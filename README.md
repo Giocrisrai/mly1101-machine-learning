@@ -110,8 +110,8 @@ datos/crudos/        dataset de trabajo (versionado, para que Colab funcione con
 src/generar_dataset.py   generador determinista del dataset
 src/eda.py               utilidades de diagnóstico de calidad de datos
 notebooks/           los tres notebooks de la Semana 1
-herramientas/        fuente única del contenido + constructor de notebooks
-tests/               pytest del generador y de las utilidades
+herramientas/        fuente única del contenido, constructor de notebooks y descarga de Waymo
+tests/               pytest del generador, de las utilidades y del mapeo de Waymo
 docs/                guion de clase y documento de diseño
 ```
 
@@ -145,6 +145,19 @@ pytest
 los 10 defectos sigue presente**. Si un test falla, el solucionario dejó de coincidir con lo que
 reciben los alumnos.
 
+Hay 10 tests adicionales que se **saltan** salvo que existan datos reales de Waymo descargados
+(`tests/test_mapeo_waymo.py`). Para activarlos:
+
+```bash
+brew install --cask google-cloud-sdk
+gcloud auth login                              # cuenta con los términos de Waymo aceptados
+python herramientas/descargar_waymo.py         # baja lidar_box + stats de un segmento
+pytest tests/test_mapeo_waymo.py -v
+```
+
+Comprueban que los nombres de columna del notebook opcional siguen siendo los del dataset real, y
+que las relaciones que reproduce el dataset sintético existen también en los datos reales.
+
 ### Estado de verificación
 
 | Qué | Cómo | Estado |
@@ -156,7 +169,7 @@ reciben los alumnos.
 | El notebook del alumno no filtra la pauta | `grep` sobre el `.ipynb` | ✅ |
 | Cifras de la pauta y la rúbrica | Comprobadas contra el CSV publicado | ✅ |
 | Esquema del notebook de Waymo | Contrastado con el código fuente oficial (2026-08-12) | ✅ |
-| **Ejecución del notebook de Waymo** | — | ❌ **no verificada**: requiere cuenta de Google con los términos aceptados y descargar cientos de MB |
+| **Ejecución del notebook de Waymo** | `herramientas/descargar_waymo.py` + `pytest tests/test_mapeo_waymo.py` | ⚠️ **verificable, aún no verificada**: requiere `gcloud auth login` con la cuenta que aceptó los términos |
 
 ---
 

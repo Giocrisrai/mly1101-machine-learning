@@ -39,6 +39,12 @@ el mismo análisis, con las mismas funciones de `src/eda.py`.
 > una cuenta de Google con los términos aceptados y varios cientos de MB de tráfico, así que no
 > se ejecutó al construir este repositorio. Si el bucket o el esquema cambiaron después de esa
 > fecha, la celda de traducción de columnas te avisará qué falta en lugar de fallar en silencio.
+>
+> **Puedes verificarlo tú:** una vez descargados los datos,
+> `pytest tests/test_mapeo_waymo.py -v` comprueba que cada columna de este notebook existe en el
+> archivo real, que la unión con `stats` encuentra correspondencia, y que las relaciones que
+> reproduce el dataset sintético (distancia ↔ puntos láser, altura del peatón, minoría ciclista)
+> también se cumplen en los datos reales. Sin datos descargados, esos tests se saltan.
 
 ### Por qué el dataset de la clase es sintético
 
@@ -97,11 +103,22 @@ print("Autenticado.")
 ```bash
 brew install --cask google-cloud-sdk
 gcloud auth login                        # abre el navegador
-gcloud auth application-default login
 ```
 
-Si `gsutil ls` responde `AccessDeniedException: 401`, casi siempre significa que la cuenta con la
-que te autenticaste **no** es la misma con la que aceptaste los términos.
+Si `gsutil` responde `401 Anonymous caller does not have storage.objects.list access`, es que no
+hay sesión iniciada. Si responde `AccessDeniedException: 403`, la cuenta con la que te
+autenticaste **no** es la misma con la que aceptaste los términos de Waymo.
+
+> **Atajo:** el repositorio incluye `herramientas/descargar_waymo.py`, que hace los pasos 3 y 4
+> por ti, comprueba los requisitos y da mensajes accionables si algo falta:
+>
+> ```bash
+> python herramientas/descargar_waymo.py --listar      # ver segmentos disponibles
+> python herramientas/descargar_waymo.py               # bajar el primero
+> pytest tests/test_mapeo_waymo.py -v                  # verificar que el esquema calza
+> ```
+>
+> Si prefieres entender qué hace por dentro, sigue las celdas de abajo: son lo mismo, paso a paso.
 
 ## Paso 3 · Elegir un segmento y descargar los dos componentes
 """

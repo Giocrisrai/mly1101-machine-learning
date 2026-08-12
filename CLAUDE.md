@@ -70,3 +70,13 @@ grep -c "Pauta docente" notebooks/01_alumno_exploracion.ipynb   # debe dar 0
 Lo único no verificado de extremo a extremo es `notebooks/00_opcional_waymo_real.ipynb`: su
 esquema se contrastó con el código fuente oficial de Waymo el 2026-08-12, pero ejecutarlo exige
 autenticación de Google y descargar cientos de MB.
+
+Para cerrarlo, el repositorio ya trae todo lo necesario:
+
+```bash
+gcloud auth login                        # el SDK ya está instalado; el login es interactivo
+python herramientas/descargar_waymo.py   # baja lidar_box + stats de un segmento
+pytest tests/test_mapeo_waymo.py -v      # 10 tests que hoy se saltan por falta de datos
+```
+
+`gcloud auth login` abre el navegador: **no lo ejecutes tú, pídeselo al usuario.**

@@ -242,7 +242,7 @@ identificación y cuantificación de problemas de calidad.
 | Cifras citadas en la pauta | Comprobadas contra el CSV publicado | ✅ |
 | Accesibilidad pública del repo | `curl` sobre `raw.githubusercontent.com` | ✅ HTTP 200 |
 | Esquema del notebook de Waymo | Contrastado con el código fuente oficial (2026-08-12) | ✅ |
-| Ejecución del notebook de Waymo | — | ❌ **no verificada**: requiere autenticación y descarga |
+| Ejecución del notebook de Waymo | `herramientas/descargar_waymo.py` + `pytest tests/test_mapeo_waymo.py` | ⚠️ **verificable, aún no verificada**: `gcloud auth login` es interactivo |
 
 ### 6.1 Comando de verificación completa
 
@@ -252,7 +252,33 @@ python herramientas/construir_notebooks.py
 cd notebooks && python -m jupyter nbconvert --to notebook --execute --stdout 01_docente_solucionario.ipynb > /dev/null
 ```
 
-### 6.2 Limitación conocida
+### 6.2 Verificación del notebook de Waymo
+
+El repositorio trae la herramienta para cerrarla cuando haya credenciales:
+
+```bash
+brew install --cask google-cloud-sdk     # ya instalado en la máquina del docente (SDK 580.0.0)
+gcloud auth login                        # interactivo: abre el navegador
+python herramientas/descargar_waymo.py   # baja lidar_box + stats de UN segmento (no imágenes)
+pytest tests/test_mapeo_waymo.py -v
+```
+
+`tests/test_mapeo_waymo.py` contiene 10 tests que se **saltan** si no hay datos descargados.
+Verifican dos cosas distintas:
+
+1. **Que el esquema no cambió:** cada columna que usa el notebook existe en el Parquet real, la
+   velocidad sigue siendo un vector, `type` y `difficulty_level.detection` siguen siendo enteros,
+   `time_of_day` y `weather` mantienen sus categorías, y la unión `lidar_box` × `stats` por
+   `(segment_context_name, frame_timestamp_micros)` encuentra correspondencia para >95 % de las
+   filas.
+2. **Que el dataset sintético no enseña algo falso:** la correlación negativa entre distancia y
+   puntos láser, la altura mediana del peatón (1,4–2,1 m) y la minoría ciclista deben existir
+   también en los datos reales.
+
+El segundo grupo es el que importa pedagógicamente: si fallara, el dataset de clase estaría
+enseñando una física que no existe.
+
+### 6.3 Limitación conocida
 
 El notebook `00_opcional_waymo_real.ipynb` tiene su esquema verificado contra el código fuente,
 pero **no se ejecutó de extremo a extremo**. La celda `traducir()` está escrita para avisar qué
