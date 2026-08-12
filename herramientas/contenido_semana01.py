@@ -19,7 +19,7 @@ Regenerar los notebooks tras editar este archivo:
 
 from __future__ import annotations
 
-URL_REPO = "https://github.com/giocrisrai/mly1101-machine-learning"
+URL_REPO = "https://github.com/Giocrisrai/mly1101-machine-learning"
 
 
 def md(texto: str) -> dict:

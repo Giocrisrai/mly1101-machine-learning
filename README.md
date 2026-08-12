@@ -30,11 +30,11 @@ LiDAR.
 
 | Notebook | Para quién | Abrir |
 |---|---|---|
-| `notebooks/01_alumno_exploracion.ipynb` | Estudiantes (18 ejercicios con TODO y autochequeo) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/giocrisrai/mly1101-machine-learning/blob/main/notebooks/01_alumno_exploracion.ipynb) |
-| `notebooks/01_docente_solucionario.ipynb` | Docente (código resuelto + pauta + criterios de logro) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/giocrisrai/mly1101-machine-learning/blob/main/notebooks/01_docente_solucionario.ipynb) |
-| `notebooks/00_opcional_waymo_real.ipynb` | Quien quiera repetirlo con datos reales de Waymo | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/giocrisrai/mly1101-machine-learning/blob/main/notebooks/00_opcional_waymo_real.ipynb) |
+| `notebooks/01_alumno_exploracion.ipynb` | Estudiantes (18 ejercicios con TODO y autochequeo) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/01_alumno_exploracion.ipynb) |
+| `notebooks/01_docente_solucionario.ipynb` | Docente (código resuelto + pauta + criterios de logro) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/01_docente_solucionario.ipynb) |
+| `notebooks/00_opcional_waymo_real.ipynb` | Quien quiera repetirlo con datos reales de Waymo | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/00_opcional_waymo_real.ipynb) |
 
-> Los enlaces de Colab apuntan a `github.com/giocrisrai/mly1101-machine-learning`. Si publicas el
+> Los enlaces de Colab apuntan a `github.com/Giocrisrai/mly1101-machine-learning`. Si publicas el
 > repositorio con otro nombre, actualiza `URL_REPO` en `herramientas/contenido_semana01.py` y en
 > este README, y vuelve a ejecutar `python herramientas/construir_notebooks.py`.
 
@@ -66,7 +66,7 @@ los datos disponibles. No hay que instalar nada.
 ### Opción B — Local
 
 ```bash
-git clone https://github.com/giocrisrai/mly1101-machine-learning.git
+git clone https://github.com/Giocrisrai/mly1101-machine-learning.git
 cd mly1101-machine-learning
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
