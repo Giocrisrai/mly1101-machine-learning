@@ -1,0 +1,148 @@
+# MLY1101 · Machine Learning — Duoc UC
+
+Material de trabajo de la asignatura **Machine Learning (MLY1101)**, Escuela de Informática y
+Telecomunicaciones, Duoc UC. Segundo semestre 2026.
+
+Docente: Giocrisrai Godoy Bonillo · `gi.godoy@profesor.duoc.cl`
+
+---
+
+## Ruta de aprendizaje
+
+```
+Problema → Datos → Exploración → Preprocesamiento → Modelamiento → Evaluación → Interpretación
+```
+
+| Experiencia | Contenido | Estado |
+|---|---|---|
+| **EA1** · Análisis y preprocesamiento de datos | Exploración, calidad de datos, preparación | ✅ Semana 1 disponible |
+| **EA2** · Aprendizaje supervisado | Regresión y clasificación | ⏳ |
+| **EA3** · Aprendizaje no supervisado | Segmentación, reducción de dimensionalidad | ⏳ |
+| **EFT** · Evaluación final transversal | Integra los tres RA (40 % de la nota) | ⏳ |
+
+---
+
+## Semana 1 · EA1 — Análisis exploratorio y calidad de datos
+
+**Contexto:** trabajas en el equipo de percepción de una empresa de conducción autónoma. Antes de
+entrenar cualquier modelo, hay que responder si se puede confiar en las detecciones del sensor
+LiDAR.
+
+| Notebook | Para quién | Abrir |
+|---|---|---|
+| `notebooks/01_alumno_exploracion.ipynb` | Estudiantes (18 ejercicios con TODO y autochequeo) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/giocrisrai/mly1101-machine-learning/blob/main/notebooks/01_alumno_exploracion.ipynb) |
+| `notebooks/01_docente_solucionario.ipynb` | Docente (código resuelto + pauta + criterios de logro) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/giocrisrai/mly1101-machine-learning/blob/main/notebooks/01_docente_solucionario.ipynb) |
+| `notebooks/00_opcional_waymo_real.ipynb` | Quien quiera repetirlo con datos reales de Waymo | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/giocrisrai/mly1101-machine-learning/blob/main/notebooks/00_opcional_waymo_real.ipynb) |
+
+> Los enlaces de Colab apuntan a `github.com/giocrisrai/mly1101-machine-learning`. Si publicas el
+> repositorio con otro nombre, actualiza `URL_REPO` en `herramientas/contenido_semana01.py` y en
+> este README, y vuelve a ejecutar `python herramientas/construir_notebooks.py`.
+
+### Estructura de la sesión (4 h)
+
+| Bloque | Min | Foco |
+|---|---|---|
+| 0 · El problema antes del algoritmo | 15 | Por qué no se empieza eligiendo un algoritmo |
+| 1 · Carga e inspección | 45 | `.info()`, `.dtypes`, memoria, diagnóstico general |
+| 2 · Tipos de variables | 45 | Taxonomía estadística y categorías inconsistentes |
+| 3 · Nulos y duplicados | 45 | Nulos ocultos, patrón MNAR, duplicado lógico |
+| 4 · Valores atípicos | 45 | IQR vs z-score; imposible vs legítimo |
+| 5 · Decisiones | 30 | Tabla de decisiones y fuga de información |
+| 6 · Datos responsables | 20 | Sesgo de muestreo y datos personales |
+| Cierre | 15 | Mini-informe de calidad de datos |
+
+El guion detallado, con las preguntas para el curso y los momentos críticos, está en
+[`docs/guion_clase_semana01.md`](docs/guion_clase_semana01.md).
+
+---
+
+## Cómo empezar
+
+### Opción A — Google Colab (recomendada para los estudiantes)
+
+Clic en el badge de Colab del notebook del alumno. La primera celda clona el repositorio y deja
+los datos disponibles. No hay que instalar nada.
+
+### Opción B — Local
+
+```bash
+git clone https://github.com/giocrisrai/mly1101-machine-learning.git
+cd mly1101-machine-learning
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+jupyter lab notebooks/01_alumno_exploracion.ipynb
+```
+
+---
+
+## Los datos
+
+`datos/crudos/detecciones_waymo_like.csv` — 40.680 detecciones de objetos, 16 columnas.
+
+Es un dataset **sintético** que usa el mismo esquema del componente `lidar_box` del
+[Waymo Open Dataset v2](https://waymo.com/open/). Contiene **10 defectos de calidad inyectados a
+propósito**, documentados en `src/generar_dataset.py::CATALOGO_DEFECTOS` y verificados por
+`pytest`. El diccionario de datos está en [`datos/README.md`](datos/README.md).
+
+No hay ningún dato real de Waymo en este repositorio: su licencia es de uso no comercial y no
+permite redistribución. El notebook `00_opcional_waymo_real.ipynb` explica cómo obtenerlos
+directamente, aceptando los términos.
+
+Para regenerarlo o cambiar su tamaño:
+
+```bash
+python src/generar_dataset.py --filas 40000 --semilla 42
+```
+
+Misma semilla ⇒ archivo idéntico byte a byte.
+
+---
+
+## Estructura del repositorio
+
+```
+datos/crudos/        dataset de trabajo (versionado, para que Colab funcione con un clic)
+src/generar_dataset.py   generador determinista del dataset
+src/eda.py               utilidades de diagnóstico de calidad de datos
+notebooks/           los tres notebooks de la Semana 1
+herramientas/        fuente única del contenido + constructor de notebooks
+tests/               pytest del generador y de las utilidades
+docs/                guion de clase y documento de diseño
+```
+
+### Los notebooks se generan, no se editan a mano
+
+El notebook del alumno y el solucionario salen de **una sola fuente** para que no se
+desincronicen. Para modificar un ejercicio:
+
+```bash
+# 1. Editar el contenido
+$EDITOR herramientas/contenido_semana01.py
+
+# 2. Regenerar los tres notebooks
+python herramientas/construir_notebooks.py
+
+# 3. Verificar que el solucionario sigue ejecutando completo
+cd notebooks && python -m jupyter nbconvert --to notebook --execute --stdout 01_docente_solucionario.ipynb > /dev/null
+```
+
+Editar los `.ipynb` directamente funciona hasta el siguiente build, que los sobrescribe.
+
+---
+
+## Tests
+
+```bash
+pytest
+```
+
+33 tests que verifican dos cosas: que el dataset es reproducible byte a byte, y que **cada uno de
+los 10 defectos sigue presente**. Si un test falla, el solucionario dejó de coincidir con lo que
+reciben los alumnos.
+
+---
+
+## Licencia
+
+Material docente. Los datos incluidos son sintéticos y de libre uso. El Waymo Open Dataset tiene
+su propia licencia ([términos](https://waymo.com/open/terms/)) y **no** se distribuye aquí.

@@ -1,0 +1,19 @@
+# Datos reales de Waymo: licencia no comercial, no se redistribuyen.
+datos/waymo_real/
+*.parquet
+*.tfrecord
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Salidas de trabajo del alumno
+notebooks/*_resuelto.ipynb
+salidas/
+
+# macOS
+.DS_Store
