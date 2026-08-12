@@ -34,6 +34,32 @@ sobre este archivo se traslada tal cual a los datos reales
 | `detection_difficulty` | ordinal | — | `LEVEL_1` (fácil) < `LEVEL_2` (difícil) |
 | `sensor_version` | constante | — | Versión del firmware |
 
+### Correspondencia con el esquema real de Waymo v2
+
+Verificada el 2026-08-12 contra `v2/perception/box.py`, `v2/perception/context.py` y
+`tutorial/tutorial_v2.ipynb` del repositorio
+[waymo-research/waymo-open-dataset](https://github.com/waymo-research/waymo-open-dataset).
+
+| Columna aquí | Columna real en Waymo Open Dataset v2 |
+|---|---|
+| `segment_id` | `key.segment_context_name` |
+| `timestamp_micros` | `key.frame_timestamp_micros` |
+| `id_interno` | `key.laser_object_id` |
+| `object_type` | `[LiDARBoxComponent].type` (entero: 1 vehículo, 2 peatón, 3 señalética, 4 ciclista) |
+| `box_center_x/y/z` | `[LiDARBoxComponent].box.center.x/y/z` |
+| `box_length/width/height` | `[LiDARBoxComponent].box.size.x/y/z` |
+| `speed_mps` | √(`speed.x`² + `speed.y`²) — en Waymo la velocidad es un **vector** |
+| `num_lidar_points` | `[LiDARBoxComponent].num_lidar_points_in_box` |
+| `detection_difficulty` | `[LiDARBoxComponent].difficulty_level.detection` (entero 1 o 2) |
+| `weather` | `[StatsComponent].weather` |
+| `time_of_day` | `[StatsComponent].time_of_day` |
+| `sensor_version` | — (columna inventada para el ejercicio) |
+
+**Diferencias deliberadas respecto del original:** el `weather` real de Waymo v2 solo toma los
+valores `Sunny` y `Rain`; aquí se agregó `fog` y variantes en español para que la limpieza de
+categorías tuviera algo que hacer. La columna `sensor_version` no existe en Waymo: está para
+ilustrar una variable de varianza cero.
+
 ### Relaciones que el dataset respeta (no son defectos)
 
 - A mayor distancia del objeto, menos puntos láser: aproximadamente

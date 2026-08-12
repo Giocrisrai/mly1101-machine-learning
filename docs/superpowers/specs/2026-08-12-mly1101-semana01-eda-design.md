@@ -1,143 +1,285 @@
-# Diseño — MLY1101 Semana 01 / EA1: Análisis y Preprocesamiento de Datos
+# Especificación — MLY1101 Semana 01 / EA1: Análisis y Preprocesamiento de Datos
 
-Fecha: 2026-08-12
-Autor: Giocrisrai Godoy (docente)
-Estado: aprobado por el docente el 2026-08-12
+- **Fecha:** 2026-08-12
+- **Autor:** Giocrisrai Godoy Bonillo (docente)
+- **Estado:** aprobado e implementado
+- **Repositorio:** <https://github.com/Giocrisrai/mly1101-machine-learning>
 
-## Problema
+---
 
-La Semana 1 de MLY1101 inicia la EA1 (20 h). El objetivo pedagógico es que el
-estudiante entienda que un proyecto de Machine Learning no empieza eligiendo un
-algoritmo, sino comprendiendo el problema y los datos:
+## 1. Problema
+
+La Semana 1 de MLY1101 inicia la EA1 (20 h). El objetivo pedagógico es que el estudiante entienda
+que un proyecto de Machine Learning no empieza eligiendo un algoritmo, sino comprendiendo el
+problema y los datos:
 
 ```
 Problema → Datos → Exploración → Preprocesamiento → Modelamiento → Evaluación → Interpretación
+           └────────── alcance de esta especificación ──────────┘
 ```
 
-Se necesita material listo para una sesión de taller de ~4 h, con alumnos que ya
-manejan pandas, ejecutable en Google Colab (recomendación del PIA) y con
-respaldo local en Jupyter.
+Se necesita material para una sesión de taller de ~4 h, con alumnos que ya manejan pandas,
+ejecutable en Google Colab (recomendación del PIA) y con respaldo local en Jupyter.
 
-## Decisiones tomadas
+### 1.1 Restricciones de contexto
 
-| Decisión | Elección | Motivo |
-| --- | --- | --- |
-| Dataset principal | Sintético con esquema Waymo v2 y defectos inyectados | Control total de lo que el alumno debe descubrir; pauta exacta; sin login ni descarga; sin problema de licencia |
-| Waymo real | Notebook opcional `00_opcional_waymo_real.ipynb` | La licencia de Waymo prohíbe redistribuir los datos; cada usuario acepta los términos por su cuenta |
-| Entrega | Repo git local, publicable en GitHub con badges "Abrir en Colab" | Un clic para el alumno, sin instalación |
-| Versiones | Notebook de alumno (con TODO) + solucionario docente | El docente necesita pauta, no ayuda para aprender |
-| Alcance | ~4 h, alumnos que ya manejan pandas | Permite llegar a outliers y decisiones de preprocesamiento |
-| Alcance del repo | Un repo por asignatura, con carpetas por experiencia | La EFT exige lógica de proyecto progresiva EA1 → EA2 → EA3 |
+| Restricción | Origen | Consecuencia de diseño |
+|---|---|---|
+| Colab como entorno primario | PIA de la asignatura | Los datos deben viajar con el repositorio; nada de instalaciones |
+| Datos "reales o suficientemente contextualizados" | Coordinación de la línea | Dataset sintético admisible si el contexto y el esquema son reales |
+| 90 h de laboratorio/taller | Programa | El material es práctico; la teoría entra como pregunta, no como diapositiva |
+| Progresión hacia la EFT (40 %) | Programa | Un repositorio por asignatura, no uno por semana |
+| Licencia no comercial de Waymo | [Términos de Waymo](https://waymo.com/open/terms/) | Prohibido incluir datos de Waymo en el repositorio |
 
-Explícitamente **fuera de alcance** en esta iteración: rúbrica de evaluación de
-la EA1, algoritmos predictivos, material de EA2/EA3.
+---
 
-## Arquitectura
+## 2. Decisiones y sus alternativas descartadas
 
-Cuatro unidades con una responsabilidad cada una:
+| Decisión | Elección | Alternativa descartada | Motivo |
+|---|---|---|---|
+| Dataset principal | Sintético con esquema Waymo v2 y defectos inyectados | Waymo real; dataset público chileno (CONASET) | Control exacto de lo que el alumno debe descubrir; sin login, sin descarga, sin problema de licencia; la pauta puede afirmar cifras exactas |
+| Waymo real | Notebook opcional, esquema verificado, ejecución no verificada | Incluir un subconjunto en el repo | La licencia prohíbe la redistribución |
+| Entrega | Repo público en GitHub con badges de Colab | ZIP en la plataforma | Un clic para el alumno, sin cuenta de GitHub |
+| Versiones del notebook | Alumno (TODO) + docente (solucionario) | Un solo notebook resuelto | El docente necesita pauta; el alumno necesita trabajo por hacer |
+| Generación de los notebooks | Fuente única en Python → dos `.ipynb` | Editar dos `.ipynb` a mano | Evita que se desincronicen al corregir un ejercicio |
+| Alcance | ~4 h, alumnos que ya manejan pandas | 2 h nivel básico | Permite llegar a outliers y a las decisiones de preprocesamiento |
+| Estructura | Un repo por asignatura, carpetas por experiencia | Un repo por semana | La EFT exige lógica de proyecto progresiva |
 
-1. **`src/generar_dataset.py`** — genera el CSV de trabajo.
-   - Entrada: `--filas`, `--semilla`, `--salida`. Salida: CSV.
-   - Determinista: misma semilla ⇒ mismo archivo byte a byte.
-   - Cada defecto se inyecta en una función propia y nombrada
-     (`_inyectar_nulos_ocultos`, `_inyectar_duplicados`, …), de modo que el
-     catálogo de defectos sea legible sin leer el detalle de la implementación.
-2. **`src/eda.py`** — utilidades de diagnóstico reutilizables por los tres
-   notebooks (`resumen_calidad`, `detectar_outliers_iqr`,
-   `normalizar_categoria`). Sin estado, sin efectos secundarios, sin `print`.
-3. **`herramientas/contenido_semana01.py` + `herramientas/construir_notebooks.py`** —
-   fuente única del contenido de la clase. Cada celda de código declara su
-   versión resuelta y, opcionalmente, su versión con `TODO`. El constructor
-   emite los dos notebooks (`.ipynb`, nbformat 4) desde esa fuente.
-   - Razón de diseño: evita que el notebook del alumno y el solucionario se
-     desincronicen al corregir un ejercicio.
-4. **`tests/`** — pytest sobre el generador (reproducibilidad + presencia de
-   cada defecto) y sobre `src/eda.py`. Si un defecto desaparece del generador,
-   la pauta deja de mentir: falla un test.
+**Fuera de alcance en esta iteración:** algoritmos predictivos, material de EA2/EA3, evaluación
+automática de las entregas de los alumnos.
 
-### Flujo de datos
+---
+
+## 3. Arquitectura
+
+Cinco unidades, cada una con una responsabilidad y un contrato explícito.
+
+### 3.1 `src/generar_dataset.py` — generación del dataset
+
+- **Entrada:** `--filas` (int), `--semilla` (int), `--salida` (ruta).
+- **Salida:** un CSV.
+- **Invariante:** misma semilla ⇒ archivo idéntico byte a byte. Verificado por
+  `test_es_reproducible_byte_a_byte`.
+- **Estructura:** cada defecto se inyecta en una función nombrada
+  (`_inyectar_nulos_ocultos`, `_inyectar_duplicados`, …) para que el catálogo se lea sin entrar
+  en la implementación. `CATALOGO_DEFECTOS` es la lista canónica de los 10 defectos.
+- **Orden de inyección** (importa): base limpia → outliers legítimos → outliers imposibles →
+  nulos MNAR → nulos ocultos → categorías inconsistentes → timestamps corruptos → duplicados.
+  Los duplicados van al final para que arrastren los defectos ya inyectados, y la permutación
+  final impide que queden contiguos.
+
+### 3.2 `src/eda.py` — diagnóstico reutilizable
+
+Funciones puras, sin estado, sin `print` ni gráficos, para que sirvan en los notebooks y en los
+tests por igual.
+
+| Función | Contrato |
+|---|---|
+| `resumen_calidad(df, centinelas, max_ejemplos)` | Una fila por columna: dtype, cardinalidad, nulos, centinelas, `pct_faltante_total` |
+| `detectar_outliers_iqr(serie, k)` | Serie booleana; los `NaN` son `False` |
+| `limites_iqr(serie, k)` | `(inferior, superior)` coherente con la función anterior |
+| `detectar_outliers_zscore(serie, umbral)` | Serie booleana; devuelve todo `False` si σ = 0 |
+| `normalizar_categoria(serie, mapa)` | `strip` → `lower` → `mapa`; conserva los `NaN` |
+| `reporte_duplicados(df, llave)` | `dup_exactos`, `dup_por_llave`, `dup_logicos = por_llave − exactos` |
+| `matriz_nulos_por_grupo(df, columna, grupos)` | % de nulos cruzado por 1 o 2 variables |
+| `valores_imposibles(df, reglas)` | Cuenta violaciones de reglas de dominio expresadas como `query` |
+| `a_numerico(serie)` | `to_numeric(errors="coerce")` con nombre explícito |
+| `resumen_desbalance(serie)` | `n`, `pct`, `ratio_vs_mayoritaria` |
+| `perfil_numerico(df, columnas)` | `describe()` + asimetría, curtosis y outliers IQR |
+
+### 3.3 `herramientas/` — fuente única de contenido
+
+- `contenido_semana01.py`: lista `CELDAS`. Cada celda de código declara su versión resuelta y,
+  opcionalmente, su versión con `TODO`. Las celdas `solo_docente` contienen la pauta.
+- `contenido_waymo.py`: celdas del notebook opcional.
+- `construir_notebooks.py`: emite los tres `.ipynb` (nbformat 4.4) y antepone el badge de Colab.
+
+**Regla:** los `.ipynb` son artefactos generados. Editarlos a mano funciona hasta el siguiente
+build, que los sobrescribe.
+
+### 3.4 `tests/` — el contrato con la pauta
+
+33 tests. Su función no es solo detectar regresiones de código: **si un defecto desaparece del
+generador, la pauta del docente pasa a mentir**. Los tests son lo que mantiene alineados el
+dataset, el solucionario y la rúbrica.
+
+### 3.5 `docs/` — material docente
+
+`guion_clase_semana01.md` (minuto a minuto), `rubrica_ea1.md` (evaluación por indicador) y esta
+especificación.
+
+### 3.6 Flujo de datos
 
 ```
-generar_dataset.py --semilla 42
+src/generar_dataset.py --semilla 42
         ↓
-datos/crudos/detecciones_waymo_like.csv   (committeado al repo)
-        ↓                          ↓
-notebook alumno            notebook docente        (ambos usan src/eda.py)
-        ↓
-mini-informe en Markdown del estudiante
+datos/crudos/detecciones_waymo_like.csv   (versionado en el repositorio)
+        ↓                    ↓                       ↓
+notebook alumno      notebook docente         tests (verifican los defectos)
+        ↓                    ↓
+   mini-informe        pauta + rúbrica
 ```
 
-En Colab, la primera celda detecta el entorno y hace `git clone` del repo para
-disponer del CSV y de `src/`. En local, usa las rutas relativas.
+En Colab, la primera celda detecta el entorno y clona el repositorio. En local usa rutas
+relativas (`RAIZ = Path("..")` desde `notebooks/`).
 
-## Esquema del dataset
+---
 
-Mismo esquema del componente `lidar_box` (+ campos de `stats`) de Waymo Open
-Dataset v2, para que el notebook opcional con datos reales sea un reemplazo
-directo:
+## 4. El dataset
 
-| Columna | Tipo esperado | Notas |
-| --- | --- | --- |
-| `segment_id` | object | `seg_0147` |
-| `timestamp_micros` | int64 | contaminado ⇒ se lee como object |
-| `object_type` | object | VEHICLE / PEDESTRIAN / CYCLIST / SIGN |
-| `box_center_x`, `box_center_y`, `box_center_z` | float64 | metros, sistema del vehículo |
-| `box_length`, `box_width`, `box_height` | float64 | metros |
-| `speed_mps` | float64 | nulos MNAR + outliers imposibles |
-| `num_lidar_points` | int64 | `-1` como nulo oculto |
-| `weather` | object | categorías inconsistentes + NaN |
-| `time_of_day` | object | Day / Night / Dawn/Dusk |
-| `detection_difficulty` | object | LEVEL_1 / LEVEL_2 |
-| `sensor_version` | object | constante: no es feature |
-| `id_interno` | object | casi único: no es feature |
+### 4.1 Esquema y correspondencia con Waymo v2
 
-## Catálogo de defectos inyectados
+Los nombres de la columna de la derecha fueron verificados el 2026-08-12 contra
+`v2/perception/box.py`, `v2/perception/context.py` y `tutorial/tutorial_v2.ipynb` del repositorio
+[waymo-research/waymo-open-dataset](https://github.com/waymo-research/waymo-open-dataset).
 
-Cada uno tiene un test que lo verifica y una respuesta esperada en el
-solucionario.
+| Columna de clase | Tipo estadístico | Columna real en Waymo Open Dataset v2 |
+|---|---|---|
+| `segment_id` | nominal | `key.segment_context_name` |
+| `timestamp_micros` | temporal | `key.frame_timestamp_micros` |
+| `id_interno` | identificador | `key.laser_object_id` |
+| `object_type` | nominal | `[LiDARBoxComponent].type` (entero 1–4) |
+| `box_center_x/y/z` | continua | `[LiDARBoxComponent].box.center.x/y/z` |
+| `box_length/width/height` | continua | `[LiDARBoxComponent].box.size.x/y/z` |
+| `speed_mps` | continua | √(`speed.x`² + `speed.y`²) — en Waymo es un **vector** |
+| `num_lidar_points` | discreta | `[LiDARBoxComponent].num_lidar_points_in_box` |
+| `detection_difficulty` | ordinal | `[LiDARBoxComponent].difficulty_level.detection` (entero) |
+| `weather` | nominal | `[StatsComponent].weather` (solo `Sunny` / `Rain`) |
+| `time_of_day` | nominal | `[StatsComponent].time_of_day` (`Day` / `Night` / `Dawn/Dusk`) |
+| `sensor_version` | constante | — (columna inventada para el ejercicio) |
 
-1. `timestamp_micros` contiene `"N/D"` ⇒ dtype `object`.
-2. `num_lidar_points == -1` como nulo oculto (~3 %).
-3. `weather` inconsistente: `sunny`, `Sunny`, `"RAIN "`, `rain`, `lluvia`, NaN (~5 %).
-4. `object_type` inconsistente: `PEDESTRIAN`, `Pedestrian`, `PEATON`, `Ped`.
-5. Duplicados exactos (~1,2 %) y duplicados lógicos (~0,5 %: misma llave
-   `segment_id`+`timestamp_micros`+`id_interno`, valores distintos).
-6. Outliers imposibles: `speed_mps` hasta ~340, `box_height == 0`,
-   `box_length` negativo.
-7. Outliers legítimos: buses con `box_length` de 12 a 18 m (no se eliminan).
-8. Nulos MNAR en `speed_mps`, concentrados en `detection_difficulty == LEVEL_2`
-   y `time_of_day == Night`.
-9. Desbalance de clases: `CYCLIST` ≈ 2 %.
-10. `sensor_version` constante y `id_interno` de cardinalidad casi única.
+Diferencias deliberadas respecto del original: `fog` y las variantes en español de `weather`
+(el Waymo real solo distingue `Sunny` y `Rain`) y la columna `sensor_version`.
 
-## Estructura de la sesión (4 h)
+### 4.2 Estructura generativa (lo que *no* es defecto)
 
-| Bloque | Min | Contenido |
-| --- | --- | --- |
-| 0 | 15 | El problema antes del algoritmo: ¿podemos confiar en las detecciones del sensor? |
-| 1 | 45 | Carga e inspección: `shape`, `head`, `info`, `dtypes`, memoria |
-| 2 | 45 | Tipos de variables: nominal / ordinal / discreta / continua; `value_counts`, `nunique` |
-| 3 | 45 | Calidad: nulos (patrón, no solo conteo) y duplicados exactos vs. lógicos |
-| 4 | 45 | Outliers: IQR y z-score; imposibles vs. legítimos |
-| 5 | 30 | Tabla de decisiones de preprocesamiento; mención de fuga de información |
-| 6 | 20 | Tratamiento responsable: peatones, geolocalización, sesgo de muestreo |
-| Cierre | 15 | Mini-informe en Markdown: 5 hallazgos y 3 decisiones |
+El dataset tiene señal real que el análisis exploratorio puede descubrir:
 
-## Manejo de errores y verificación
+- `num_lidar_points ~ Poisson(900 / (1 + d/12)²)` con `d = √(x² + y²)`. Correlación de Spearman
+  esperada con la distancia: **< −0,5** (verificado por test).
+- Las detecciones con pocos puntos tienden a `LEVEL_2`.
+- Las dimensiones son coherentes por tipo de objeto (peatón ≈ 1,72 m de alto).
+- La señalética no se mueve (< 2 % supera 1 m/s, y solo por los outliers inyectados).
 
-- El notebook del alumno incluye celdas `assert` de autochequeo tras los
-  ejercicios clave: el alumno sabe si acertó sin esperar al docente.
-- La primera celda verifica versiones de pandas/numpy y la existencia del CSV;
-  si falta, ofrece regenerarlo con `src/generar_dataset.py`.
-- Los tests se ejecutan con `pytest` desde la raíz del repo.
-- El notebook de Waymo real **no puede verificarse** en esta sesión (requiere
-  `gcloud`, aceptación de términos y descarga de GB). Queda marcado como *no
-  verificado* dentro del propio notebook.
+Sin esta estructura, el ejercicio sería solo limpieza; con ella, hay algo que aprender de los
+datos.
 
-## Riesgos asumidos
+### 4.3 Catálogo de defectos — cifras exactas
 
-- **Dataset sintético**: se declara como tal en el README, en `datos/README.md`
-  y en la primera celda del notebook. Mitigación pedagógica: el esquema es real
-  y el notebook opcional permite repetir el análisis con datos reales de Waymo.
-- **Licencia de Waymo**: no se redistribuye ningún dato de Waymo en el repo.
-- **CSV committeado** (~4 MB): aceptable para que Colab funcione con un clic.
+Con `--filas 40000 --semilla 42` ⇒ 40.680 filas × 16 columnas (4,6 MB).
+
+| # | Defecto | Cifra verificada | Enseña |
+|---|---|---|---|
+| 1 | `timestamp_micros` con `"N/D"` | 60 filas (0,15 %) | Un valor de texto rompe el dtype de toda la columna |
+| 2 | `num_lidar_points = -1` | 1.198 (2,9 %) | Un nulo puede estar disfrazado de valor válido |
+| 3 | `weather`: 11 variantes → 3 categorías | 2.075 nulos (5,1 %) | Normalización; espacios invisibles |
+| 4 | `object_type`: 7 variantes → 4 categorías | 2.343 filas | Impacto directo sobre la variable objetivo |
+| 5 | Duplicados exactos y lógicos | 480 + 200 | `drop_duplicates()` no basta |
+| 6 | Outliers imposibles | 157 > 60 m/s · 122 con alto 0 · 80 con largo < 0 | Reglas de dominio |
+| 7 | Outliers legítimos (buses) | 608 con largo > 12 m | No todo atípico es error |
+| 8 | Nulos MNAR en `speed_mps` | 787; 33,8 % en LEVEL_2 nocturno vs. 0,4 % en LEVEL_1 | El patrón importa más que el conteo |
+| 9 | Desbalance | `CYCLIST` 1,9 % | Anticipa las métricas de EA2 |
+| 10 | `sensor_version` constante · `id_interno` 98,3 % único | — | Qué no es una feature |
+
+Cada uno tiene su test en `tests/test_generar_dataset.py`.
+
+### 4.4 Composición del dataset (para el bloque de sesgo)
+
+~20,0 % nocturnas · ~21,3 % con lluvia · 1,9 % ciclistas. La intersección *nocturna + difícil* es
+pequeña y además es donde más faltan las velocidades: doble carencia, y es exactamente el punto
+del bloque 6.
+
+---
+
+## 5. Diseño instruccional
+
+### 5.1 Estructura de la sesión
+
+| Bloque | Min | TODO | Objetivo |
+|---|---|---|---|
+| 0 · El problema | 15 | — | Que nadie abra scikit-learn hoy |
+| 1 · Carga e inspección | 45 | 1–3 | Que `.info()` deje de ser un trámite |
+| 2 · Tipos de variables | 45 | 4–6 | Tipo de pandas ≠ tipo estadístico |
+| 3 · Nulos y duplicados | 45 | 7–11 | Nulos ocultos y patrón MNAR ⭐ |
+| 4 · Outliers | 45 | 12–15 | Imposible vs. legítimo |
+| 5 · Decisiones | 30 | 16–17 | Del diagnóstico a la decisión documentada |
+| 6 · Datos responsables | 20 | 18 | Sesgo de muestreo con consecuencia concreta |
+| Cierre | 15 | — | Mini-informe |
+
+**Bloque 3 es el imprescindible.** Si el tiempo se acorta, se recorta el 2 y el 6 (ver
+`docs/guion_clase_semana01.md`).
+
+### 5.2 Tres ideas que deben quedar
+
+1. *Eliminar filas nunca es gratis: siempre estás eligiendo qué parte de la realidad borrar.*
+2. *El umbral estadístico propone; el conocimiento del dominio dispone.*
+3. *Un promedio global oculta a las minorías.*
+
+### 5.3 Autochequeo
+
+Cada bloque de ejercicios termina en una celda `assert`. El alumno sabe si acertó sin esperar al
+docente, y el docente puede recorrer la sala mirando los ✅ en vez de revisar código.
+
+Diseño de los `assert`: mensaje en español que **orienta sin dar la respuesta**
+(`"revisa: ¿estás mirando la columna correcta?"`).
+
+### 5.4 Evaluación
+
+`docs/rubrica_ea1.md`, cinco indicadores mapeados al RA1, con el peso mayor (30 %) en la
+identificación y cuantificación de problemas de calidad.
+
+---
+
+## 6. Verificación
+
+| Qué | Cómo | Resultado |
+|---|---|---|
+| Reproducibilidad del dataset | `pytest` (hash SHA-256 de dos generaciones) | ✅ |
+| Presencia de los 10 defectos | `pytest`, un test por defecto | ✅ |
+| Utilidades de `eda.py` | `pytest`, 15 tests | ✅ |
+| El solucionario ejecuta completo | `jupyter nbconvert --execute` | ✅ exit 0 |
+| El notebook del alumno no filtra la pauta | `grep "Pauta docente"` sobre el `.ipynb` | ✅ 0 coincidencias |
+| Cifras citadas en la pauta | Comprobadas contra el CSV publicado | ✅ |
+| Accesibilidad pública del repo | `curl` sobre `raw.githubusercontent.com` | ✅ HTTP 200 |
+| Esquema del notebook de Waymo | Contrastado con el código fuente oficial (2026-08-12) | ✅ |
+| Ejecución del notebook de Waymo | — | ❌ **no verificada**: requiere autenticación y descarga |
+
+### 6.1 Comando de verificación completa
+
+```bash
+pytest -q
+python herramientas/construir_notebooks.py
+cd notebooks && python -m jupyter nbconvert --to notebook --execute --stdout 01_docente_solucionario.ipynb > /dev/null
+```
+
+### 6.2 Limitación conocida
+
+El notebook `00_opcional_waymo_real.ipynb` tiene su esquema verificado contra el código fuente,
+pero **no se ejecutó de extremo a extremo**. La celda `traducir()` está escrita para avisar qué
+columnas faltan en lugar de fallar en silencio, de modo que un cambio de esquema en Waymo se
+manifieste como un mensaje legible y no como un `KeyError`. La limitación está declarada dentro
+del propio notebook, no solo aquí.
+
+---
+
+## 7. Riesgos asumidos
+
+| Riesgo | Mitigación |
+|---|---|
+| El dataset es sintético y podría leerse como "de juguete" | Se declara como tal en el README, en `datos/README.md` y en la primera celda; el esquema es real y el notebook opcional permite repetir todo con datos reales |
+| Los alumnos podrían leer el solucionario | Está en el mismo repo público. Se asume: quien quiera copiar puede, y el mini-informe con cifras propias es lo que se evalúa |
+| El CSV de 4,6 MB versionado | Aceptable: es lo que permite que Colab funcione con un clic |
+| El esquema de Waymo puede cambiar | La fecha de verificación está declarada y la traducción avisa qué falta |
+| Los badges dependen del nombre del repositorio | `URL_REPO` está en un solo lugar (`contenido_semana01.py`) y el README documenta cómo cambiarlo |
+
+---
+
+## 8. Trabajo futuro
+
+| Cuándo | Qué |
+|---|---|
+| Semana 2 | Preprocesamiento aplicado: imputación por grupo, codificación, escalado, y `Pipeline` de scikit-learn para evitar la fuga de información |
+| EA2 | Aprendizaje supervisado. El desbalance de `CYCLIST` (1,9 %) y las métricas por clase quedaron sembrados en esta sesión |
+| EA3 | Aprendizaje no supervisado sobre el mismo dominio: segmentación de detecciones, reducción de dimensionalidad |
+| EFT | El mismo dataset o su versión real de Waymo, integrando los tres RA |
+| Cuando se amplíe la EA1 | Extender `docs/rubrica_ea1.md`: hoy cubre solo la Semana 1 de las 20 h de la experiencia |

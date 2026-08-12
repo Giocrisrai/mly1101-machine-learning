@@ -51,8 +51,13 @@ LiDAR.
 | 6 · Datos responsables | 20 | Sesgo de muestreo y datos personales |
 | Cierre | 15 | Mini-informe de calidad de datos |
 
-El guion detallado, con las preguntas para el curso y los momentos críticos, está en
-[`docs/guion_clase_semana01.md`](docs/guion_clase_semana01.md).
+### Material docente
+
+| Documento | Para qué |
+|---|---|
+| [`docs/guion_clase_semana01.md`](docs/guion_clase_semana01.md) | Guion minuto a minuto: preguntas para el curso, momentos críticos, qué recortar si falta tiempo |
+| [`docs/rubrica_ea1.md`](docs/rubrica_ea1.md) | Rúbrica por indicador de logro, mapeada al RA1, con las cifras exactas para corregir |
+| [`docs/superpowers/specs/2026-08-12-mly1101-semana01-eda-design.md`](docs/superpowers/specs/2026-08-12-mly1101-semana01-eda-design.md) | Especificación completa: decisiones de diseño, catálogo de defectos, protocolo de verificación |
 
 ---
 
@@ -139,6 +144,19 @@ pytest
 33 tests que verifican dos cosas: que el dataset es reproducible byte a byte, y que **cada uno de
 los 10 defectos sigue presente**. Si un test falla, el solucionario dejó de coincidir con lo que
 reciben los alumnos.
+
+### Estado de verificación
+
+| Qué | Cómo | Estado |
+|---|---|---|
+| Reproducibilidad del dataset | `pytest` (SHA-256 de dos generaciones) | ✅ |
+| Presencia de los 10 defectos | `pytest`, un test por defecto | ✅ |
+| Utilidades de `src/eda.py` | `pytest`, 15 tests | ✅ |
+| El solucionario ejecuta completo | `jupyter nbconvert --execute` | ✅ |
+| El notebook del alumno no filtra la pauta | `grep` sobre el `.ipynb` | ✅ |
+| Cifras de la pauta y la rúbrica | Comprobadas contra el CSV publicado | ✅ |
+| Esquema del notebook de Waymo | Contrastado con el código fuente oficial (2026-08-12) | ✅ |
+| **Ejecución del notebook de Waymo** | — | ❌ **no verificada**: requiere cuenta de Google con los términos aceptados y descargar cientos de MB |
 
 ---
 
