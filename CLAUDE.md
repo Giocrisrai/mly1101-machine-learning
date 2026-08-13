@@ -67,16 +67,18 @@ grep -c "Pauta docente" notebooks/01_alumno_exploracion.ipynb   # debe dar 0
 | EA1 semanas siguientes | ⏳ pendiente (la EA1 son 20 h en total) |
 | EA2 / EA3 / EFT | ⏳ pendiente |
 
-Lo único no verificado de extremo a extremo es `notebooks/00_opcional_waymo_real.ipynb`: su
-esquema se contrastó con el código fuente oficial de Waymo el 2026-08-12, pero ejecutarlo exige
-autenticación de Google y descargar cientos de MB.
+Todo está verificado, incluido `notebooks/00_opcional_waymo_real.ipynb`: se ejecutó de extremo a
+extremo el 2026-08-13 contra el segmento real `10023947602400723454_1120_000_1140_000`
+(18.633 detecciones) y `tests/test_mapeo_waymo.py` pasó 10/10.
 
-Para cerrarlo, el repositorio ya trae todo lo necesario:
+Para reproducirlo en otra máquina:
 
 ```bash
-gcloud auth login                        # el SDK ya está instalado; el login es interactivo
-python herramientas/descargar_waymo.py   # baja lidar_box + stats de un segmento
-pytest tests/test_mapeo_waymo.py -v      # 10 tests que hoy se saltan por falta de datos
+brew install --cask google-cloud-sdk
+gcloud auth login                        # interactivo: NO lo ejecutes tú, pídeselo al usuario
+python herramientas/descargar_waymo.py   # baja lidar_box (~1 MB) + stats (~23 KB)
+pytest tests/test_mapeo_waymo.py -v
 ```
 
-`gcloud auth login` abre el navegador: **no lo ejecutes tú, pídeselo al usuario.**
+Los tests de Waymo se **saltan** si no hay datos descargados, así que `pytest` sigue pasando en
+limpio sin credenciales.

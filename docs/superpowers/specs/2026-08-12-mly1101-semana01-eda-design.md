@@ -38,7 +38,7 @@ ejecutable en Google Colab (recomendación del PIA) y con respaldo local en Jupy
 | Decisión | Elección | Alternativa descartada | Motivo |
 |---|---|---|---|
 | Dataset principal | Sintético con esquema Waymo v2 y defectos inyectados | Waymo real; dataset público chileno (CONASET) | Control exacto de lo que el alumno debe descubrir; sin login, sin descarga, sin problema de licencia; la pauta puede afirmar cifras exactas |
-| Waymo real | Notebook opcional, esquema verificado, ejecución no verificada | Incluir un subconjunto en el repo | La licencia prohíbe la redistribución |
+| Waymo real | Notebook opcional, verificado de extremo a extremo | Incluir un subconjunto en el repo | La licencia prohíbe la redistribución |
 | Entrega | Repo público en GitHub con badges de Colab | ZIP en la plataforma | Un clic para el alumno, sin cuenta de GitHub |
 | Versiones del notebook | Alumno (TODO) + docente (solucionario) | Un solo notebook resuelto | El docente necesita pauta; el alumno necesita trabajo por hacer |
 | Generación de los notebooks | Fuente única en Python → dos `.ipynb` | Editar dos `.ipynb` a mano | Evita que se desincronicen al corregir un ejercicio |
@@ -242,7 +242,8 @@ identificación y cuantificación de problemas de calidad.
 | Cifras citadas en la pauta | Comprobadas contra el CSV publicado | ✅ |
 | Accesibilidad pública del repo | `curl` sobre `raw.githubusercontent.com` | ✅ HTTP 200 |
 | Esquema del notebook de Waymo | Contrastado con el código fuente oficial (2026-08-12) | ✅ |
-| Ejecución del notebook de Waymo | `herramientas/descargar_waymo.py` + `pytest tests/test_mapeo_waymo.py` | ⚠️ **verificable, aún no verificada**: `gcloud auth login` es interactivo |
+| Ejecución del notebook de Waymo | `jupyter nbconvert --execute` sobre datos reales | ✅ 2026-08-13, sin errores |
+| Mapeo del esquema de Waymo | `pytest tests/test_mapeo_waymo.py` contra un Parquet real | ✅ 10/10 |
 
 ### 6.1 Comando de verificación completa
 
@@ -278,13 +279,51 @@ Verifican dos cosas distintas:
 El segundo grupo es el que importa pedagógicamente: si fallara, el dataset de clase estaría
 enseñando una física que no existe.
 
-### 6.3 Limitación conocida
+### 6.3 Resultado de la validación contra datos reales (2026-08-13)
 
-El notebook `00_opcional_waymo_real.ipynb` tiene su esquema verificado contra el código fuente,
-pero **no se ejecutó de extremo a extremo**. La celda `traducir()` está escrita para avisar qué
-columnas faltan en lugar de fallar en silencio, de modo que un cambio de esquema en Waymo se
-manifieste como un mensaje legible y no como un `KeyError`. La limitación está declarada dentro
-del propio notebook, no solo aquí.
+Segmento `10023947602400723454_1120_000_1140_000` (San Francisco, soleado, de día): 18.633
+detecciones en 0,95 MB de Parquet más 23 KB de `stats`. Los 10 tests pasaron y el notebook se
+ejecutó completo sin errores ni avisos de columnas faltantes.
+
+**Lo que la validación confirmó del dataset sintético:**
+
+| Magnitud | Sintético | Waymo real | Veredicto |
+|---|---|---|---|
+| Altura mediana del peatón | 1,72 m | 1,74 m | ✅ |
+| Largo mediano del vehículo | 4,61 m | 4,42 m | ✅ |
+| Correlación distancia ↔ puntos láser | −0,93 | −0,64 | ⚠️ ver abajo |
+| Proporción de ciclistas | 1,9 % | 0,8 % | ✅ (la realidad es peor) |
+
+**Lo que la validación reveló y no estaba previsto:**
+
+1. **El sintético es demasiado prolijo.** La relación distancia ↔ puntos láser es casi
+   determinista en el generador (−0,93) y claramente más ruidosa en la realidad (−0,64), porque
+   el modelo de Poisson no incorpora oclusiones, tamaño del objeto, ángulo de incidencia ni
+   reflectancia. **No se corrigió el generador**: la limpieza de la señal es lo que hace que la
+   relación sea descubrible en una clase de 4 h. Pero el notebook lo declara explícitamente y lo
+   usa como advertencia metodológica (*un dato simulado casi siempre es más limpio que la
+   realidad*).
+2. **Los datos reales son mucho más livianos de lo estimado.** El diseño asumía "cientos de MB";
+   los dos componentes necesarios pesan ~1 MB. Los terabytes del dataset son imágenes y nubes de
+   puntos. Consecuencia: la actividad con datos reales **es viable en clase**, no solo como tarea
+   avanzada. La documentación se corrigió.
+3. **El dataset real trae un problema de calidad que la clase no cubría:** 82 % de nulos en
+   `difficulty_level.detection`, que no son datos faltantes sino una convención de codificación
+   (el campo se escribe solo cuando la detección es difícil; el nulo significa `LEVEL_1`). Es el
+   espejo exacto del `-1` sintético: allá un valor válido escondía un nulo, acá un nulo esconde
+   un valor válido. Se incorporó al notebook como hallazgo.
+4. **Cero duplicados, cero categorías inconsistentes, cero valores imposibles.** Confirma la
+   justificación del dataset sintético: con datos ya curados no se puede enseñar a limpiar.
+
+### 6.4 Limitaciones que persisten
+
+- La comparación se hizo sobre **un** segmento (20 s, San Francisco, soleado, de día). Por eso
+  `weather` y `time_of_day` no varían: son propiedades del segmento completo. Analizar el sesgo
+  de muestreo real exigiría decenas de segmentos.
+- `tests/test_mapeo_waymo.py` se salta sin datos descargados, de modo que en una máquina sin
+  credenciales el `pytest` pasa en limpio pero **no** revalida el esquema de Waymo.
+- La celda `traducir()` avisa qué columnas faltan en lugar de fallar en silencio, para que un
+  cambio futuro de esquema se manifieste como mensaje legible y no como `KeyError`.
 
 ---
 

@@ -91,7 +91,12 @@ propósito**, documentados en `src/generar_dataset.py::CATALOGO_DEFECTOS` y veri
 
 No hay ningún dato real de Waymo en este repositorio: su licencia es de uso no comercial y no
 permite redistribución. El notebook `00_opcional_waymo_real.ipynb` explica cómo obtenerlos
-directamente, aceptando los términos.
+directamente, aceptando los términos, y compara el sintético con el real.
+
+**Los datos reales son más livianos de lo que parece:** el análisis solo necesita los componentes
+`lidar_box` (~1 MB por segmento) y `stats` (~23 KB). Los terabytes del Waymo Open Dataset son las
+imágenes y las nubes de puntos, que aquí no se usan. Un alumno con cuenta de Google puede hacerlo
+en clase.
 
 Para regenerarlo o cambiar su tamaño:
 
@@ -146,7 +151,8 @@ los 10 defectos sigue presente**. Si un test falla, el solucionario dejó de coi
 reciben los alumnos.
 
 Hay 10 tests adicionales que se **saltan** salvo que existan datos reales de Waymo descargados
-(`tests/test_mapeo_waymo.py`). Para activarlos:
+(`tests/test_mapeo_waymo.py`). Pasaron 10/10 contra el segmento
+`10023947602400723454_1120_000_1140_000` el 2026-08-13. Para reproducirlos:
 
 ```bash
 brew install --cask google-cloud-sdk
@@ -169,7 +175,8 @@ que las relaciones que reproduce el dataset sintético existen también en los d
 | El notebook del alumno no filtra la pauta | `grep` sobre el `.ipynb` | ✅ |
 | Cifras de la pauta y la rúbrica | Comprobadas contra el CSV publicado | ✅ |
 | Esquema del notebook de Waymo | Contrastado con el código fuente oficial (2026-08-12) | ✅ |
-| **Ejecución del notebook de Waymo** | `herramientas/descargar_waymo.py` + `pytest tests/test_mapeo_waymo.py` | ⚠️ **verificable, aún no verificada**: requiere `gcloud auth login` con la cuenta que aceptó los términos |
+| Ejecución del notebook de Waymo | `jupyter nbconvert --execute` sobre datos reales descargados | ✅ ejecutado de extremo a extremo el 2026-08-13 |
+| Mapeo del esquema de Waymo | `pytest tests/test_mapeo_waymo.py` contra un Parquet real | ✅ 10/10 |
 
 ---
 
