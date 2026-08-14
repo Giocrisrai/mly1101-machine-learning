@@ -38,7 +38,7 @@ estructural.
 ## Verificación obligatoria antes de dar algo por terminado
 
 ```bash
-pytest -q                                    # 33 tests: reproducibilidad + los 10 defectos
+pytest -q                                    # 43 tests (33 + 10 de Waymo, que se saltan sin datos)
 python herramientas/construir_notebooks.py   # regenera los tres notebooks
 cd notebooks && python -m jupyter nbconvert --to notebook --execute --stdout \
     01_docente_solucionario.ipynb > /dev/null   # el solucionario debe ejecutar completo

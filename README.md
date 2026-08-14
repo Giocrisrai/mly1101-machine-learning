@@ -146,12 +146,19 @@ Editar los `.ipynb` directamente funciona hasta el siguiente build, que los sobr
 pytest
 ```
 
-33 tests que verifican dos cosas: que el dataset es reproducible byte a byte, y que **cada uno de
-los 10 defectos sigue presente**. Si un test falla, el solucionario dejó de coincidir con lo que
-reciben los alumnos.
+**43 tests en total**, repartidos así:
 
-Hay 10 tests adicionales que se **saltan** salvo que existan datos reales de Waymo descargados
-(`tests/test_mapeo_waymo.py`). Pasaron 10/10 contra el segmento
+| Archivo | Tests | Qué verifica |
+|---|---|---|
+| `tests/test_generar_dataset.py` | 19 | Reproducibilidad byte a byte y presencia de **cada uno de los 10 defectos** |
+| `tests/test_eda.py` | 14 | Las utilidades de diagnóstico de `src/eda.py` |
+| `tests/test_mapeo_waymo.py` | 10 | El mapeo al esquema real de Waymo (se saltan sin datos descargados) |
+
+Si un test del generador falla, el solucionario dejó de coincidir con lo que reciben los
+alumnos.
+
+Sin datos de Waymo descargados el resultado es `33 passed, 10 skipped`. Los 10 de Waymo pasaron
+10/10 contra el segmento
 `10023947602400723454_1120_000_1140_000` el 2026-08-13. Para reproducirlos:
 
 ```bash
@@ -170,7 +177,7 @@ que las relaciones que reproduce el dataset sintético existen también en los d
 |---|---|---|
 | Reproducibilidad del dataset | `pytest` (SHA-256 de dos generaciones) | ✅ |
 | Presencia de los 10 defectos | `pytest`, un test por defecto | ✅ |
-| Utilidades de `src/eda.py` | `pytest`, 15 tests | ✅ |
+| Utilidades de `src/eda.py` | `pytest`, 14 tests | ✅ |
 | El solucionario ejecuta completo | `jupyter nbconvert --execute` | ✅ |
 | El notebook del alumno no filtra la pauta | `grep` sobre el `.ipynb` | ✅ |
 | Cifras de la pauta y la rúbrica | Comprobadas contra el CSV publicado | ✅ |
