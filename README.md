@@ -189,5 +189,22 @@ que las relaciones que reproduce el dataset sintético existen también en los d
 
 ## Licencia
 
-Material docente. Los datos incluidos son sintéticos y de libre uso. El Waymo Open Dataset tiene
-su propia licencia ([términos](https://waymo.com/open/terms/)) y **no** se distribuye aquí.
+Copyright © 2026 Giocrisrai Godoy Bonillo.
+
+Este material está bajo licencia
+[Creative Commons Atribución-NoComercial-CompartirIgual 4.0 Internacional](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es)
+(CC BY-NC-SA 4.0). El texto completo está en [`LICENSE`](LICENSE).
+
+En términos prácticos, puedes:
+
+- **usarlo y adaptarlo** para tus propias clases, citando la fuente;
+- **compartir** tus adaptaciones, siempre bajo la misma licencia;
+- pero **no** usarlo con fines comerciales.
+
+Si lo reutilizas, una atribución razonable sería:
+*"Basado en material de MLY1101 · Giocrisrai Godoy Bonillo, Duoc UC (github.com/Giocrisrai/mly1101-machine-learning), CC BY-NC-SA 4.0"*.
+
+El dataset `detecciones_waymo_like.csv` es sintético y queda cubierto por esta misma licencia.
+El **Waymo Open Dataset no se distribuye aquí**: tiene su propia licencia de uso no comercial
+([términos](https://waymo.com/open/terms/)) y cada persona debe aceptarla y descargar los datos
+por su cuenta.

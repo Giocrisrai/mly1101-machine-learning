@@ -28,10 +28,13 @@ estructural.
    `src/generar_dataset.py::CATALOGO_DEFECTOS` y cada uno tiene un test. No los "arregles". Si
    cambias el generador, los tests te dirán qué pauta quedó desalineada.
 
-4. **Nunca agregues datos reales de Waymo al repositorio.** Su licencia es de uso no comercial y
+4. **El material está bajo CC BY-NC-SA 4.0** (ver `LICENSE`). No agregues contenido de terceros
+   con licencia incompatible.
+
+5. **Nunca agregues datos reales de Waymo al repositorio.** Su licencia es de uso no comercial y
    prohíbe la redistribución. `datos/waymo_real/` está en `.gitignore`.
 
-5. **Las cifras de la pauta y de la rúbrica deben verificarse contra el CSV**, no citarse de
+6. **Las cifras de la pauta y de la rúbrica deben verificarse contra el CSV**, no citarse de
    memoria. Si cambias `--filas` o la semilla, todas las cifras del solucionario, del guion de
    clase y de la rúbrica quedan obsoletas.
 
