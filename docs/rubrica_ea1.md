@@ -34,7 +34,42 @@ Machine Learning, considerando el tratamiento responsable de la información.*
 | **Inicial** | 1 | Evidencia mínima o incorrecta |
 | **No entregado** | 0 | No hay evidencia |
 
-Nota final = Σ (puntaje del indicador × peso) / 4 × 6 + 1, en escala 1,0 a 7,0.
+### Conversión a nota
+
+Se usa la escala chilena con **exigencia del 60 %**: la nota 4,0 se alcanza con el 60 % del
+puntaje máximo, y la escala es lineal a ambos lados de ese punto.
+
+Sea `P` el puntaje ponderado (0 a 4), `Pmax = 4` y `U = 0,6 · Pmax = 2,4`:
+
+```
+P < 2,4 :  nota = 1,0 + 3,0 · P / 2,4
+P ≥ 2,4 :  nota = 4,0 + 3,0 · (P − 2,4) / 1,6
+```
+
+Referencia rápida con puntaje uniforme en los cinco indicadores:
+
+| Nivel en todos los indicadores | Puntaje | Logro | Nota |
+|---|---|---|---|
+| Destacado (4) | 4,0 | 100 % | **7,0** |
+| Logrado (3) | 3,0 | 75 % | **5,1** |
+| En desarrollo (2) | 2,0 | 50 % | **3,5** |
+| Inicial (1) | 1,0 | 25 % | **2,2** |
+| No entregado (0) | 0,0 | 0 % | **1,0** |
+
+**Calculadora incluida.** Para no hacer esto a mano:
+
+```bash
+python herramientas/calcular_nota.py 3 4 2 3 3      # IL1 IL2 IL3 IL4 IL5 → nota 5,2
+python herramientas/calcular_nota.py --csv notas.csv    # el curso completo
+python herramientas/calcular_nota.py 3 4 2 3 3 --exigencia 0.5   # si tu sede usa otra
+```
+
+El CSV debe tener la cabecera `nombre,IL1,IL2,IL3,IL4,IL5`; la salida incluye promedio del curso
+y porcentaje de aprobación. La fórmula está cubierta por 14 tests en
+`tests/test_calcular_nota.py`.
+
+> **Verifica la exigencia con tu sede.** El 60 % es el estándar habitual, pero si tu programa
+> usa otro valor, cámbialo con `--exigencia` sin tocar la rúbrica.
 
 ---
 

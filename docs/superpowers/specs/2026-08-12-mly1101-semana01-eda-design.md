@@ -99,8 +99,9 @@ build, que los sobrescribe.
 
 ### 3.4 `tests/` — el contrato con la pauta
 
-43 tests (19 del generador, 14 de `eda.py`, 10 del mapeo de Waymo que se saltan sin datos
-descargados). Su función no es solo detectar regresiones de código: **si un defecto desaparece del
+63 tests (19 del generador, 14 de `eda.py`, 14 del cálculo de notas, 6 del análisis de sesgo y
+10 del mapeo de Waymo, que se saltan sin datos descargados). Su función no es solo detectar
+regresiones de código: **si un defecto desaparece del
 generador, la pauta del docente pasa a mentir**. Los tests son lo que mantiene alineados el
 dataset, el solucionario y la rúbrica.
 

@@ -90,19 +90,61 @@ def descargar(gsutil: str, segmento: str) -> None:
     (DESTINO / "SEGMENTO.txt").write_text(segmento + "\n", encoding="utf-8")
 
 
+def descargar_muestra(gsutil: str, segmentos: list[str]) -> Path:
+    """Descarga varios segmentos para el análisis de sesgo de muestreo.
+
+    Cada segmento queda en ``datos/waymo_real/muestra/{nombre}/``. Se usa desde
+    ``herramientas/analizar_sesgo_waymo.py``: un solo segmento no sirve para
+    estudiar el sesgo, porque el clima y la hora son propiedades del segmento
+    completo y no varían dentro de él.
+    """
+    muestra = DESTINO / "muestra"
+    for numero, segmento in enumerate(segmentos, start=1):
+        carpeta = muestra / segmento
+        carpeta.mkdir(parents=True, exist_ok=True)
+        pendientes = [c for c in COMPONENTES if not (carpeta / f"{c}.parquet").exists()]
+        if not pendientes:
+            print(f"[{numero}/{len(segmentos)}] {segmento[:28]}… ya estaba")
+            continue
+        for componente in pendientes:
+            resultado = _ejecutar(
+                [gsutil, "cp", f"{BUCKET}/{componente}/{segmento}.parquet",
+                 str(carpeta / f"{componente}.parquet")]
+            )
+            if resultado.returncode != 0:
+                print(f"   ⚠️ falló {componente} de {segmento}: {resultado.stderr.strip()[:90]}")
+        peso = sum(f.stat().st_size for f in carpeta.glob("*.parquet")) / 1024**2
+        print(f"[{numero}/{len(segmentos)}] {segmento[:28]}…  {peso:.2f} MB")
+    return muestra
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--segmento", help="nombre del segmento (sin .parquet)")
     parser.add_argument("--listar", action="store_true", help="solo listar segmentos disponibles")
+    parser.add_argument(
+        "--muestra",
+        type=int,
+        metavar="N",
+        help="descarga N segmentos a datos/waymo_real/muestra/ para el análisis de sesgo",
+    )
     args = parser.parse_args()
 
     gsutil = _comprobar_requisitos()
-    disponibles = listar_segmentos(gsutil)
+    cantidad = args.muestra if args.muestra else 5
+    disponibles = listar_segmentos(gsutil, cantidad=cantidad)
 
     if args.listar:
-        print("\nSegmentos disponibles (primeros 5):")
+        print(f"\nSegmentos disponibles (primeros {len(disponibles)}):")
         for nombre in disponibles:
             print("  ", nombre)
+        return
+
+    if args.muestra:
+        print(f"\nDescargando {len(disponibles)} segmentos (~1 MB cada uno)…")
+        muestra = descargar_muestra(gsutil, disponibles)
+        print(f"\nListo. Ahora puedes ejecutar:  python herramientas/analizar_sesgo_waymo.py")
+        print(f"Datos en: {muestra.relative_to(RAIZ)}")
         return
 
     segmento = args.segmento or disponibles[0]
