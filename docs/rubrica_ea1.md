@@ -60,12 +60,13 @@ Referencia rápida con puntaje uniforme en los cinco indicadores:
 
 ```bash
 python herramientas/calcular_nota.py 3 4 2 3 3      # IL1 IL2 IL3 IL4 IL5 → nota 5,2
-python herramientas/calcular_nota.py --csv notas.csv    # el curso completo
+python herramientas/calcular_nota.py --csv docs/ejemplo_notas.csv   # el curso completo
 python herramientas/calcular_nota.py 3 4 2 3 3 --exigencia 0.5   # si tu sede usa otra
 ```
 
-El CSV debe tener la cabecera `nombre,IL1,IL2,IL3,IL4,IL5`; la salida incluye promedio del curso
-y porcentaje de aprobación. La fórmula está cubierta por 14 tests en
+El CSV debe tener la cabecera `nombre,IL1,IL2,IL3,IL4,IL5` (hay un ejemplo en
+[`docs/ejemplo_notas.csv`](ejemplo_notas.csv)); la salida incluye promedio del curso y porcentaje
+de aprobación, y marca con ⚠ a quienes reprueban. La fórmula está cubierta por 14 tests en
 `tests/test_calcular_nota.py`.
 
 > **Verifica la exigencia con tu sede.** El 60 % es el estándar habitual, pero si tu programa
