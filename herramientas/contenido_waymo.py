@@ -380,7 +380,7 @@ Un solo segmento son 20 segundos de conducción, en San Francisco, soleado y de 
 sesgo de muestreo hay que comparar **entre** segmentos, no dentro de uno. Eso es lo que sigue.
 
 ---
-## Paso 7 · Sesgo de muestreo, medido sobre 250 segmentos
+## Paso 7 · Sesgo de muestreo, medido sobre los 798 segmentos
 
 Como `stats` pesa solo ~23 KB, se puede caracterizar la composición del dataset a bajo costo:
 
