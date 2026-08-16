@@ -144,8 +144,27 @@ Regla práctica que deben anotar:
 **Objetivo:** conectar el RA1 con una consecuencia concreta.
 
 - TODO 18.
-- Cifras: ~20 % nocturnas, ~21 % con lluvia, ~2 % ciclistas.
+- Cifras del dataset de clase: ~20 % nocturnas, ~21 % con lluvia, ~2 % ciclistas.
 - Las tres preguntas: qué está sub-representado, quién corre riesgo, qué medida concreta propones.
+
+**El remate con datos reales.** Cuando el curso ya discutió el sesgo del dataset sintético,
+muestra lo que pasa en el Waymo Open Dataset real. Medido sobre 250 segmentos
+(`herramientas/analizar_sesgo_waymo.py`, agosto 2026):
+
+| | Dataset de clase | Waymo real |
+|---|---|---|
+| Segmentos con lluvia | 21 % | **0,4 %** (1 de 250) |
+| Segmentos nocturnos | 20 % | **9,6 %** (24 de 250) |
+| Peatones + ciclistas de día | — | **27,05 %** |
+| Peatones + ciclistas de noche | — | **14,11 %** |
+
+La frase para lanzarlo: *"Yo inventé el dataset de la clase y le puse 21 % de lluvia. ¿Cuánta
+lluvia creen que tiene el dataset real de una de las empresas de conducción autónoma más
+grandes del mundo?"* La respuesta —**1 segmento de 250**— suele producir silencio.
+
+Y el dato que cierra el argumento: de noche, la proporción de peatones y ciclistas cae a la
+mitad. Menos ejemplos para aprender justo cuando detectarlos es más difícil y equivocarse
+cuesta más.
 - **La idea que debe quedar:** un promedio global oculta a las minorías. Un modelo con 97 % de
   exactitud puede tener 60 % en ciclistas nocturnos, y ese error no se reparte al azar: recae
   sobre quienes ya son más vulnerables.
@@ -176,5 +195,13 @@ Regla práctica que deben anotar:
 - Pedir imputación por grupo (tipo de objeto × dificultad) en vez de una media global.
 - Discutir la columna indicadora `speed_faltante`: casi nadie la propone y suele ser la mejor
   solución.
+- **La unidad de análisis.** En el Waymo real, agregar todas las detecciones sugiere que de día
+  se detecta peor que de noche (13,19 % vs. 7,04 % de detecciones difíciles). Calculado por
+  segmento, la diferencia se evapora (4,81 % vs. 4,25 %): un solo segmento diurno atípico, con
+  53,81 % de difíciles y muchísimas filas, arrastraba el promedio.
+  Es la antesala perfecta de EA2: si el split de entrenamiento/prueba se hace por fila, las
+  detecciones de un mismo segmento caen a ambos lados, el modelo reconoce la escena en vez de
+  aprender el objeto, y la evaluación miente. **El split va por `segment_id`.**
+  Está desarrollado en `notebooks/00_opcional_waymo_real.ipynb`, Paso 7.
 - Abrir el notebook de Waymo real y mostrar el esquema original: los nombres jerárquicos del
   tipo `[LiDARBoxComponent].box.center.x` explican por qué renombrar es parte del trabajo.

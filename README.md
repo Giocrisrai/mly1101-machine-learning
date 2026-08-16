@@ -164,20 +164,20 @@ Editar los `.ipynb` directamente funciona hasta el siguiente build, que los sobr
 pytest
 ```
 
-**63 tests en total**, repartidos así:
+**68 tests en total**, repartidos así:
 
 | Archivo | Tests | Qué verifica |
 |---|---|---|
 | `tests/test_generar_dataset.py` | 19 | Reproducibilidad byte a byte y presencia de **cada uno de los 10 defectos** |
 | `tests/test_eda.py` | 14 | Las utilidades de diagnóstico de `src/eda.py` |
 | `tests/test_calcular_nota.py` | 14 | La conversión de rúbrica a nota (escala 1,0–7,0, exigencia 60 %) |
-| `tests/test_analisis_sesgo.py` | 6 | La lógica del análisis de sesgo de muestreo |
+| `tests/test_analisis_sesgo.py` | 11 | La lógica del análisis de sesgo, incluida la unidad de análisis |
 | `tests/test_mapeo_waymo.py` | 10 | El mapeo al esquema real de Waymo (se saltan sin datos descargados) |
 
 Si un test del generador falla, el solucionario dejó de coincidir con lo que reciben los
 alumnos.
 
-Sin datos de Waymo descargados el resultado es `53 passed, 10 skipped`. Los 10 de Waymo pasaron
+Sin datos de Waymo descargados el resultado es `58 passed, 10 skipped`. Los 10 de Waymo pasaron
 10/10 contra el segmento
 `10023947602400723454_1120_000_1140_000` el 2026-08-13. Para reproducirlos:
 
@@ -203,6 +203,7 @@ que las relaciones que reproduce el dataset sintético existen también en los d
 | Cifras de la pauta y la rúbrica | Comprobadas contra el CSV publicado | ✅ |
 | Esquema del notebook de Waymo | Contrastado con el código fuente oficial (2026-08-12) | ✅ |
 | Ejecución del notebook de Waymo | `jupyter nbconvert --execute` sobre datos reales descargados | ✅ ejecutado de extremo a extremo el 2026-08-13 |
+| Análisis de sesgo de muestreo | 250 segmentos reales de Waymo | ✅ medido el 2026-08-16 · [informe](docs/sesgo_waymo.md) |
 | Mapeo del esquema de Waymo | `pytest tests/test_mapeo_waymo.py` contra un Parquet real | ✅ 10/10 |
 
 ---

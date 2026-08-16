@@ -41,7 +41,7 @@ estructural.
 ## Verificación obligatoria antes de dar algo por terminado
 
 ```bash
-pytest -q                                    # 63 tests (53 + 10 de Waymo, que se saltan sin datos)
+pytest -q                                    # 68 tests (58 + 10 de Waymo, que se saltan sin datos)
 python herramientas/construir_notebooks.py   # regenera los tres notebooks
 cd notebooks && python -m jupyter nbconvert --to notebook --execute --stdout \
     01_docente_solucionario.ipynb > /dev/null   # el solucionario debe ejecutar completo

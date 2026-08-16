@@ -109,24 +109,94 @@ def calidad_por_condicion(df: pd.DataFrame, condicion: str) -> pd.DataFrame:
     )
 
 
+def calidad_por_segmento(df: pd.DataFrame, condicion: str, columna: str = "dificil") -> pd.DataFrame:
+    """Igual que ``calidad_por_condicion``, pero **sin mezclar segmentos**.
+
+    Calcula primero la tasa dentro de cada segmento y recién después resume por
+    condición. La diferencia no es cosmética: agregar todas las detecciones
+    juntas trata cientos de miles de filas como observaciones independientes
+    cuando en realidad provienen de unas pocas decenas de grabaciones. Un solo
+    segmento atípico con muchas detecciones puede arrastrar el promedio global.
+
+    Returns:
+        Por cada valor de la condición: número de segmentos y la mediana, el
+        mínimo y el máximo de la tasa (en %) entre esos segmentos.
+    """
+    por_segmento = (
+        df.groupby(["segmento", condicion])[columna].mean().mul(100).reset_index()
+    )
+    resumen = por_segmento.groupby(condicion)[columna].agg(
+        segmentos="size", mediana="median", minimo="min", maximo="max"
+    )
+    return resumen.round(2)
+
+
+def cargar_condiciones(directorio: Path = MUESTRA) -> pd.DataFrame:
+    """Una fila por segmento con su condición, usando solo el componente ``stats``.
+
+    Permite caracterizar clima, hora y ubicación sobre muchos más segmentos que
+    los descargados con ``lidar_box``: ``stats`` pesa ~23 KB frente a ~1 MB.
+    """
+    if not directorio.exists():
+        raise SystemExit(
+            f"No existe {directorio.relative_to(RAIZ)}.\n"
+            "  Descarga primero:  python herramientas/descargar_waymo.py --muestra 250 --solo-stats"
+        )
+    filas = []
+    for carpeta in sorted(directorio.iterdir()):
+        ruta = carpeta / "stats.parquet"
+        if not ruta.exists():
+            continue
+        condicion = pd.read_parquet(ruta).iloc[0]
+        filas.append({
+            "segmento": carpeta.name,
+            "weather": str(condicion[f"{ST}.weather"]).strip().lower(),
+            "time_of_day": str(condicion[f"{ST}.time_of_day"]).strip(),
+            "location": str(condicion[f"{ST}.location"]).strip(),
+        })
+    if not filas:
+        raise SystemExit(f"No se encontró ningún stats.parquet en {directorio}")
+    return pd.DataFrame(filas)
+
+
 def _bloque(titulo: str, tabla: pd.DataFrame) -> str:
     return f"\n{titulo}\n{'-' * len(titulo)}\n{tabla.to_string()}\n"
 
 
-def generar_informe(df: pd.DataFrame) -> str:
-    """Arma el informe completo como texto."""
+def generar_informe(df: pd.DataFrame, condiciones: pd.DataFrame | None = None) -> str:
+    """Arma el informe completo como texto.
+
+    Args:
+        df: detecciones (requiere segmentos con ``lidar_box``).
+        condiciones: opcional, una fila por segmento con solo ``stats``. Si se
+            entrega, la caracterización de clima y hora usa esa muestra mayor.
+    """
     segmentos = tabla_segmentos(df)
     n_seg, n_det = len(segmentos), len(df)
 
     detecciones_fmt = f"{n_det:,}".replace(",", ".")
-    partes = [
-        f"Muestra: {n_seg} segmentos, {detecciones_fmt} detecciones",
-        _bloque("Segmentos por momento del día", segmentos["momento"].value_counts().to_frame("segmentos")),
-        _bloque("Segmentos por clima", segmentos["clima"].value_counts().to_frame("segmentos")),
-        _bloque("Segmentos por ubicación", segmentos["lugar"].value_counts().to_frame("segmentos")),
+    partes = [f"Muestra de detecciones: {n_seg} segmentos, {detecciones_fmt} detecciones"]
+
+    if condiciones is not None and len(condiciones) > n_seg:
+        partes.append(f"Muestra de condiciones: {len(condiciones)} segmentos (solo stats)")
+        base = condiciones.rename(columns={"time_of_day": "momento", "weather": "clima",
+                                           "location": "lugar"})
+    else:
+        base = segmentos
+
+    partes += [
+        _bloque("Segmentos por momento del día", base["momento"].value_counts().to_frame("segmentos")),
+        _bloque("Segmentos por clima", base["clima"].value_counts().to_frame("segmentos")),
+        _bloque("Segmentos por ubicación", base["lugar"].value_counts().to_frame("segmentos")),
         _bloque("Composición de objetos por momento del día (%)", composicion_por_condicion(df, "time_of_day")),
         _bloque("Composición de objetos por clima (%)", composicion_por_condicion(df, "weather")),
-        _bloque("Calidad de la detección por momento del día", calidad_por_condicion(df, "time_of_day")),
+        _bloque("Calidad de la detección por momento del día (agregando TODAS las detecciones)",
+                calidad_por_condicion(df, "time_of_day")),
+        _bloque("Lo mismo, pero calculado POR SEGMENTO (tasa de detecciones difíciles, %)",
+                calidad_por_segmento(df, "time_of_day")),
+        "\nOjo con las dos tablas anteriores: si no coinciden, el promedio global está dominado\n"
+        "por unos pocos segmentos con muchas detecciones. La unidad de análisis es el segmento,\n"
+        "no la detección.\n",
     ]
 
     # Conclusión cuantitativa sobre los usuarios vulnerables de la vía.
@@ -143,7 +213,8 @@ def main() -> None:
     args = parser.parse_args()
 
     df = cargar_muestra()
-    informe = generar_informe(df)
+    condiciones = cargar_condiciones()
+    informe = generar_informe(df, condiciones)
     print(informe)
 
     if args.markdown:

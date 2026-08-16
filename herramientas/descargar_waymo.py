@@ -90,19 +90,25 @@ def descargar(gsutil: str, segmento: str) -> None:
     (DESTINO / "SEGMENTO.txt").write_text(segmento + "\n", encoding="utf-8")
 
 
-def descargar_muestra(gsutil: str, segmentos: list[str]) -> Path:
+def descargar_muestra(gsutil: str, segmentos: list[str], solo_stats: bool = False) -> Path:
     """Descarga varios segmentos para el análisis de sesgo de muestreo.
 
     Cada segmento queda en ``datos/waymo_real/muestra/{nombre}/``. Se usa desde
     ``herramientas/analizar_sesgo_waymo.py``: un solo segmento no sirve para
     estudiar el sesgo, porque el clima y la hora son propiedades del segmento
     completo y no varían dentro de él.
+
+    Args:
+        solo_stats: baja únicamente el componente ``stats`` (~23 KB por
+            segmento en vez de ~1 MB). Suficiente para caracterizar clima,
+            hora y ubicación sobre muchos segmentos a bajo costo.
     """
     muestra = DESTINO / "muestra"
     for numero, segmento in enumerate(segmentos, start=1):
         carpeta = muestra / segmento
         carpeta.mkdir(parents=True, exist_ok=True)
-        pendientes = [c for c in COMPONENTES if not (carpeta / f"{c}.parquet").exists()]
+        requeridos = ["stats"] if solo_stats else COMPONENTES
+        pendientes = [c for c in requeridos if not (carpeta / f"{c}.parquet").exists()]
         if not pendientes:
             print(f"[{numero}/{len(segmentos)}] {segmento[:28]}… ya estaba")
             continue
@@ -128,6 +134,11 @@ def main() -> None:
         metavar="N",
         help="descarga N segmentos a datos/waymo_real/muestra/ para el análisis de sesgo",
     )
+    parser.add_argument(
+        "--solo-stats",
+        action="store_true",
+        help="con --muestra, baja solo el componente stats (~23 KB por segmento)",
+    )
     args = parser.parse_args()
 
     gsutil = _comprobar_requisitos()
@@ -141,8 +152,9 @@ def main() -> None:
         return
 
     if args.muestra:
-        print(f"\nDescargando {len(disponibles)} segmentos (~1 MB cada uno)…")
-        muestra = descargar_muestra(gsutil, disponibles)
+        peso = "~23 KB" if args.solo_stats else "~1 MB"
+        print(f"\nDescargando {len(disponibles)} segmentos ({peso} cada uno)…")
+        muestra = descargar_muestra(gsutil, disponibles, solo_stats=args.solo_stats)
         print(f"\nListo. Ahora puedes ejecutar:  python herramientas/analizar_sesgo_waymo.py")
         print(f"Datos en: {muestra.relative_to(RAIZ)}")
         return

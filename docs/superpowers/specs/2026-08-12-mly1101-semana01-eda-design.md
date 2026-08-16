@@ -319,13 +319,45 @@ ejecutó completo sin errores ni avisos de columnas faltantes.
 
 ### 6.4 Limitaciones que persisten
 
-- La comparación se hizo sobre **un** segmento (20 s, San Francisco, soleado, de día). Por eso
-  `weather` y `time_of_day` no varían: son propiedades del segmento completo. Analizar el sesgo
-  de muestreo real exigiría decenas de segmentos.
+- La comparación de la §6.3 se hizo sobre **un** segmento. El análisis de sesgo posterior
+  (§6.5) usa 250 segmentos para las condiciones y 40 para las detecciones, pero **no es una
+  muestra aleatoria**: son los primeros del listado del bucket. Los nombres son identificadores,
+  así que el orden es arbitrario en la práctica, pero las cifras son indicativas y no un censo.
 - `tests/test_mapeo_waymo.py` se salta sin datos descargados, de modo que en una máquina sin
   credenciales el `pytest` pasa en limpio pero **no** revalida el esquema de Waymo.
 - La celda `traducir()` avisa qué columnas faltan en lugar de fallar en silencio, para que un
   cambio futuro de esquema se manifieste como mensaje legible y no como `KeyError`.
+
+### 6.5 Análisis de sesgo de muestreo (2026-08-16)
+
+Medido con `herramientas/analizar_sesgo_waymo.py` sobre 250 segmentos (condiciones) y 40
+segmentos con detecciones completas (530.396 detecciones):
+
+| Hallazgo | Cifra |
+|---|---|
+| Segmentos con lluvia | **1 de 250** (0,4 %) |
+| Segmentos nocturnos | 24 de 250 (9,6 %) |
+| Ubicaciones | 116 SF · 109 Phoenix · 25 otras |
+| Peatones + ciclistas de día | 27,05 % |
+| Peatones + ciclistas de noche | **14,11 %** |
+| Ciclistas | 0,47 % (día) · 0,38 % (noche) · 0,00 % (amanecer/atardecer) |
+
+**El hallazgo metodológico.** Agregando todas las detecciones, la tasa de detecciones difíciles
+parecía mayor de día (13,19 %) que de noche (7,04 %), lo que es absurdo. Calculada **por
+segmento**, la diferencia se evapora: mediana 4,81 % contra 4,25 %. Un único segmento diurno con
+53,81 % de difíciles y muchas filas dominaba el promedio.
+
+Consecuencias sobre el diseño:
+
+1. `analizar_sesgo_waymo.py` reporta **ambas** tablas y advierte explícitamente sobre la unidad
+   de análisis. La herramienta no debe cometer el error que enseña a evitar.
+2. Se añadió `calidad_por_segmento()`, con tests que usan un caso construido a propósito (dos
+   segmentos limpios y uno atípico enorme) para fijar el contraste entre ambas agregaciones.
+3. El material conecta esto con EA2: **el split de entrenamiento/prueba debe ser por
+   `segment_id`**, no por fila. Es el mismo error con otra cara.
+
+Las cifras se incorporaron al Paso 7 de `00_opcional_waymo_real.ipynb` y al bloque 6 del guion de
+clase, donde reemplazan una discusión hipotética por uno medido.
 
 ---
 

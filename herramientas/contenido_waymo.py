@@ -376,9 +376,89 @@ transfiere no es la lista de defectos: es el hábito de mirar antes de modelar.
 ### Una limitación de esta comparación
 
 Un solo segmento son 20 segundos de conducción, en San Francisco, soleado y de día. Por eso aquí
-`weather` y `time_of_day` no varían: son propiedades del segmento completo. Para analizar el
-sesgo de muestreo de verdad habría que bajar decenas de segmentos y comparar entre ellos. Si
-quieres hacerlo, `herramientas/descargar_waymo.py --listar` te muestra los disponibles.
+`weather` y `time_of_day` no varían: son propiedades del segmento completo. Para estudiar el
+sesgo de muestreo hay que comparar **entre** segmentos, no dentro de uno. Eso es lo que sigue.
+
+---
+## Paso 7 · Sesgo de muestreo, medido sobre 250 segmentos
+
+Como `stats` pesa solo ~23 KB, se puede caracterizar la composición del dataset a bajo costo:
+
+```bash
+python herramientas/descargar_waymo.py --muestra 250 --solo-stats   # ~6 MB
+python herramientas/descargar_waymo.py --muestra 40                 # ~45 MB, con detecciones
+python herramientas/analizar_sesgo_waymo.py
+```
+
+Estos son los resultados medidos el 16 de agosto de 2026 (250 segmentos para las condiciones,
+40 con detecciones completas, 530.396 detecciones):
+
+### 1. El clima: 1 de cada 250
+
+| Clima | Segmentos | % |
+|---|---|---|
+| `sunny` | 249 | **99,6 %** |
+| `rain` | 1 | **0,4 %** |
+
+La documentación de Waymo dice que el clima es *"Sunny o Rain"*. En la práctica, la lluvia
+prácticamente no existe en esta muestra. Un modelo entrenado con esto **nunca vio llover**.
+
+### 2. La hora del día
+
+| Momento | Segmentos | % |
+|---|---|---|
+| `Day` | 200 | 80,0 % |
+| `Dawn/Dusk` | 26 | 10,4 % |
+| `Night` | 24 | **9,6 %** |
+
+### 3. Los usuarios vulnerables desaparecen de noche
+
+| Momento | Peatones + ciclistas | Ciclistas |
+|---|---|---|
+| `Day` | **27,05 %** | 0,47 % |
+| `Night` | **14,11 %** | 0,38 % |
+| `Dawn/Dusk` | 6,81 % | 0,00 % |
+
+De noche, la proporción de peatones y ciclistas cae a **casi la mitad**. No es que dejen de
+existir: es que hay menos ejemplos para aprender a detectarlos, justo cuando son más difíciles de
+ver y cuando un error cuesta más caro.
+
+### 4. El hallazgo que se desmintió solo
+
+Al mirar la tasa de detecciones marcadas como difíciles, apareció algo raro:
+
+| Momento | Agregando TODAS las detecciones | Mediana **por segmento** | Rango entre segmentos |
+|---|---|---|---|
+| `Day` | 13,19 % | **4,81 %** | 0,00 % – 53,81 % |
+| `Night` | 7,04 % | **4,25 %** | 0,00 % – 13,17 % |
+
+La primera columna sugiere que **de día es más difícil detectar que de noche**, lo que no tiene
+sentido. La segunda muestra que la diferencia casi desaparece: 4,81 % contra 4,25 %.
+
+¿Qué pasó? El promedio global juntó 530.396 detecciones como si fueran observaciones
+independientes, cuando en realidad vienen de **40 grabaciones**. Un único segmento diurno con
+53,81 % de detecciones difíciles y muchísimas filas arrastró el promedio de todo el grupo.
+
+> **La unidad de análisis es el segmento, no la detección.**
+>
+> Es el mismo error que arruina un modelo cuando se separa entrenamiento y prueba **por fila**:
+> detecciones del mismo segmento terminan a ambos lados del split, el modelo reconoce la escena
+> en vez de aprender el objeto, y la evaluación miente. En EA2 el split tendrá que ser
+> **por `segment_id`**, y esta tabla es la razón.
+
+### Para discutir
+
+1. Si este dataset se usara tal cual para entrenar, ¿en qué condición meteorológica esperarías el
+   peor desempeño? ¿Podrías siquiera medirlo con estos datos?
+2. Con 24 segmentos nocturnos, ¿cuánta confianza tienes en cualquier conclusión sobre la noche?
+3. ¿Qué recolectarías tú antes de desplegar?
+
+### Una advertencia sobre esta muestra
+
+Los 250 segmentos son **los primeros del listado del bucket**, no una muestra aleatoria. Los
+nombres son identificadores, así que el orden es arbitrario en la práctica, pero no es lo mismo
+que un muestreo aleatorio: las cifras de arriba son indicativas, no un censo del dataset
+completo. Decirlo es parte del trabajo.
 
 ---
 
