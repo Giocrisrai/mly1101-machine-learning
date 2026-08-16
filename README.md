@@ -80,6 +80,11 @@ otra exigencia, `--exigencia 0.5`.
 Clic en el badge de Colab del notebook del alumno. La primera celda clona el repositorio y deja
 los datos disponibles. No hay que instalar nada.
 
+> **Avísales de esto antes de la clase.** Al ejecutar la primera celda, Colab muestra
+> *"Advertencia: Este cuaderno no lo ha creado Google"*. Es el aviso estándar para cualquier
+> notebook abierto desde GitHub, no una señal de problema. Hay que pulsar **"Ejecutar de todos
+> modos"**. Si no se les advierte, la mitad del curso se detiene ahí.
+
 ### Opción B — Local
 
 ```bash
@@ -204,6 +209,7 @@ que las relaciones que reproduce el dataset sintético existen también en los d
 | Esquema del notebook de Waymo | Contrastado con el código fuente oficial (2026-08-12) | ✅ |
 | Ejecución del notebook de Waymo | `jupyter nbconvert --execute` sobre datos reales descargados | ✅ ejecutado de extremo a extremo el 2026-08-13 |
 | Análisis de sesgo de muestreo | 250 segmentos reales de Waymo | ✅ medido el 2026-08-16 · [informe](docs/sesgo_waymo.md) |
+| **Ejecución en Google Colab** | Notebook abierto desde el badge y ejecutado completo | ✅ 2026-08-16 · 29 celdas, 0 errores, 0 warnings |
 | Mapeo del esquema de Waymo | `pytest tests/test_mapeo_waymo.py` contra un Parquet real | ✅ 10/10 |
 
 ---

@@ -245,6 +245,7 @@ identificación y cuantificación de problemas de calidad.
 | Accesibilidad pública del repo | `curl` sobre `raw.githubusercontent.com` | ✅ HTTP 200 |
 | Esquema del notebook de Waymo | Contrastado con el código fuente oficial (2026-08-12) | ✅ |
 | Ejecución del notebook de Waymo | `jupyter nbconvert --execute` sobre datos reales | ✅ 2026-08-13, sin errores |
+| Ejecución en Google Colab | Notebook abierto desde el badge y ejecutado completo en Colab | ✅ 2026-08-16: 29 celdas, 0 tracebacks, 0 warnings, gráficos renderizados |
 | Mapeo del esquema de Waymo | `pytest tests/test_mapeo_waymo.py` contra un Parquet real | ✅ 10/10 |
 
 ### 6.1 Comando de verificación completa

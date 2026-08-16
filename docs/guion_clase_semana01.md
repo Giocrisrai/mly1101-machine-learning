@@ -13,6 +13,10 @@ Material: `notebooks/01_alumno_exploracion.ipynb` (alumnos) y
 - [ ] Tener el enlace de Colab del notebook del alumno listo para pegar en el chat/pizarra.
 - [ ] Verificar que el repositorio esté publicado y accesible sin cuenta.
 - [ ] Tener a mano el número clave del día: **34 %** (nulos de velocidad en LEVEL_2 nocturno).
+- [ ] Avisar al curso que Colab mostrará *"Advertencia: Este cuaderno no lo ha creado Google"* al
+      ejecutar la primera celda, y que hay que pulsar **"Ejecutar de todos modos"**. Es el aviso
+      estándar de cualquier notebook abierto desde GitHub. Si no se advierte, medio curso se
+      detiene en esa pantalla.
 
 ---
 
