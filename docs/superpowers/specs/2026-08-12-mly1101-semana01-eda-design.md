@@ -320,10 +320,11 @@ ejecutó completo sin errores ni avisos de columnas faltantes.
 
 ### 6.4 Limitaciones que persisten
 
-- La comparación de la §6.3 se hizo sobre **un** segmento. El análisis de sesgo posterior
-  (§6.5) usa 250 segmentos para las condiciones y 40 para las detecciones, pero **no es una
-  muestra aleatoria**: son los primeros del listado del bucket. Los nombres son identificadores,
-  así que el orden es arbitrario en la práctica, pero las cifras son indicativas y no un censo.
+- La comparación de la §6.3 se hizo sobre **un** segmento. En la §6.5, las cifras de clima, hora
+  y ubicación son un **censo** de los 798 segmentos de training, así que no hay pregunta de
+  representatividad. Las de composición de objetos y calidad de detección sí provienen de una
+  muestra de 40 segmentos (requieren `lidar_box`, ~1 MB frente a 23 KB), y por eso el informe
+  reporta el rango entre segmentos y no solo el promedio.
 - `tests/test_mapeo_waymo.py` se salta sin datos descargados, de modo que en una máquina sin
   credenciales el `pytest` pasa en limpio pero **no** revalida el esquema de Waymo.
 - La celda `traducir()` avisa qué columnas faltan en lugar de fallar en silencio, para que un
@@ -331,14 +332,15 @@ ejecutó completo sin errores ni avisos de columnas faltantes.
 
 ### 6.5 Análisis de sesgo de muestreo (2026-08-16)
 
-Medido con `herramientas/analizar_sesgo_waymo.py` sobre 250 segmentos (condiciones) y 40
-segmentos con detecciones completas (530.396 detecciones):
+Medido con `herramientas/analizar_sesgo_waymo.py`. Las condiciones son un **censo del split de
+entrenamiento** (los 798 segmentos, no una muestra); las detecciones vienen de 40 segmentos
+(530.396 filas):
 
 | Hallazgo | Cifra |
 |---|---|
-| Segmentos con lluvia | **1 de 250** (0,4 %) |
-| Segmentos nocturnos | 24 de 250 (9,6 %) |
-| Ubicaciones | 116 SF · 109 Phoenix · 25 otras |
+| Segmentos con lluvia | **5 de 798** (0,6 %) |
+| Segmentos nocturnos | 79 de 798 (9,9 %) |
+| Ubicaciones | 409 SF · 284 Phoenix · 105 otras — **87 % en dos ciudades de clima seco** |
 | Peatones + ciclistas de día | 27,05 % |
 | Peatones + ciclistas de noche | **14,11 %** |
 | Ciclistas | 0,47 % (día) · 0,38 % (noche) · 0,00 % (amanecer/atardecer) |

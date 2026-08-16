@@ -9,9 +9,10 @@ Este script cruza muchos segmentos y responde:
 - ¿Los ciclistas y peatones están igual de representados de noche que de día?
 - ¿Cambia la calidad de la detección (puntos láser, dificultad) según condición?
 
-Requisito previo:
+Requisitos previos:
 
-    python herramientas/descargar_waymo.py --muestra 40
+    python herramientas/descargar_waymo.py --censo-stats   # condiciones de los 798 segmentos
+    python herramientas/descargar_waymo.py --muestra 40    # detecciones de 40 segmentos
 
 Uso:
 
@@ -32,6 +33,7 @@ RAIZ = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RAIZ / "src"))
 
 MUESTRA = RAIZ / "datos" / "waymo_real" / "muestra"
+CENSO = RAIZ / "datos" / "waymo_real" / "censo_stats"
 LB = "[LiDARBoxComponent]"
 ST = "[StatsComponent]"
 TIPOS = {0: "unknown", 1: "vehicle", 2: "pedestrian", 3: "sign", 4: "cyclist"}
@@ -131,32 +133,50 @@ def calidad_por_segmento(df: pd.DataFrame, condicion: str, columna: str = "dific
     return resumen.round(2)
 
 
-def cargar_condiciones(directorio: Path = MUESTRA) -> pd.DataFrame:
+def _fila_condicion(nombre: str, ruta: Path) -> dict:
+    condicion = pd.read_parquet(ruta).iloc[0]
+    return {
+        "segmento": nombre,
+        "weather": str(condicion[f"{ST}.weather"]).strip().lower(),
+        "time_of_day": str(condicion[f"{ST}.time_of_day"]).strip(),
+        "location": str(condicion[f"{ST}.location"]).strip(),
+    }
+
+
+def cargar_condiciones(directorio: Path | None = None) -> pd.DataFrame:
     """Una fila por segmento con su condición, usando solo el componente ``stats``.
 
-    Permite caracterizar clima, hora y ubicación sobre muchos más segmentos que
-    los descargados con ``lidar_box``: ``stats`` pesa ~23 KB frente a ~1 MB.
+    Acepta las dos disposiciones que produce ``descargar_waymo.py``:
+
+    - **censo** (``--censo-stats``): archivos planos ``{segmento}.parquet``.
+    - **muestra** (``--muestra N``): una carpeta por segmento con ``stats.parquet``.
+
+    Si no se indica directorio, prefiere el censo cuando existe, porque cubre
+    los 798 segmentos de training y evita la objeción de si la muestra era
+    representativa.
     """
+    if directorio is None:
+        directorio = CENSO if CENSO.exists() else MUESTRA
     if not directorio.exists():
         raise SystemExit(
             f"No existe {directorio.relative_to(RAIZ)}.\n"
-            "  Descarga primero:  python herramientas/descargar_waymo.py --muestra 250 --solo-stats"
+            "  Descarga primero:  python herramientas/descargar_waymo.py --censo-stats"
         )
-    filas = []
-    for carpeta in sorted(directorio.iterdir()):
-        ruta = carpeta / "stats.parquet"
-        if not ruta.exists():
-            continue
-        condicion = pd.read_parquet(ruta).iloc[0]
-        filas.append({
-            "segmento": carpeta.name,
-            "weather": str(condicion[f"{ST}.weather"]).strip().lower(),
-            "time_of_day": str(condicion[f"{ST}.time_of_day"]).strip(),
-            "location": str(condicion[f"{ST}.location"]).strip(),
-        })
+
+    planos = sorted(directorio.glob("*.parquet"))
+    if planos:
+        filas = [_fila_condicion(ruta.stem, ruta) for ruta in planos]
+    else:
+        filas = [
+            _fila_condicion(carpeta.name, carpeta / "stats.parquet")
+            for carpeta in sorted(directorio.iterdir())
+            if (carpeta / "stats.parquet").exists()
+        ]
     if not filas:
         raise SystemExit(f"No se encontró ningún stats.parquet en {directorio}")
-    return pd.DataFrame(filas)
+    tabla = pd.DataFrame(filas)
+    tabla.attrs["es_censo"] = directorio == CENSO
+    return tabla
 
 
 def _bloque(titulo: str, tabla: pd.DataFrame) -> str:
@@ -178,7 +198,13 @@ def generar_informe(df: pd.DataFrame, condiciones: pd.DataFrame | None = None) -
     partes = [f"Muestra de detecciones: {n_seg} segmentos, {detecciones_fmt} detecciones"]
 
     if condiciones is not None and len(condiciones) > n_seg:
-        partes.append(f"Muestra de condiciones: {len(condiciones)} segmentos (solo stats)")
+        if condiciones.attrs.get("es_censo"):
+            partes.append(
+                f"CENSO de condiciones: {len(condiciones)} segmentos "
+                "(todo el split de training, no una muestra)"
+            )
+        else:
+            partes.append(f"Muestra de condiciones: {len(condiciones)} segmentos (solo stats)")
         base = condiciones.rename(columns={"time_of_day": "momento", "weather": "clima",
                                            "location": "lugar"})
     else:

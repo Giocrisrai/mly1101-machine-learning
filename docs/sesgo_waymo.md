@@ -1,49 +1,35 @@
 # Sesgo de muestreo en el Waymo Open Dataset
 
-Medido el 2026-08-16 con `herramientas/analizar_sesgo_waymo.py`.
-
-**Qué contiene esto y qué no.** Son estadísticas agregadas calculadas sobre el Waymo Open
-Dataset; **no** contiene datos de Waymo. Reproducirlo requiere aceptar los términos en
-<https://waymo.com/open/terms/> y descargar los segmentos por cuenta propia:
-
-```bash
-python herramientas/descargar_waymo.py --muestra 250 --solo-stats   # ~6 MB
-python herramientas/descargar_waymo.py --muestra 40                 # ~45 MB
-python herramientas/analizar_sesgo_waymo.py --markdown docs/sesgo_waymo.md
-```
-
-**Advertencia sobre la muestra:** son los primeros 250 segmentos del listado del bucket, no una
-muestra aleatoria. Los nombres son identificadores, así que el orden es arbitrario en la
-práctica, pero las cifras son indicativas y no un censo del dataset completo.
+Generado por `herramientas/analizar_sesgo_waymo.py`.
 
 ```
 Muestra de detecciones: 40 segmentos, 530.396 detecciones
-Muestra de condiciones: 250 segmentos (solo stats)
+CENSO de condiciones: 798 segmentos (todo el split de training, no una muestra)
 
 Segmentos por momento del día
 -----------------------------
            segmentos
 momento             
-Day              200
-Dawn/Dusk         26
-Night             24
+Day              647
+Night             79
+Dawn/Dusk         72
 
 
 Segmentos por clima
 -------------------
        segmentos
 clima           
-sunny        249
-rain           1
+sunny        793
+rain           5
 
 
 Segmentos por ubicación
 -----------------------
                 segmentos
 lugar                    
-location_sf           116
-location_phx          109
-location_other         25
+location_sf           409
+location_phx          284
+location_other        105
 
 
 Composición de objetos por momento del día (%)

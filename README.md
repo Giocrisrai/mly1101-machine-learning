@@ -208,7 +208,7 @@ que las relaciones que reproduce el dataset sintético existen también en los d
 | Cifras de la pauta y la rúbrica | Comprobadas contra el CSV publicado | ✅ |
 | Esquema del notebook de Waymo | Contrastado con el código fuente oficial (2026-08-12) | ✅ |
 | Ejecución del notebook de Waymo | `jupyter nbconvert --execute` sobre datos reales descargados | ✅ ejecutado de extremo a extremo el 2026-08-13 |
-| Análisis de sesgo de muestreo | 250 segmentos reales de Waymo | ✅ medido el 2026-08-16 · [informe](docs/sesgo_waymo.md) |
+| Análisis de sesgo de muestreo | **Censo** de los 798 segmentos de training de Waymo | ✅ medido el 2026-08-16 · [informe](docs/sesgo_waymo.md) |
 | **Ejecución en Google Colab** | Notebook abierto desde el badge y ejecutado completo | ✅ 2026-08-16 · 29 celdas, 0 errores, 0 warnings |
 | Mapeo del esquema de Waymo | `pytest tests/test_mapeo_waymo.py` contra un Parquet real | ✅ 10/10 |
 

@@ -36,8 +36,10 @@ Machine Learning, considerando el tratamiento responsable de la información.*
 
 ### Conversión a nota
 
-Se usa la escala chilena con **exigencia del 60 %**: la nota 4,0 se alcanza con el 60 % del
-puntaje máximo, y la escala es lineal a ambos lados de ese punto.
+Se usa la **exigencia del 60 %**, que es la norma institucional: el Reglamento Académico de
+Duoc UC establece la escala de 1,0 a 7,0 con un decimal, y que **la nota 4,0 corresponde a haber
+alcanzado el 60 % del logro de aprendizaje** de la asignatura. La escala es lineal a ambos lados
+de ese punto.
 
 Sea `P` el puntaje ponderado (0 a 4), `Pmax = 4` y `U = 0,6 · Pmax = 2,4`:
 
@@ -61,7 +63,7 @@ Referencia rápida con puntaje uniforme en los cinco indicadores:
 ```bash
 python herramientas/calcular_nota.py 3 4 2 3 3      # IL1 IL2 IL3 IL4 IL5 → nota 5,2
 python herramientas/calcular_nota.py --csv docs/ejemplo_notas.csv   # el curso completo
-python herramientas/calcular_nota.py 3 4 2 3 3 --exigencia 0.5   # si tu sede usa otra
+python herramientas/calcular_nota.py 3 4 2 3 3 --exigencia 0.5   # otra regla, si aplicara
 ```
 
 El CSV debe tener la cabecera `nombre,IL1,IL2,IL3,IL4,IL5` (hay un ejemplo en
@@ -69,8 +71,13 @@ El CSV debe tener la cabecera `nombre,IL1,IL2,IL3,IL4,IL5` (hay un ejemplo en
 de aprobación, y marca con ⚠ a quienes reprueban. La fórmula está cubierta por 14 tests en
 `tests/test_calcular_nota.py`.
 
-> **Verifica la exigencia con tu sede.** El 60 % es el estándar habitual, pero si tu programa
-> usa otro valor, cámbialo con `--exigencia` sin tocar la rúbrica.
+> El parámetro `--exigencia` existe por si se evalúa una actividad con otra regla, pero para la
+> EA1 el 60 % es el valor que corresponde según el Reglamento Académico.
+
+**Coherencia con la ponderación de la asignatura.** El mismo reglamento fija que la nota final se
+compone del promedio de las evaluaciones parciales ponderado por 0,60 y el examen final por 0,40.
+La EA1 es una de esas evaluaciones parciales; la EFT es el 40 % restante, tal como indica la
+coordinación de la línea.
 
 ---
 

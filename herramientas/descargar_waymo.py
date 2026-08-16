@@ -15,6 +15,8 @@ Uso:
     python herramientas/descargar_waymo.py                 # primer segmento disponible
     python herramientas/descargar_waymo.py --segmento NOMBRE
     python herramientas/descargar_waymo.py --listar        # solo listar segmentos
+    python herramientas/descargar_waymo.py --muestra 40    # varios segmentos completos
+    python herramientas/descargar_waymo.py --censo-stats   # stats de los 798 segmentos
 
 Los archivos quedan en ``datos/waymo_real/``, que está en .gitignore: la
 licencia de Waymo es de uso no comercial y no permite redistribuirlos.
@@ -124,6 +126,29 @@ def descargar_muestra(gsutil: str, segmentos: list[str], solo_stats: bool = Fals
     return muestra
 
 
+def descargar_censo_stats(gsutil: str) -> Path:
+    """Descarga el componente ``stats`` de **todos** los segmentos de training.
+
+    Son ~798 segmentos de ~23 KB, unos 18 MB en total. Con ``gsutil -m`` y un
+    comodín se copian en paralelo en una sola llamada, así que tarda minutos y
+    no horas.
+
+    A diferencia de ``--muestra N``, esto no es un muestreo: es el censo del
+    split de entrenamiento. Elimina la pregunta de si la muestra era
+    representativa, que es la objeción obvia a cualquier cifra de sesgo.
+    """
+    destino = DESTINO / "censo_stats"
+    destino.mkdir(parents=True, exist_ok=True)
+    print("Copiando stats de todos los segmentos de training (~18 MB, en paralelo)…")
+    resultado = _ejecutar([gsutil, "-m", "cp", f"{BUCKET}/stats/*.parquet", str(destino)])
+    archivos = list(destino.glob("*.parquet"))
+    if not archivos:
+        sys.exit(f"No se descargó nada:\n{resultado.stderr.strip()[:400]}")
+    peso = sum(f.stat().st_size for f in archivos) / 1024**2
+    print(f"{len(archivos)} segmentos · {peso:.1f} MB en {destino.relative_to(RAIZ)}")
+    return destino
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--segmento", help="nombre del segmento (sin .parquet)")
@@ -139,9 +164,20 @@ def main() -> None:
         action="store_true",
         help="con --muestra, baja solo el componente stats (~23 KB por segmento)",
     )
+    parser.add_argument(
+        "--censo-stats",
+        action="store_true",
+        help="baja el stats de TODOS los segmentos de training (~798, ~18 MB)",
+    )
     args = parser.parse_args()
 
     gsutil = _comprobar_requisitos()
+
+    if args.censo_stats:
+        descargar_censo_stats(gsutil)
+        print("\nListo. Ahora puedes ejecutar:  python herramientas/analizar_sesgo_waymo.py")
+        return
+
     cantidad = args.muestra if args.muestra else 5
     disponibles = listar_segmentos(gsutil, cantidad=cantidad)
 

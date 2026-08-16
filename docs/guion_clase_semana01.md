@@ -152,19 +152,24 @@ Regla práctica que deben anotar:
 - Las tres preguntas: qué está sub-representado, quién corre riesgo, qué medida concreta propones.
 
 **El remate con datos reales.** Cuando el curso ya discutió el sesgo del dataset sintético,
-muestra lo que pasa en el Waymo Open Dataset real. Medido sobre 250 segmentos
-(`herramientas/analizar_sesgo_waymo.py`, agosto 2026):
+muestra lo que pasa en el Waymo Open Dataset real. No es una muestra: es el **censo de los 798
+segmentos** de entrenamiento (`herramientas/analizar_sesgo_waymo.py`, agosto 2026):
 
-| | Dataset de clase | Waymo real |
+| | Dataset de clase | Waymo real (censo de 798) |
 |---|---|---|
-| Segmentos con lluvia | 21 % | **0,4 %** (1 de 250) |
-| Segmentos nocturnos | 20 % | **9,6 %** (24 de 250) |
+| Segmentos con lluvia | 21 % | **0,6 %** (5 de 798) |
+| Segmentos nocturnos | 20 % | **9,9 %** (79 de 798) |
+| Concentración geográfica | — | **87 %** en San Francisco y Phoenix |
 | Peatones + ciclistas de día | — | **27,05 %** |
 | Peatones + ciclistas de noche | — | **14,11 %** |
 
 La frase para lanzarlo: *"Yo inventé el dataset de la clase y le puse 21 % de lluvia. ¿Cuánta
 lluvia creen que tiene el dataset real de una de las empresas de conducción autónoma más
-grandes del mundo?"* La respuesta —**1 segmento de 250**— suele producir silencio.
+grandes del mundo?"* La respuesta —**5 grabaciones de 798**— suele producir silencio.
+
+Y el remate del remate: el 87 % de los datos viene de San Francisco y Phoenix, dos ciudades de
+clima seco. *"La falta de lluvia no es mala suerte: es consecuencia de dónde decidieron grabar.
+¿Qué pasa cuando ese auto llega a Valdivia?"*
 
 Y el dato que cierra el argumento: de noche, la proporción de peatones y ciclistas cae a la
 mitad. Menos ejemplos para aprender justo cuando detectarlos es más difícil y equivocarse

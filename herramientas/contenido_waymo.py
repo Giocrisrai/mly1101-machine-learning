@@ -385,31 +385,44 @@ sesgo de muestreo hay que comparar **entre** segmentos, no dentro de uno. Eso es
 Como `stats` pesa solo ~23 KB, se puede caracterizar la composición del dataset a bajo costo:
 
 ```bash
-python herramientas/descargar_waymo.py --muestra 250 --solo-stats   # ~6 MB
-python herramientas/descargar_waymo.py --muestra 40                 # ~45 MB, con detecciones
+python herramientas/descargar_waymo.py --censo-stats   # ~18 MB: los 798 segmentos
+python herramientas/descargar_waymo.py --muestra 40    # ~45 MB: con detecciones
 python herramientas/analizar_sesgo_waymo.py
 ```
 
-Estos son los resultados medidos el 16 de agosto de 2026 (250 segmentos para las condiciones,
-40 con detecciones completas, 530.396 detecciones):
+Como `stats` pesa solo ~23 KB, no hace falta muestrear: se puede bajar **el split completo**.
+Estos resultados son un **censo de los 798 segmentos de entrenamiento**, medido el 16 de agosto
+de 2026. Las detecciones vienen de 40 de esos segmentos (530.396 filas).
 
-### 1. El clima: 1 de cada 250
+### 1. El clima: 5 segmentos de 798
 
 | Clima | Segmentos | % |
 |---|---|---|
-| `sunny` | 249 | **99,6 %** |
-| `rain` | 1 | **0,4 %** |
+| `sunny` | 793 | **99,4 %** |
+| `rain` | 5 | **0,6 %** |
 
-La documentación de Waymo dice que el clima es *"Sunny o Rain"*. En la práctica, la lluvia
-prácticamente no existe en esta muestra. Un modelo entrenado con esto **nunca vio llover**.
+La documentación de Waymo dice que el clima es *"Sunny o Rain"*. En los hechos, la lluvia
+prácticamente no existe: **cinco grabaciones de setecientas noventa y ocho**. Un modelo
+entrenado con esto **nunca vio llover**.
 
 ### 2. La hora del día
 
 | Momento | Segmentos | % |
 |---|---|---|
-| `Day` | 200 | 80,0 % |
-| `Dawn/Dusk` | 26 | 10,4 % |
-| `Night` | 24 | **9,6 %** |
+| `Day` | 647 | 81,1 % |
+| `Night` | 79 | **9,9 %** |
+| `Dawn/Dusk` | 72 | 9,0 % |
+
+### 2b. Y todo ocurre en dos ciudades
+
+| Ubicación | Segmentos | % |
+|---|---|---|
+| San Francisco | 409 | 51,3 % |
+| Phoenix | 284 | 35,6 % |
+| Otras | 105 | 13,2 % |
+
+Dos ciudades de clima seco concentran el 87 % de los datos. Que casi no haya lluvia no es
+casualidad: es consecuencia de **dónde** se decidió grabar.
 
 ### 3. Los usuarios vulnerables desaparecen de noche
 
@@ -453,12 +466,18 @@ independientes, cuando en realidad vienen de **40 grabaciones**. Un único segme
 2. Con 24 segmentos nocturnos, ¿cuánta confianza tienes en cualquier conclusión sobre la noche?
 3. ¿Qué recolectarías tú antes de desplegar?
 
-### Una advertencia sobre esta muestra
+### Alcance de estas cifras
 
-Los 250 segmentos son **los primeros del listado del bucket**, no una muestra aleatoria. Los
-nombres son identificadores, así que el orden es arbitrario en la práctica, pero no es lo mismo
-que un muestreo aleatorio: las cifras de arriba son indicativas, no un censo del dataset
-completo. Decirlo es parte del trabajo.
+Las cifras de clima, hora y ubicación son un **censo del split de entrenamiento**: los 798
+segmentos, no una muestra. No hay pregunta de representatividad que responder.
+
+Las cifras de composición de objetos y de calidad de detección sí vienen de una muestra de **40
+segmentos**, porque requieren el componente `lidar_box` (~1 MB cada uno en vez de 23 KB). Ahí
+las conclusiones son indicativas, y por eso el informe muestra el rango entre segmentos y no
+solo el promedio.
+
+Distinguir qué parte de tu análisis es censo y qué parte es muestra también es parte del
+trabajo.
 
 ---
 
