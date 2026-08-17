@@ -25,12 +25,16 @@ El notebook `01_alumno_exploracion.ipynb` usa un dataset **sintético** con el e
 componente `lidar_box` del Waymo Open Dataset v2. Aquí bajamos datos **reales** y corremos el
 mismo análisis, con las mismas funciones de `src/eda.py`.
 
-> ### ✅ Estado de verificación
+> ### Estado de verificación
 >
-> Este notebook fue **ejecutado de extremo a extremo el 13 de agosto de 2026** sobre el segmento
-> `{SEGMENTO_VERIFICADO}` (San Francisco, soleado, de día): 18.633 detecciones.
-> `tests/test_mapeo_waymo.py` revalida el esquema y las relaciones cada vez que hay datos
-> descargados.
+> **✅ En local (Jupyter):** ejecutado de extremo a extremo el 13 de agosto de 2026 sobre el
+> segmento `{SEGMENTO_VERIFICADO}` (San Francisco, soleado, de día):
+> 18.633 detecciones. `tests/test_mapeo_waymo.py` revalida el esquema cada vez que hay datos.
+>
+> **⚠️ En Google Colab:** hay dos trampas comprobadas el 16 de agosto de 2026. Están explicadas
+> en el Paso 2. Si vas a usar Colab, **léelo antes de ejecutar** o perderás veinte minutos.
+> Este notebook es el único de los tres cuyo camino en Colab no está verificado de punta a punta;
+> los otros dos sí lo están.
 
 ### Buenas noticias sobre el tamaño
 
@@ -79,6 +83,20 @@ gs://waymo_open_dataset_v_2_0_1/
 Cada `context_name` es un segmento de conducción de unos 20 segundos.
 
 ## Paso 2 · Preparar el entorno y autenticarse
+
+> ### ⚠️ Dos trampas de Colab, comprobadas
+>
+> **1. Guarda una copia en Drive antes de ejecutar.** Si abres este notebook directamente desde
+> GitHub, `auth.authenticate_user()` **se queda colgado indefinidamente**, incluso después de
+> conceder el permiso. Comprobado dos veces. En una copia guardada en Drive
+> (*Archivo → Guardar una copia en Drive*) la autenticación completa en segundos.
+>
+> **2. `gsutil` no hereda las credenciales de Colab.** Aunque `auth.authenticate_user()` tenga
+> éxito, el comando `!gsutil` responde *"You are attempting to access protected data with no
+> configured credentials"*: autentica a Python, no al CLI. Por eso la celda de descarga usa el
+> **cliente Python** `google.cloud.storage` cuando está en Colab, y `gsutil` solo en local.
+>
+> En local no ocurre ninguna de las dos: basta `gcloud auth login` una vez.
 """
     ),
     code(
@@ -133,14 +151,36 @@ BUCKET = "gs://waymo_open_dataset_v_2_0_1/training"
         f"""
 # Segmento verificado para este notebook (San Francisco, soleado, de día).
 SEGMENTO = "{SEGMENTO_VERIFICADO}"
+NOMBRE_BUCKET = "waymo_open_dataset_v_2_0_1"
 
-for componente in ["lidar_box", "stats"]:
+
+def descargar(componente: str) -> Path:
+    \"\"\"Baja un componente del segmento, usando la vía que funciona en cada entorno.
+
+    En Colab se usa el cliente Python de Cloud Storage, porque `gsutil` **no**
+    hereda las credenciales de `auth.authenticate_user()`. En local se usa
+    `gsutil`, que sí las tiene tras `gcloud auth login`.
+    \"\"\"
     destino = DESTINO / f"{{componente}}.parquet"
     if destino.exists():
-        print(f"{{componente}}: ya descargado ({{destino.stat().st_size / 1024**2:.2f}} MB)")
+        print(f"{{componente}}: ya estaba ({{destino.stat().st_size / 1024**2:.2f}} MB)")
+        return destino
+
+    if EN_COLAB:
+        from google.cloud import storage
+
+        # El proyecto solo se usa para facturación; cualquier nombre sirve para leer.
+        bucket = storage.Client(project="mly1101").bucket(NOMBRE_BUCKET)
+        bucket.blob(f"training/{{componente}}/{{SEGMENTO}}.parquet").download_to_filename(destino)
     else:
         !gsutil cp {{BUCKET}}/{{componente}}/{{SEGMENTO}}.parquet {{destino}}
-        print(f"{{componente}}: descargado ({{destino.stat().st_size / 1024**2:.2f}} MB)")
+
+    print(f"{{componente}}: descargado ({{destino.stat().st_size / 1024**2:.2f}} MB)")
+    return destino
+
+
+for componente in ["lidar_box", "stats"]:
+    descargar(componente)
 """
     ),
     md(

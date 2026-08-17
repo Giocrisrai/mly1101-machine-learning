@@ -245,7 +245,8 @@ identificación y cuantificación de problemas de calidad.
 | Accesibilidad pública del repo | `curl` sobre `raw.githubusercontent.com` | ✅ HTTP 200 |
 | Esquema del notebook de Waymo | Contrastado con el código fuente oficial (2026-08-12) | ✅ |
 | Ejecución del notebook de Waymo | `jupyter nbconvert --execute` sobre datos reales | ✅ 2026-08-13, sin errores |
-| Ejecución en Google Colab | Notebook abierto desde el badge y ejecutado completo en Colab | ✅ 2026-08-16: 29 celdas, 0 tracebacks, 0 warnings, gráficos renderizados |
+| Ejecución en Google Colab (notebooks 01) | Abiertos desde el badge y ejecutados en Colab | ✅ 2026-08-16: 29 celdas, 0 tracebacks, 0 warnings, gráficos renderizados |
+| Ejecución en Colab del notebook de Waymo | Intentada el 2026-08-16 | ⚠️ **no lograda**, ver §6.6 |
 | Mapeo del esquema de Waymo | `pytest tests/test_mapeo_waymo.py` contra un Parquet real | ✅ 10/10 |
 
 ### 6.1 Comando de verificación completa
@@ -317,6 +318,30 @@ ejecutó completo sin errores ni avisos de columnas faltantes.
    un valor válido. Se incorporó al notebook como hallazgo.
 4. **Cero duplicados, cero categorías inconsistentes, cero valores imposibles.** Confirma la
    justificación del dataset sintético: con datos ya curados no se puede enseñar a limpiar.
+
+### 6.6 Dos trampas de Colab para el notebook de Waymo (2026-08-16)
+
+Al intentar ejecutar `00_opcional_waymo_real.ipynb` dentro de Colab aparecieron dos problemas que
+no existen en local. Ambos comprobados, y ambos hacían que el notebook **no funcionara** en Colab
+tal como estaba escrito:
+
+1. **`auth.authenticate_user()` se cuelga** si el notebook se abre directamente desde GitHub.
+   Reproducido dos veces, ~2 minutos cada vez, incluso después de conceder el permiso en el
+   diálogo. En una copia guardada en Drive, la misma llamada completa en segundos e imprime
+   `Autenticado en Colab`.
+2. **`gsutil` no hereda las credenciales de Colab.** Con la sesión ya autenticada, `!gsutil cp`
+   responde *"You are attempting to access protected data with no configured credentials"*:
+   `authenticate_user()` autentica a Python, no al CLI. La descarga fallaba y la celda siguiente
+   moría con `FileNotFoundError`.
+
+**Corrección aplicada:** la celda de descarga ahora bifurca por entorno — cliente Python
+`google.cloud.storage` en Colab, `gsutil` en local — y el Paso 2 del notebook documenta ambas
+trampas antes de que el alumno las sufra.
+
+**Lo que queda sin verificar:** que el cliente Python resuelva efectivamente el punto 2 en Colab.
+Es la vía documentada por Google y la que usa las credenciales de `authenticate_user()`, pero no
+se logró una corrida limpia para confirmarlo. El camino **local está verificado** y es el que el
+material recomienda.
 
 ### 6.4 Limitaciones que persisten
 
