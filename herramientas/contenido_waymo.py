@@ -141,46 +141,22 @@ términos de Waymo.
     ),
     code(
         """
-BUCKET = "gs://waymo_open_dataset_v_2_0_1/training"
-
-# Primeros segmentos disponibles.
-!gsutil ls {BUCKET}/lidar_box/ | head -5
+# Primeros segmentos disponibles. En Colab `gsutil` no tiene credenciales
+# (ver Paso 2), así que este listado solo funciona en local.
+if not EN_COLAB:
+    !gsutil ls gs://waymo_open_dataset_v_2_0_1/training/lidar_box/ | head -5
+else:
+    print("En Colab: usa el SEGMENTO ya elegido en la celda siguiente.")
 """
     ),
     code(
         f"""
+import waymo   # src/waymo.py: elige la vía de descarga que funciona en cada entorno
+
 # Segmento verificado para este notebook (San Francisco, soleado, de día).
 SEGMENTO = "{SEGMENTO_VERIFICADO}"
-NOMBRE_BUCKET = "waymo_open_dataset_v_2_0_1"
 
-
-def descargar(componente: str) -> Path:
-    \"\"\"Baja un componente del segmento, usando la vía que funciona en cada entorno.
-
-    En Colab se usa el cliente Python de Cloud Storage, porque `gsutil` **no**
-    hereda las credenciales de `auth.authenticate_user()`. En local se usa
-    `gsutil`, que sí las tiene tras `gcloud auth login`.
-    \"\"\"
-    destino = DESTINO / f"{{componente}}.parquet"
-    if destino.exists():
-        print(f"{{componente}}: ya estaba ({{destino.stat().st_size / 1024**2:.2f}} MB)")
-        return destino
-
-    if EN_COLAB:
-        from google.cloud import storage
-
-        # El proyecto solo se usa para facturación; cualquier nombre sirve para leer.
-        bucket = storage.Client(project="mly1101").bucket(NOMBRE_BUCKET)
-        bucket.blob(f"training/{{componente}}/{{SEGMENTO}}.parquet").download_to_filename(destino)
-    else:
-        !gsutil cp {{BUCKET}}/{{componente}}/{{SEGMENTO}}.parquet {{destino}}
-
-    print(f"{{componente}}: descargado ({{destino.stat().st_size / 1024**2:.2f}} MB)")
-    return destino
-
-
-for componente in ["lidar_box", "stats"]:
-    descargar(componente)
+rutas = waymo.descargar_segmento(SEGMENTO, DESTINO)
 """
     ),
     md(
@@ -200,8 +176,8 @@ import pandas as pd
 
 import eda
 
-cajas = pd.read_parquet(DESTINO / "lidar_box.parquet")
-stats = pd.read_parquet(DESTINO / "stats.parquet")
+cajas = pd.read_parquet(rutas["lidar_box"])
+stats = pd.read_parquet(rutas["stats"])
 
 print("lidar_box:", cajas.shape, " (una fila = una detección)")
 print("stats:    ", stats.shape, " (una fila = un frame)")
