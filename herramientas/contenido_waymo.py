@@ -31,10 +31,11 @@ mismo análisis, con las mismas funciones de `src/eda.py`.
 > segmento `{SEGMENTO_VERIFICADO}` (San Francisco, soleado, de día):
 > 18.633 detecciones. `tests/test_mapeo_waymo.py` revalida el esquema cada vez que hay datos.
 >
-> **⚠️ En Google Colab:** hay dos trampas comprobadas el 16 de agosto de 2026. Están explicadas
-> en el Paso 2. Si vas a usar Colab, **léelo antes de ejecutar** o perderás veinte minutos.
-> Este notebook es el único de los tres cuyo camino en Colab no está verificado de punta a punta;
-> los otros dos sí lo están.
+> **⚠️ En Google Colab:** el código llega hasta Google Cloud correctamente (autentica y hace la
+> petición), pero la descarga depende de que **la cuenta de Colab sea la misma que aceptó los
+> términos de Waymo**. Hay tres trampas comprobadas el 16 de agosto de 2026, explicadas en el
+> Paso 2. **Léelas antes de ejecutar** o perderás veinte minutos. Los otros dos notebooks del
+> repositorio sí están verificados de punta a punta en Colab; este depende de tu cuenta.
 
 ### Buenas noticias sobre el tamaño
 
@@ -84,19 +85,28 @@ Cada `context_name` es un segmento de conducción de unos 20 segundos.
 
 ## Paso 2 · Preparar el entorno y autenticarse
 
-> ### ⚠️ Dos trampas de Colab, comprobadas
+> ### ⚠️ Tres trampas de Colab, todas comprobadas
 >
-> **1. Guarda una copia en Drive antes de ejecutar.** Si abres este notebook directamente desde
+> **1. La cuenta de Colab debe ser la que aceptó los términos de Waymo.** Es el error más
+> frecuente y el más confuso, porque no falla al autenticarse: falla al descargar, con un
+> `403 … does not have storage.objects.get access`. Si usas Gmail personal en Colab pero te
+> registraste en Waymo con el correo institucional (o al revés), no vas a poder bajar nada.
+> Mira el avatar de arriba a la derecha y cambia de cuenta si hace falta. `src/waymo.py` detecta
+> ese 403 y te dice exactamente esto en vez de mostrar el error crudo.
+>
+> **2. Guarda una copia en Drive antes de ejecutar.** Si abres este notebook directamente desde
 > GitHub, `auth.authenticate_user()` **se queda colgado indefinidamente**, incluso después de
 > conceder el permiso. Comprobado dos veces. En una copia guardada en Drive
 > (*Archivo → Guardar una copia en Drive*) la autenticación completa en segundos.
 >
-> **2. `gsutil` no hereda las credenciales de Colab.** Aunque `auth.authenticate_user()` tenga
+> **3. `gsutil` no hereda las credenciales de Colab.** Aunque `auth.authenticate_user()` tenga
 > éxito, el comando `!gsutil` responde *"You are attempting to access protected data with no
-> configured credentials"*: autentica a Python, no al CLI. Por eso la celda de descarga usa el
-> **cliente Python** `google.cloud.storage` cuando está en Colab, y `gsutil` solo en local.
+> configured credentials"*: autentica a Python, no al CLI. Por eso la descarga usa el **cliente
+> Python** `google.cloud.storage` en Colab, y `gsutil` solo en local. Esa decisión vive en
+> `src/waymo.py` y está cubierta por tests.
 >
-> En local no ocurre ninguna de las dos: basta `gcloud auth login` una vez.
+> En local no ocurre ninguna de las tres: basta `gcloud auth login` una vez, con la cuenta
+> correcta.
 """
     ),
     code(

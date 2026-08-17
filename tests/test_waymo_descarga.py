@@ -103,3 +103,30 @@ def test_descargar_segmento_baja_los_dos_componentes(monkeypatch, tmp_path: Path
     rutas = waymo.descargar_segmento(SEGMENTO, tmp_path)
     assert set(rutas) == {"lidar_box", "stats"}
     assert all(r.exists() for r in rutas.values())
+
+
+def test_el_403_se_traduce_a_un_mensaje_sobre_la_cuenta(monkeypatch, tmp_path: Path) -> None:
+    """El error más confuso de Colab: la cuenta abierta no es la registrada en Waymo."""
+    from google.api_core import exceptions
+
+    class BlobFalso:
+        def download_to_filename(self, ruta):
+            raise exceptions.Forbidden("giocrisrai@gmail.com does not have storage.objects.get")
+
+    class BucketFalso:
+        def blob(self, ruta):
+            return BlobFalso()
+
+    class ClienteFalso:
+        def __init__(self, project=None):
+            pass
+
+        def bucket(self, nombre):
+            return BucketFalso()
+
+    import google.cloud.storage as gcs
+
+    monkeypatch.setattr(gcs, "Client", ClienteFalso)
+
+    with pytest.raises(RuntimeError, match="aceptó los términos"):
+        waymo._descargar_con_cliente_python("stats", SEGMENTO, tmp_path / "s.parquet")

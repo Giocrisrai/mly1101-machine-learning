@@ -210,7 +210,7 @@ que las relaciones que reproduce el dataset sintético existen también en los d
 | Ejecución del notebook de Waymo | `jupyter nbconvert --execute` sobre datos reales descargados | ✅ ejecutado de extremo a extremo el 2026-08-13 |
 | Análisis de sesgo de muestreo | **Censo** de los 798 segmentos de training de Waymo | ✅ medido el 2026-08-16 · [informe](docs/sesgo_waymo.md) |
 | **Ejecución en Google Colab** (notebooks 01) | Abiertos desde el badge y ejecutados | ✅ 2026-08-16 · 29 celdas, 0 errores, 0 warnings |
-| Ejecución en Colab del notebook de Waymo | — | ⚠️ **no verificada**: Colab tiene dos trampas documentadas dentro del propio notebook (Paso 2) |
+| Ejecución en Colab del notebook de Waymo | Ejecutado en Colab el 2026-08-16 | ⚠️ **depende de tu cuenta**: el código llega a Google Cloud, pero la descarga exige que la cuenta de Colab sea la que aceptó los términos de Waymo. Tres trampas documentadas en el Paso 2 del notebook |
 | Mapeo del esquema de Waymo | `pytest tests/test_mapeo_waymo.py` contra un Parquet real | ✅ 10/10 |
 
 ---

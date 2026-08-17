@@ -43,11 +43,30 @@ def _descargar_con_cliente_python(componente: str, segmento: str, destino: Path)
     El proyecto que se indica solo se usa para facturación; para **leer** un
     objeto sirve cualquier nombre, y las cuentas personales no tienen proyecto
     por defecto.
+
+    Raises:
+        RuntimeError: si el bucket responde 403, con el nombre de la cuenta que
+            se está usando. Es el error más frecuente y el más confuso: Colab
+            suele estar abierto con una cuenta personal, mientras que los
+            términos de Waymo se aceptaron con otra.
     """
+    from google.api_core import exceptions
     from google.cloud import storage
 
     bucket = storage.Client(project="mly1101").bucket(BUCKET)
-    bucket.blob(ruta_gcs(componente, segmento)).download_to_filename(str(destino))
+    try:
+        bucket.blob(ruta_gcs(componente, segmento)).download_to_filename(str(destino))
+    except exceptions.Forbidden as error:
+        destino.unlink(missing_ok=True)
+        raise RuntimeError(
+            "Google Cloud respondió 403: la cuenta con la que está abierto este entorno no "
+            "tiene acceso al Waymo Open Dataset.\n\n"
+            "  Causa habitual: Colab está abierto con una cuenta de Google distinta de la que "
+            "aceptó los términos en https://waymo.com/open/download/\n\n"
+            "  Solución: cambia de cuenta en Colab (avatar arriba a la derecha) y usa la misma "
+            "con la que te registraste en Waymo, o acepta los términos con esta cuenta.\n\n"
+            f"  Mensaje original: {error}"
+        ) from error
 
 
 def _descargar_con_gsutil(componente: str, segmento: str, destino: Path) -> None:

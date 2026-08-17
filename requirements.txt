@@ -6,4 +6,5 @@ matplotlib>=3.7
 seaborn>=0.13
 jupyterlab>=4.0
 pytest>=7.4
-pyarrow>=14.0   # lectura de Parquet (notebook opcional de Waymo)
+pyarrow>=14.0              # lectura de Parquet (notebook opcional de Waymo)
+google-cloud-storage>=2.14 # descarga de Waymo en Colab (ahí ya viene instalado)

@@ -246,7 +246,7 @@ identificación y cuantificación de problemas de calidad.
 | Esquema del notebook de Waymo | Contrastado con el código fuente oficial (2026-08-12) | ✅ |
 | Ejecución del notebook de Waymo | `jupyter nbconvert --execute` sobre datos reales | ✅ 2026-08-13, sin errores |
 | Ejecución en Google Colab (notebooks 01) | Abiertos desde el badge y ejecutados en Colab | ✅ 2026-08-16: 29 celdas, 0 tracebacks, 0 warnings, gráficos renderizados |
-| Ejecución en Colab del notebook de Waymo | Intentada el 2026-08-16 | ⚠️ **no lograda**, ver §6.6 |
+| Ejecución en Colab del notebook de Waymo | Ejecutada el 2026-08-16 | ⚠️ **bloqueada por la cuenta**, no por el código; ver §6.6 |
 | Mapeo del esquema de Waymo | `pytest tests/test_mapeo_waymo.py` contra un Parquet real | ✅ 10/10 |
 
 ### 6.1 Comando de verificación completa
@@ -338,10 +338,26 @@ tal como estaba escrito:
 `google.cloud.storage` en Colab, `gsutil` en local — y el Paso 2 del notebook documenta ambas
 trampas antes de que el alumno las sufra.
 
-**Lo que queda sin verificar:** que el cliente Python resuelva efectivamente el punto 2 en Colab.
-Es la vía documentada por Google y la que usa las credenciales de `authenticate_user()`, pero no
-se logró una corrida limpia para confirmarlo. El camino **local está verificado** y es el que el
-material recomienda.
+3. **La cuenta de Colab no es la que aceptó los términos de Waymo.** Al probar el cliente Python
+   dentro de Colab, la petición llegó a Google Cloud y respondió:
+
+   ```
+   403 GET https://storage.googleapis.com/download/storage/v1/b/waymo_open_dataset_v_2_0_1/…
+   giocrisrai@gmail.com does not have storage.objects.get access
+   ```
+
+   Es decir: **el código funciona** —autentica y alcanza el bucket— pero Colab estaba abierto con
+   la cuenta personal, mientras que los términos de Waymo se aceptaron con la institucional. Es
+   el error más confuso de los tres, porque la autenticación tiene éxito y el fallo aparece
+   después, al descargar.
+
+**Correcciones adicionales:** `src/waymo.py` captura ese 403 y lo traduce a un mensaje que nombra
+la causa y la solución (cambiar de cuenta en Colab), con un test que fija ese comportamiento. El
+Paso 2 del notebook documenta las tres trampas en orden de frecuencia.
+
+**Estado resultante:** el camino local está verificado de punta a punta; el de Colab está
+verificado hasta la petición HTTP a Google Cloud, y de ahí en adelante depende de qué cuenta use
+quien lo ejecute — algo que ya no puede fallar en silencio.
 
 ### 6.4 Limitaciones que persisten
 
