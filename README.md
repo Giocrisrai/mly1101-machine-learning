@@ -40,7 +40,7 @@ vienen los datos → cómo se almacenan y manipulan → qué tan sucios están.
 | Notebook transversal | Para quién | Abrir |
 |---|---|---|
 | `10_proyecto_equipo_plantilla.ipynb` | El equipo la copia y la rellena con **su** dataset | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/10_proyecto_equipo_plantilla.ipynb) |
-| `04_opcional_kedro_databricks.ipynb` | Quien quiera ver el análisis como pipeline reproducible | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/04_opcional_kedro_databricks.ipynb) |
+| `04_opcional_kedro_databricks.ipynb` | Quien quiera ver el análisis como pipeline reproducible ([`kedro_mly1101/`](kedro_mly1101/)) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/04_opcional_kedro_databricks.ipynb) |
 | `00_opcional_waymo_real.ipynb` | Quien quiera repetirlo con datos reales de Waymo | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/00_opcional_waymo_real.ipynb) |
 
 > **El número del archivo no coincide con el de la actividad.** El notebook de EDA se publicó
@@ -84,6 +84,32 @@ python herramientas/calcular_nota.py --csv docs/ejemplo_notas.csv   # el curso c
 
 El modo CSV entrega también el promedio del curso y el porcentaje de aprobación. Si tu sede usa
 otra exigencia, `--exigencia 0.5`.
+
+---
+
+## El pipeline: `kedro_mly1101/`
+
+El análisis de la EA1 también existe como **pipeline reproducible de [Kedro](https://kedro.org)**,
+versionado en [`kedro_mly1101/`](kedro_mly1101/) y cubierto por 16 tests. No es una demostración:
+es la columna de ingeniería sobre la que crecen las experiencias siguientes.
+
+```bash
+uv sync --extra kedro
+cd kedro_mly1101 && uv run kedro run
+```
+
+Nueve nodos: cuatro de diagnóstico y cinco de limpieza. Producen el diagnóstico de calidad y
+`detecciones_limpias.parquet`, que es **lo que consumirá la EA2** para entrenar el primer modelo.
+
+| Experiencia | Pipeline | Consume | Estado |
+|---|---|---|---|
+| **EA1** · Datos | `calidad` · `preprocesamiento` | El CSV crudo | ✅ |
+| **EA2** · Supervisado | `supervisado` | `detecciones_limpias` | ⏳ |
+| **EA3** · No supervisado | `no_supervisado` | `detecciones_limpias` | ⏳ |
+
+Cada experiencia **añade nodos, no reescribe el análisis anterior**. Los detalles, las decisiones
+de diseño y qué cambiaría en Databricks están en
+[`kedro_mly1101/README.md`](kedro_mly1101/README.md) y en el notebook 04.
 
 ---
 
@@ -237,6 +263,10 @@ herramientas/
   descargar_waymo.py        descarga segmentos reales de Waymo
   analizar_sesgo_waymo.py   análisis de sesgo sobre varios segmentos
 
+kedro_mly1101/       el pipeline reproducible (Kedro). Versionado; sus salidas no
+  conf/base/            catalog.yml (dónde vive el dato) y parameters.yml (las decisiones)
+  src/.../pipelines/    calidad (diagnóstico) y preprocesamiento (limpieza)
+
 tests/               pytest de todo lo anterior
 docs/                guiones de clase, rúbrica y documentos de diseño
 ```
@@ -267,11 +297,12 @@ Editar los `.ipynb` directamente funciona hasta el siguiente build, que los sobr
 uv run pytest        # o simplemente `pytest` si ya activaste el entorno
 ```
 
-**111 tests en total**, repartidos así:
+**127 tests en total**, repartidos así:
 
 | Archivo | Tests | Qué verifica |
 |---|---|---|
 | `tests/test_generar_dataset.py` | 19 | Reproducibilidad byte a byte y presencia de **cada uno de los 10 defectos** |
+| `tests/test_pipeline_kedro.py` | 16 | Los nodos del pipeline y que el grafo se construya sin ciclos |
 | `tests/test_formatos.py` | 17 | El benchmark de formatos de la Act. 1.2: peso, tiempos y pérdida de tipos |
 | `tests/test_fuentes.py` | 15 | La lectura desde SQL, JSON anidado y texto libre de la Act. 1.1 |
 | `tests/test_eda.py` | 14 | Las utilidades de diagnóstico de `src/eda.py` |

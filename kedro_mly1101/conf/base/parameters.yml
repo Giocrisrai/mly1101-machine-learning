@@ -1,0 +1,43 @@
+# Parámetros del pipeline.
+#
+# Aquí viven las DECISIONES, no el código que las aplica. Es la diferencia que
+# más cuesta ver al empezar con Kedro: cambiar un umbral o agregar una variante
+# de escritura no debería exigir tocar Python ni volver a probar nada.
+#
+# Cada bloque corresponde a una fila de la tabla de decisiones de la EA1.
+
+# Variantes de escritura que hay que unificar (defectos 3 y 4 del dataset).
+mapas_categorias:
+  object_type:
+    peaton: pedestrian
+    ped: pedestrian
+  weather:
+    lluvia: rain
+    soleado: sunny
+    niebla: fog
+
+# Valores que representan un dato faltante sin ser NaN (defectos 1 y 2).
+centinelas:
+  num_lidar_points: -1
+
+# Reglas de dominio: describen filas IMPOSIBLES, no atípicas.
+# Un bus de 15 m es atípico y legítimo; una altura de 0 m es imposible.
+reglas_dominio:
+  altura nula o negativa: box_height <= 0
+  largo negativo: box_length < 0
+  ancho negativo: box_width < 0
+  velocidad superior a 100 m/s: speed_mps > 100
+  puntos laser negativos: num_lidar_points < 0
+
+# Columnas que no aportan información a un modelo.
+# sensor_version es constante (varianza cero); id_interno es casi único, así que
+# un modelo con capacidad suficiente lo memoriza y el rendimiento en test se cae.
+columnas_a_descartar:
+  - sensor_version
+
+# Para el análisis de sesgo: qué faltante se cruza contra qué grupo.
+sesgo:
+  columna: speed_mps
+  grupos:
+    - time_of_day
+    - detection_difficulty

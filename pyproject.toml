@@ -48,7 +48,7 @@ package = false          # es un repositorio de material, no una librería insta
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src", "herramientas"]
+pythonpath = ["src", "herramientas", "kedro_mly1101/src"]
 addopts = "-q"
 
 [tool.ruff]

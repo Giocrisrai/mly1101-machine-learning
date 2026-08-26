@@ -16,8 +16,14 @@ notebooks/*_resuelto.ipynb
 salidas/
 salidas_act12/           # exportaciones del benchmark de formatos (Actividad 1.2)
 notebooks/salidas_act12/
-kedro_mly1101/           # proyecto Kedro que genera el notebook 04
-notebooks/kedro_mly1101/
+salidas_proyecto/        # salidas de la plantilla de proyecto de equipo
+notebooks/salidas_proyecto/
+
+# El proyecto Kedro SI se versiona (kedro_mly1101/): es la columna de ingenieria
+# de la asignatura. Lo que no se versiona son sus salidas, que se regeneran con
+# `kedro run` en un par de segundos.
+kedro_mly1101/data/
+notebooks/kedro_mly1101/   # la copia de juguete que crea el notebook 04
 
 # macOS
 .DS_Store

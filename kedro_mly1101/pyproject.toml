@@ -1,0 +1,4 @@
+[tool.kedro]
+package_name = "kedro_mly1101"
+project_name = "MLY1101 - pipeline de datos de deteccion LiDAR"
+kedro_init_version = "1.5.0"

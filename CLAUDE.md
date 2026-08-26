@@ -55,7 +55,12 @@ estructural.
    justamente a leer ese `object`, y Colab sigue en la serie 2.x. No subas el tope sin migrar el
    material completo.
 
-8. **La rúbrica usa dos numeraciones y ambas son necesarias.** Los PPT definen IL 1.1, 1.2 y 1.3
+8. **El pipeline de `kedro_mly1101/` SÍ se versiona; sus salidas (`data/`) no.** Es la columna
+   de ingeniería del curso, no un ejemplo desechable: las pipelines de EA2 y EA3 se registran
+   ahí. Sus nodos **reutilizan `src/eda.py`**, nunca reimplementan el análisis, y las decisiones
+   de limpieza viven en `conf/base/parameters.yml`, no en el código.
+
+9. **La rúbrica usa dos numeraciones y ambas son necesarias.** Los PPT definen IL 1.1, 1.2 y 1.3
    (uno por actividad); la corrección usa cinco dimensiones D1–D5, que en el código y en
    `calcular_nota.py` se siguen llamando `IL1`…`IL5`. La tabla de correspondencia está al
    principio de `docs/rubrica_ea1.md`.
@@ -64,7 +69,8 @@ estructural.
 
 ```bash
 uv sync                                        # entorno reproducible (pyproject.toml + uv.lock)
-uv run pytest                                  # 111 tests; sin extras: 110 passed, 1 skipped
+uv run pytest                                  # 127 tests; sin el extra waymo, 1 se salta
+cd kedro_mly1101 && uv run kedro run && cd ..  # el pipeline debe correr 9/9 nodos
 uv run python herramientas/construir_notebooks.py   # regenera los nueve notebooks
 
 # Los cinco notebooks con código resuelto deben ejecutar completos:
@@ -113,7 +119,8 @@ es sobre `google.cloud.storage`.
 | EA1 Semana 1 · Act. 1.2 Estructuras y almacenamiento | ✅ completa y verificada |
 | EA1 Semana 1 · Act. 1.3 EDA | ✅ completa y verificada |
 | Plantilla de proyecto de equipo | ✅ ejecuta de extremo a extremo |
-| Notebook opcional de Kedro y Databricks | ✅ el pipeline corre; Databricks queda conceptual |
+| Pipeline Kedro (`kedro_mly1101/`) | ✅ 9 nodos, versionado, 16 tests |
+| Notebook opcional de Kedro y Databricks | ✅ usa el pipeline real; Databricks queda conceptual |
 | EA1 semanas siguientes | ⏳ pendiente (la EA1 son 20 h en total) |
 | EA2 / EA3 / EFT | ⏳ pendiente |
 

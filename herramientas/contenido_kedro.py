@@ -1,15 +1,19 @@
-"""Fuente única del notebook opcional de Kedro y Databricks.
+"""Fuente única del notebook de Kedro y Databricks.
 
 Genera ``notebooks/04_opcional_kedro_databricks.ipynb``.
 
-Alcance decidido con el docente: **Kedro se ejecuta de verdad** (se construye un proyecto
-mínimo con ``%%writefile`` y se corre con ``kedro run``), y **Databricks queda conceptual**,
-porque exige una cuenta y un clúster que no se pueden pedir en clase. Lo que sí se muestra de
-Databricks es el código equivalente lado a lado, que es lo que permite decidir cuándo hace falta.
+**Cambio de enfoque respecto de la primera versión (2026-08-26):** el notebook ya no
+construye un proyecto Kedro de juguete con ``%%writefile``. Ahora **usa el proyecto real
+del repositorio**, ``kedro_mly1101/``, que está versionado y cubierto por
+``tests/test_pipeline_kedro.py``.
 
-El pipeline que se construye no es un ejemplo de juguete: sus nodos **reutilizan las funciones
-de ``src/eda.py``** que los alumnos ya usaron en la Actividad 1.3. La idea que debe quedar es que
-industrializar no significa reescribir el análisis, sino declarar sus dependencias.
+El motivo es que ese proyecto no es una demostración: es la columna de ingeniería sobre la
+que crecen las experiencias siguientes. Un proyecto que se crea y se borra dentro de una
+celda no sirve como base para la EA2 ni para la EA3.
+
+Alcance de Databricks: **conceptual por diseño**. Exige cuenta y clúster que no se pueden
+pedir en clase. Lo que sí se muestra es el cambio exacto en ``catalog.yml``, que es el
+argumento de por qué se separó el catálogo del análisis.
 
 Regenerar tras editar:
 
@@ -24,9 +28,9 @@ CELDAS_KEDRO: list[dict] = [
     md(
         """
 # MLY1101 · Notebook opcional
-## De un notebook a un pipeline: Kedro, y qué cambiaría en Databricks
+## De notebooks a pipeline: Kedro, y qué cambiaría en Databricks
 
-**Este notebook es opcional.** No entra en la evaluación de la EA1. Está para responder una
+**Este notebook es opcional y no entra en la evaluación de la EA1.** Está para responder una
 pregunta que aparece en cuanto un análisis deja de ser un ejercicio:
 
 > El notebook funciona. ¿Por qué no basta con eso?
@@ -35,25 +39,36 @@ pregunta que aparece en cuanto un análisis deja de ser un ejercicio:
 
 ### El problema del notebook
 
-Un notebook tiene un defecto que no se ve mientras trabajas solo: **el estado depende del orden
-en que ejecutaste las celdas, no del orden en que están escritas.**
+Un notebook tiene un defecto que no se nota mientras trabajas solo: **el estado depende del
+orden en que ejecutaste las celdas, no del orden en que están escritas.**
 
-Puedes borrar una celda y el resultado sigue en memoria. Puedes ejecutar la 12 antes que la 7 y
-todo funciona. Al día siguiente lo abres de nuevo, ejecutas de arriba abajo y falla, y nadie
-sabe por qué.
+Puedes borrar una celda y su resultado sigue en memoria. Puedes ejecutar la 12 antes que la 7 y
+todo funciona. Al día siguiente lo abres, ejecutas de arriba abajo y falla, y nadie sabe por qué.
 
 En una entrega de clase eso es una molestia. En un sistema que decide algo, es un incidente.
 
 | | Notebook | Pipeline |
 |---|---|---|
-| Orden de ejecución | El que hayas hecho tú | Declarado y resuelto automáticamente |
+| Orden de ejecución | El que hiciste tú | Declarado y resuelto automáticamente |
 | Dónde están las rutas de archivo | Repartidas por el código | En un solo catálogo |
+| Dónde están las decisiones | Mezcladas con el código | En un archivo de configuración |
 | Reejecutar solo lo que cambió | No | Sí |
 | Probar una pieza con `pytest` | Difícil | Es una función normal |
 | Correr sin que nadie mire | No | Sí |
 
 **Kedro** aplica esa estructura a un proyecto de Python. **Databricks** resuelve otro problema
 distinto: qué hacer cuando los datos ya no caben en un computador.
+
+---
+
+### Este no es un ejemplo de juguete
+
+El proyecto que vamos a ejecutar **está en el repositorio**, en `kedro_mly1101/`. No se crea
+aquí ni se borra al cerrar el notebook: está versionado en Git y tiene 16 tests propios en
+`tests/test_pipeline_kedro.py`.
+
+Es la columna de ingeniería de la asignatura. Las pipelines de aprendizaje supervisado (EA2) y
+no supervisado (EA3) se enchufarán en este mismo proyecto, sobre el mismo dataset.
 """
     ),
     md(
@@ -61,7 +76,7 @@ distinto: qué hacer cuando los datos ya no caben en un computador.
 ---
 ## 0 · Preparación
 
-En Colab hay que instalar Kedro (no viene preinstalado). Tarda cerca de un minuto.
+En Colab hay que instalar Kedro, que no viene preinstalado. Tarda cerca de un minuto.
 """
     ),
     code(
@@ -75,15 +90,15 @@ if EN_COLAB:
     REPO = Path("mly1101-machine-learning")
     if not REPO.exists():
         !git clone -q {URL_REPO}.git {{REPO}}
-    RAIZ = REPO
+    RAIZ = REPO.resolve()
 else:
     RAIZ = Path("..").resolve()
 
-sys.path.insert(0, str(RAIZ / "src"))
-RUTA_DATOS = (RAIZ / "datos" / "crudos" / "detecciones_waymo_like.csv").resolve()
+PROYECTO = RAIZ / "kedro_mly1101"
 
 print("Colab:", EN_COLAB)
-print("Dataset:", RUTA_DATOS, "->", RUTA_DATOS.exists())
+print("Raíz del repositorio:", RAIZ)
+print("¿Existe el proyecto Kedro?:", PROYECTO.exists())
 """
     ),
     code(
@@ -102,61 +117,30 @@ except ImportError:
     md(
         """
 ---
-# Bloque 1 · Anatomía de un proyecto Kedro
+# Bloque 1 · Anatomía del proyecto
 
-Un proyecto de Kedro son cuatro piezas, y cada una responde a una pregunta:
+Cuatro piezas, y cada una responde a una pregunta distinta:
 
 | Pieza | Archivo | Pregunta que responde |
 |---|---|---|
 | **Catálogo** | `conf/base/catalog.yml` | ¿Dónde vive cada dato y en qué formato? |
-| **Nodos** | `nodes.py` | ¿Qué transformación hace cada paso? |
-| **Pipeline** | `pipeline.py` | ¿Qué depende de qué? |
-| **Registro** | `pipeline_registry.py` | ¿Qué pipelines existen en este proyecto? |
+| **Parámetros** | `conf/base/parameters.yml` | ¿Cuáles son las decisiones? |
+| **Nodos** | `pipelines/*/nodes.py` | ¿Qué transformación hace cada paso? |
+| **Pipeline** | `pipelines/*/pipeline.py` | ¿Qué depende de qué? |
 
-Lo importante es lo que **no** hay: ninguna ruta de archivo dentro del código de análisis, y
-ningún orden de ejecución escrito a mano. Kedro deduce el orden de las dependencias entre nodos.
-
-Vamos a construirlo entero, archivo por archivo.
+Lo importante es lo que **no** hay: ninguna ruta de archivo dentro del código de análisis,
+ninguna decisión escrita a mano en medio de una transformación, y ningún orden de ejecución.
 """
     ),
     code(
         """
-PROYECTO = Path("kedro_mly1101").resolve()
-
-for carpeta in [
-    PROYECTO / "conf" / "base",
-    PROYECTO / "conf" / "local",
-    PROYECTO / "data",
-    PROYECTO / "src" / "kedro_mly1101" / "pipelines" / "calidad",
-]:
-    carpeta.mkdir(parents=True, exist_ok=True)
-
-for paquete in [
-    PROYECTO / "src" / "kedro_mly1101",
-    PROYECTO / "src" / "kedro_mly1101" / "pipelines",
-    PROYECTO / "src" / "kedro_mly1101" / "pipelines" / "calidad",
-]:
-    (paquete / "__init__.py").touch()
-
-# Desactivar la telemetría de Kedro: si no, pide consentimiento y en un notebook
-# eso interrumpe la ejecución.
-(PROYECTO / ".telemetry").write_text("consent: false\\n", encoding="utf-8")
-
-print("Estructura creada en:", PROYECTO)
-"""
-    ),
-    code(
-        """
-# Kedro reconoce una carpeta como proyecto por este bloque del pyproject.toml.
-(PROYECTO / "pyproject.toml").write_text(
-    f'''[tool.kedro]
-package_name = "kedro_mly1101"
-project_name = "MLY1101 - diagnostico de calidad"
-kedro_init_version = "{kedro.__version__}"
-''',
-    encoding="utf-8",
-)
-print((PROYECTO / "pyproject.toml").read_text())
+# El proyecto real, tal como está en el repositorio.
+for ruta in sorted(PROYECTO.rglob("*")):
+    if any(p in ruta.parts for p in ("data", "__pycache__", ".ipynb_checkpoints")):
+        continue
+    if ruta.is_file():
+        relativa = ruta.relative_to(PROYECTO)
+        print(f"  kedro_mly1101/{relativa}")
 """
     ),
     # ------------------------------------------------------------------
@@ -165,252 +149,145 @@ print((PROYECTO / "pyproject.toml").read_text())
 ---
 # Bloque 2 · El catálogo: dónde vive el dato
 
-Esta es la pieza que más cambia la forma de trabajar. En un notebook, la ruta del archivo está
-escrita en medio del código:
+Esta es la pieza que más cambia la forma de trabajar. En un notebook, la ruta está escrita en
+medio del análisis:
 
 ```python
 df = pd.read_csv("../datos/crudos/detecciones_waymo_like.csv")   # ¿y en producción?
 ```
 
-En Kedro, el dato tiene un **nombre** y el código solo usa ese nombre. Dónde está y en qué
-formato se declara aparte:
+En Kedro el dato tiene un **nombre**, y el nodo solo conoce ese nombre:
 
 ```python
-def diagnosticar(detecciones_crudas):   # el nodo solo conoce el nombre
+def diagnosticar(detecciones_crudas):    # de dónde sale, no es asunto suyo
     ...
 ```
 
-Consecuencia práctica: cambiar de CSV a Parquet, o de disco local a un bucket en la nube, es
-editar tres líneas de YAML. **Ni una línea del análisis se toca.**
+Dónde está y en qué formato se declara aparte. Consecuencia práctica: cambiar de CSV a Parquet,
+o de disco local a un bucket en la nube, es editar tres líneas de YAML. **Ni una línea del
+análisis se toca.** Esto vuelve en el bloque 6, cuando hablemos de Databricks.
 """
     ),
     code(
         """
-catalogo = f'''
-# Catálogo de datos: el único lugar del proyecto donde hay rutas.
+print((PROYECTO / "conf" / "base" / "catalog.yml").read_text(encoding="utf-8"))
+"""
+    ),
+    md(
+        """
+### Las capas del catálogo
 
-detecciones_crudas:
-  type: pandas.CSVDataset
-  filepath: {RUTA_DATOS}
+Los nombres `01_raw`, `02_intermediate`, `03_primary` son una convención de Kedro, y valen la
+pena aunque no uses Kedro:
 
-# --- Salidas del pipeline ---------------------------------------------------
+| Capa | Qué contiene | Regla |
+|---|---|---|
+| **01_raw** | Lo que llegó | **No se toca nunca.** Es la evidencia de origen |
+| **02_intermediate** | Diagnósticos y tablas de trabajo | Se puede borrar y regenerar |
+| **03_primary** | El dataset limpio, listo para modelar | Es el que consume la EA2 |
 
-resumen_calidad:
-  type: pandas.CSVDataset
-  filepath: data/01_resumen_calidad.csv
-  save_args:
-    index: true
-
-desbalance_clases:
-  type: pandas.CSVDataset
-  filepath: data/02_desbalance_clases.csv
-  save_args:
-    index: true
-
-valores_imposibles:
-  type: pandas.CSVDataset
-  filepath: data/03_valores_imposibles.csv
-  save_args:
-    index: false
-
-# Parquet para el dataset limpio: conserva los tipos, como se midió en la Act. 1.2.
-detecciones_limpias:
-  type: pandas.ParquetDataset
-  filepath: data/04_detecciones_limpias.parquet
-'''
-(PROYECTO / "conf" / "base" / "catalog.yml").write_text(catalogo, encoding="utf-8")
-print(catalogo)
+Fíjate en que `detecciones_limpias` se guarda en **Parquet y no en CSV**. No es capricho: es lo
+que se midió en la Actividad 1.2. El CSV pierde el tipo de 11 de las 16 columnas, así que
+guardar ahí desharía el trabajo de preprocesamiento en el mismo momento de escribirlo.
 """
     ),
     # ------------------------------------------------------------------
     md(
         """
 ---
-# Bloque 3 · Los nodos: funciones puras y nada más
+# Bloque 3 · Los parámetros: dónde viven las decisiones
 
-Un nodo de Kedro es **una función normal de Python**. Recibe DataFrames, devuelve DataFrames, y
-no sabe de dónde vinieron ni a dónde van.
+Esta es la parte que más cuesta ver al empezar, y la que más se agradece después.
 
-Fíjate en lo que hacen estos nodos: **reutilizan `src/eda.py`**, exactamente las mismas funciones
-que usaste en la Actividad 1.3. No hay que reescribir el análisis para industrializarlo. Ese es
-el premio de haber escrito funciones puras desde el principio, sin `print` y sin gráficos dentro.
+Las decisiones de limpieza —qué variantes de escritura unificar, qué valor es un centinela, qué
+regla define lo imposible— **no están en el código**. Están en `parameters.yml`.
+
+Agregar una variante de escritura no debería exigir tocar Python, ni volver a probar nada, ni
+que la persona que la agrega sepa programar.
 """
     ),
     code(
-        r'''
-nodos = f"""
-\"\"\"Nodos del pipeline de calidad de datos.
-
-Cada funcion es pura: recibe y devuelve DataFrames, sin imprimir ni graficar.
-Reutilizan src/eda.py del repositorio, las mismas funciones de la Actividad 1.3.
-\"\"\"
-
-import sys
-
-sys.path.insert(0, r"{RAIZ.resolve() / 'src'}")
-
-import pandas as pd
-
-import eda
-
-
-def diagnosticar(detecciones: pd.DataFrame) -> pd.DataFrame:
-    \"\"\"Radiografia por columna: tipos, cardinalidad, nulos declarados y ocultos.\"\"\"
-    return eda.resumen_calidad(detecciones)
-
-
-def medir_desbalance(detecciones: pd.DataFrame) -> pd.DataFrame:
-    \"\"\"Frecuencia de cada tipo de objeto, tras unificar variantes de escritura.\"\"\"
-    tipos = eda.normalizar_categoria(
-        detecciones["object_type"], mapa={{"peaton": "pedestrian", "ped": "pedestrian"}}
-    )
-    return eda.resumen_desbalance(tipos)
-
-
-def auditar_dominio(detecciones: pd.DataFrame) -> pd.DataFrame:
-    \"\"\"Filas que violan reglas fisicas del dominio: son imposibles, no atipicas.\"\"\"
-    reglas = {{
-        "altura nula o negativa": "box_height <= 0",
-        "largo negativo": "box_length < 0",
-        "velocidad superior a 100 m/s": "speed_mps > 100",
-        "puntos laser negativos (centinela -1)": "num_lidar_points < 0",
-    }}
-    return eda.valores_imposibles(detecciones, reglas)
-
-
-def limpiar(detecciones: pd.DataFrame) -> pd.DataFrame:
-    \"\"\"Aplica las decisiones de preprocesamiento acordadas en la Actividad 1.3.
-
-    Cada paso corresponde a una fila de la tabla de decisiones. Los valores
-    imposibles se convierten en faltantes en vez de eliminarse: quitar la fila
-    entera descarta tambien las columnas que si eran validas.
-    \"\"\"
-    limpio = detecciones.copy()
-
-    # 1. El centinela -1 de num_lidar_points es un faltante disfrazado.
-    limpio["num_lidar_points"] = limpio["num_lidar_points"].replace(-1, pd.NA)
-
-    # 2. "N/D" impide que la marca de tiempo sea numerica.
-    limpio["timestamp_micros"] = eda.a_numerico(limpio["timestamp_micros"])
-
-    # 3. Unificar las variantes de escritura de las categoricas.
-    limpio["object_type"] = eda.normalizar_categoria(
-        limpio["object_type"], mapa={{"peaton": "pedestrian", "ped": "pedestrian"}}
-    )
-    limpio["weather"] = eda.normalizar_categoria(
-        limpio["weather"], mapa={{"lluvia": "rain", "soleado": "sunny", "niebla": "fog"}}
-    )
-
-    # 4. Las dimensiones imposibles pasan a faltantes, no se borran las filas.
-    for columna in ["box_height", "box_length", "box_width"]:
-        limpio.loc[limpio[columna] <= 0, columna] = pd.NA
-
-    # 5. Los duplicados exactos si se eliminan: una fila identica no aporta nada.
-    limpio = limpio.drop_duplicates().reset_index(drop=True)
-
-    # 6. sensor_version es constante: varianza cero, informacion cero.
-    limpio = limpio.drop(columns=["sensor_version"])
-
-    return limpio
+        """
+print((PROYECTO / "conf" / "base" / "parameters.yml").read_text(encoding="utf-8"))
 """
-(PROYECTO / "src" / "kedro_mly1101" / "pipelines" / "calidad" / "nodes.py").write_text(
-    nodos, encoding="utf-8"
-)
-print(nodos[:900], "...")
-'''
+    ),
+    md(
+        """
+**Cada bloque de ese archivo es una fila de la tabla de decisiones de la EA1.** Lo que el alumno
+escribe en Markdown en su informe, aquí está en un formato que además se ejecuta.
+
+Esa es la diferencia de fondo: una tabla de decisiones en un informe se interpreta distinto cada
+vez que alguien la lee. Un `parameters.yml` se ejecuta igual siempre.
+"""
     ),
     # ------------------------------------------------------------------
     md(
         """
 ---
-# Bloque 4 · El pipeline: declarar dependencias, no orden
+# Bloque 4 · Los nodos: funciones puras y nada más
 
-Aquí está la idea central de Kedro y conviene detenerse en ella.
+Un nodo de Kedro es **una función normal de Python**. Recibe DataFrames y parámetros, devuelve
+DataFrames, y no sabe de dónde vinieron ni a dónde van.
 
-**No se escribe en qué orden ejecutar los nodos.** Se declara qué necesita cada uno (`inputs`) y
-qué produce (`outputs`). Kedro construye el grafo de dependencias y deduce el orden solo.
+Mira lo que hacen estos nodos: **reutilizan `src/eda.py`**, exactamente las mismas funciones que
+usaste en la Actividad 1.3. No hubo que reescribir el análisis para industrializarlo.
 
-Consecuencias que se obtienen gratis:
+Ese es el premio de haber escrito funciones puras desde el principio: sin `print`, sin gráficos,
+sin estado.
+"""
+    ),
+    code(
+        """
+nodos_calidad = PROYECTO / "src" / "kedro_mly1101" / "pipelines" / "calidad" / "nodes.py"
+print(nodos_calidad.read_text(encoding="utf-8"))
+"""
+    ),
+    md(
+        """
+### El pipeline de limpieza
+
+El de calidad solo diagnostica. El de preprocesamiento **aplica** las decisiones, y tiene una
+regla que gobierna todo el módulo:
+
+> **Marcar antes que eliminar.** Un valor imposible se convierte en faltante; no se borra la
+> fila entera, porque el resto de esa fila sí era válido.
+
+Lo único que se elimina son los duplicados exactos, que por definición no aportan nada.
+"""
+    ),
+    code(
+        """
+import ast
+
+nodos_prep = PROYECTO / "src" / "kedro_mly1101" / "pipelines" / "preprocesamiento" / "nodes.py"
+arbol = ast.parse(nodos_prep.read_text(encoding="utf-8"))
+
+for definicion in [n for n in arbol.body if isinstance(n, ast.FunctionDef)]:
+    argumentos = ", ".join(a.arg for a in definicion.args.args)
+    resumen = (ast.get_docstring(definicion) or "").split("\\n")[0]
+    print(f"{definicion.name}({argumentos})")
+    print(f"    → {resumen}\\n")
+"""
+    ),
+    # ------------------------------------------------------------------
+    md(
+        """
+---
+# Bloque 5 · El grafo: declarar dependencias, no orden
+
+Aquí está la idea central de Kedro, y conviene detenerse.
+
+**En ningún archivo se escribe en qué orden ejecutar los nodos.** Se declara qué necesita cada
+uno (`inputs`) y qué produce (`outputs`). Kedro construye el grafo de dependencias y deduce el
+orden solo.
+
+Lo que se obtiene gratis:
 
 - Los nodos independientes **pueden correr en paralelo** (`kedro run --runner=ParallelRunner`).
 - Si cambia un nodo, se puede reejecutar **solo lo que depende de él**.
-- El grafo se puede dibujar (`kedro viz`) y sirve para explicarle el proceso a alguien más.
+- El grafo se dibuja con `kedro viz` y sirve para explicarle el proceso a quien no lee código.
 - Un ciclo o una dependencia que falta es un **error al construir**, no un fallo a mitad de
   ejecución.
-"""
-    ),
-    code(
-        '''
-pipeline_py = """
-\\"\\"\\"Pipeline de calidad de datos.
-
-No se declara el ORDEN de ejecucion, solo las dependencias: que necesita cada
-nodo y que produce. Kedro deduce el orden a partir del grafo.
-\\"\\"\\"
-
-from kedro.pipeline import Pipeline, node
-
-from .nodes import auditar_dominio, diagnosticar, limpiar, medir_desbalance
-
-
-def create_pipeline(**kwargs) -> Pipeline:
-    return Pipeline(
-        [
-            node(
-                func=diagnosticar,
-                inputs="detecciones_crudas",
-                outputs="resumen_calidad",
-                name="diagnosticar_calidad",
-            ),
-            node(
-                func=medir_desbalance,
-                inputs="detecciones_crudas",
-                outputs="desbalance_clases",
-                name="medir_desbalance",
-            ),
-            node(
-                func=auditar_dominio,
-                inputs="detecciones_crudas",
-                outputs="valores_imposibles",
-                name="auditar_reglas_de_dominio",
-            ),
-            node(
-                func=limpiar,
-                inputs="detecciones_crudas",
-                outputs="detecciones_limpias",
-                name="aplicar_decisiones_de_limpieza",
-            ),
-        ]
-    )
-"""
-(PROYECTO / "src" / "kedro_mly1101" / "pipelines" / "calidad" / "pipeline.py").write_text(
-    pipeline_py, encoding="utf-8"
-)
-
-registro = """
-from kedro.pipeline import Pipeline
-
-from kedro_mly1101.pipelines.calidad.pipeline import create_pipeline as calidad
-
-
-def register_pipelines() -> dict[str, Pipeline]:
-    pipeline_calidad = calidad()
-    return {"calidad": pipeline_calidad, "__default__": pipeline_calidad}
-"""
-(PROYECTO / "src" / "kedro_mly1101" / "pipeline_registry.py").write_text(
-    registro, encoding="utf-8"
-)
-
-print("pipeline.py y pipeline_registry.py escritos")
-'''
-    ),
-    # ------------------------------------------------------------------
-    md(
-        """
-### Antes de ejecutar: el orden que Kedro dedujo
-
-En `pipeline.py` los nodos están escritos en un orden cualquiera y **nunca dijimos cuál va
-primero**. Kedro construyó el grafo a partir de los `inputs` y `outputs` de cada uno. Míralo:
 """
     ),
     code(
@@ -419,28 +296,52 @@ sys.path.insert(0, str(PROYECTO / "src"))
 
 from kedro_mly1101.pipeline_registry import register_pipelines
 
-pipeline = register_pipelines()["calidad"]
+pipelines = register_pipelines()
+print("Pipelines registradas:", sorted(pipelines), "\\n")
 
-print("Orden de ejecución deducido por Kedro:\\n")
-for i, nodo in enumerate(pipeline.nodes, start=1):
-    print(f"  {i}. {nodo.name}")
-    print(f"     recibe : {sorted(nodo.inputs)}")
-    print(f"     produce: {sorted(nodo.outputs)}\\n")
-
-print("Datos que el pipeline espera encontrar :", sorted(pipeline.inputs()))
-print("Datos que el pipeline produce          :", sorted(pipeline.outputs()))
+completo = pipelines["__default__"]
+for i, nodo in enumerate(completo.nodes, start=1):
+    entradas = [e for e in sorted(nodo.inputs) if not e.startswith("params:")]
+    parametros = [e.replace("params:", "") for e in sorted(nodo.inputs) if e.startswith("params:")]
+    print(f"{i}. {nodo.name}")
+    print(f"     datos     : {entradas}")
+    if parametros:
+        print(f"     parámetros: {parametros}")
+    print(f"     produce   : {sorted(nodo.outputs)}\\n")
+"""
+    ),
+    code(
+        """
+# Lo único que el pipeline espera de fuera, y lo que entrega al final.
+entradas_externas = {e for e in completo.inputs() if not e.startswith("params:")}
+print("Entradas externas :", sorted(entradas_externas))
+print("Salidas finales   :", sorted(completo.outputs()))
+print()
+print("Los nombres que empiezan por '_' no están en el catálogo: son datasets de")
+print("memoria, existen solo durante la ejecución y no tocan el disco.")
 """
     ),
     md(
         """
-Los cuatro nodos dependen solo de `detecciones_crudas`, así que **son independientes entre sí** y
-podrían ejecutarse en paralelo (`kedro run --runner=ParallelRunner`). Si un nodo consumiera la
-salida de otro, Kedro lo colocaría después sin que nadie se lo dijera.
+Fíjate en dos cosas del listado:
 
+1. Los cuatro nodos de **calidad** dependen solo de `detecciones_crudas`: son independientes
+   entre sí y podrían correr en paralelo.
+2. Los cinco de **preprocesamiento** forman una cadena, porque cada uno consume la salida del
+   anterior. Kedro lo dedujo de los nombres, no de una lista de pasos.
+"""
+    ),
+    # ------------------------------------------------------------------
+    md(
+        """
 ---
-# Bloque 5 · Ejecutar
+# Bloque 6 · Ejecutar
 
 Un comando. Sin argumentos, sin rutas, sin orden.
+
+```bash
+cd kedro_mly1101 && kedro run
+```
 """
     ),
     code(
@@ -468,41 +369,77 @@ salida = resultado.stdout + resultado.stderr
 ejecutados = salida.count("Completed node")
 
 print("Código de salida :", resultado.returncode)
-print(f"Nodos ejecutados : {ejecutados} de {len(pipeline.nodes)}")
+print(f"Nodos ejecutados : {ejecutados} de {len(completo.nodes)}")
 print("Pipeline completo:", "Pipeline execution completed" in salida)
 
 assert resultado.returncode == 0, f"el pipeline falló:\\n{salida[-2000:]}"
-assert ejecutados == len(pipeline.nodes), "no se ejecutaron todos los nodos"
-print("\\n✅ Los cuatro nodos corrieron y dejaron sus salidas en disco.")
+assert ejecutados == len(completo.nodes), "no se ejecutaron todos los nodos"
+print("\\n✅ Los nueve nodos corrieron y dejaron sus salidas en kedro_mly1101/data/")
 """
     ),
     code(
         """
 import pandas as pd
 
-print("Archivos producidos por el pipeline:\\n")
-for archivo in sorted((PROYECTO / "data").glob("*")):
-    print(f"  {archivo.name:38s} {archivo.stat().st_size/1024:8.1f} KB")
-
-print("\\n--- Reglas de dominio violadas ---")
-print(pd.read_csv(PROYECTO / "data" / "03_valores_imposibles.csv").to_string(index=False))
-
-print("\\n--- Desbalance de clases ---")
-print(pd.read_csv(PROYECTO / "data" / "02_desbalance_clases.csv", index_col=0))
+print("Archivos producidos:\\n")
+for archivo in sorted((PROYECTO / "data").rglob("*")):
+    if archivo.is_file():
+        print(f"  {str(archivo.relative_to(PROYECTO)):48s} {archivo.stat().st_size/1024:8.1f} KB")
 """
     ),
     code(
         """
-# El dataset limpio, guardado en Parquet: conserva los tipos.
-limpio = pd.read_parquet(PROYECTO / "data" / "04_detecciones_limpias.parquet")
-crudo = pd.read_csv(RUTA_DATOS)
+print("=== Qué cambió al limpiar ===")
+print(pd.read_csv(PROYECTO / "data" / "03_primary" / "informe_limpieza.csv").to_string(index=False))
+"""
+    ),
+    md(
+        """
+### Una cifra que parece un error y no lo es
+
+Mira la fila **`celdas faltantes`**: después de limpiar hay **más** faltantes que antes.
+
+No aparecieron faltantes nuevos. Los que estaban **disfrazados** —el `-1` de `num_lidar_points`,
+el `"N/D"` de `timestamp_micros`, las dimensiones imposibles— pasaron a contarse como lo que
+siempre fueron.
+
+Es exactamente lo que tiene que pasar. Si esa cifra **bajara**, sería la señal de que se
+eliminaron filas en vez de marcarlas. Hay un test que lo deja por escrito:
+`test_resumir_limpieza_reporta_el_aumento_de_faltantes`.
+
+> *Limpiar datos no es hacer que los problemas desaparezcan de la vista. Es hacerlos visibles.*
+"""
+    ),
+    code(
+        """
+print("=== Reglas de dominio violadas ===")
+print(pd.read_csv(PROYECTO / "data" / "02_intermediate" / "valores_imposibles.csv").to_string(index=False))
+
+print("\\n=== Desbalance de clases (tras unificar variantes) ===")
+print(pd.read_csv(PROYECTO / "data" / "02_intermediate" / "desbalance_clases.csv", index_col=0))
+"""
+    ),
+    code(
+        """
+print("=== % de velocidad faltante, por momento del día y dificultad ===")
+print(pd.read_csv(PROYECTO / "data" / "02_intermediate" / "nulos_por_grupo.csv", index_col=0))
+print()
+print("El faltante NO es aleatorio: se concentra en las detecciones difíciles nocturnas.")
+print("Un dropna() global dejaría al modelo aún más ciego de noche de lo que ya estaba,")
+print("y como el conjunto de prueba tiene el mismo sesgo, la métrica no lo mostraría.")
+"""
+    ),
+    code(
+        """
+# El dataset limpio, en Parquet: conserva los tipos.
+limpio = pd.read_parquet(PROYECTO / "data" / "03_primary" / "detecciones_limpias.parquet")
+crudo = pd.read_csv(RAIZ / "datos" / "crudos" / "detecciones_waymo_like.csv")
 
 print(f"Crudo  : {len(crudo):,} filas × {crudo.shape[1]} columnas")
 print(f"Limpio : {len(limpio):,} filas × {limpio.shape[1]} columnas")
-print(f"\\nFilas eliminadas   : {len(crudo) - len(limpio):,} (duplicados exactos)")
-print(f"Columnas eliminadas: {crudo.shape[1] - limpio.shape[1]} (sensor_version, constante)")
-print(f"\\nCategorías de object_type: {crudo['object_type'].nunique()} -> {limpio['object_type'].nunique()}")
-print(f"Categorías de weather    : {crudo['weather'].nunique()} -> {limpio['weather'].nunique()}")
+print()
+print("Este Parquet es lo que consumirá la EA2 para entrenar el primer modelo.")
+limpio.head(3)
 """
     ),
     md(
@@ -511,19 +448,17 @@ print(f"Categorías de weather    : {crudo['weather'].nunique()} -> {limpio['wea
 
 El mismo análisis de la Actividad 1.3, pero ahora:
 
-- **Se ejecuta con un comando** y sin intervención humana. Se puede programar cada noche.
-- **Las rutas están en un solo archivo.** Cambiar el origen no toca el análisis.
-- **Cada nodo es una función normal**, así que `pytest` puede probarla sin levantar nada.
-- **El orden lo deduce Kedro** del grafo de dependencias.
-- **La limpieza quedó escrita como código**, no como una lista de decisiones en un informe que
-  alguien tendrá que volver a implementar.
+- **Se ejecuta con un comando**, sin intervención humana. Se puede programar cada noche.
+- **Las rutas están en un solo archivo**, y las decisiones en otro.
+- **Cada nodo es una función normal**, así que `pytest` la prueba sin levantar nada. Son los 16
+  tests de `tests/test_pipeline_kedro.py`.
+- **El orden lo deduce Kedro** del grafo.
+- **La limpieza quedó escrita como código**, no como una lista de decisiones que alguien tendrá
+  que volver a implementar.
 
-Ese último punto es el que más se subestima. Una tabla de decisiones en Markdown se interpreta
-distinto cada vez que alguien la lee. La función `limpiar()` se ejecuta igual siempre.
-
-> **`kedro viz`** dibuja el grafo en el navegador. En local: `pip install kedro-viz` y
-> `kedro viz run` dentro de la carpeta del proyecto. Es la mejor forma de explicarle un pipeline
-> a alguien que no lee código.
+> **`kedro viz`** dibuja el grafo en el navegador: `pip install kedro-viz` y `kedro viz run`
+> dentro de la carpeta del proyecto. Es la mejor forma de explicarle un pipeline a alguien que
+> no lee código.
 
 > **Cuándo *no* usar Kedro:** para una exploración de media hora. Todo este andamiaje se paga
 > cuando el proceso se va a repetir, cuando lo va a mantener alguien más, o cuando tiene que
@@ -535,12 +470,12 @@ distinto cada vez que alguien la lee. La función `limpiar()` se ejecuta igual s
     md(
         """
 ---
-# Bloque 6 · Databricks: el otro problema
+# Bloque 7 · Databricks: el otro problema
 
 Kedro resuelve la **estructura**. Databricks resuelve la **escala**: qué hacer cuando los datos
 ya no caben en la memoria de un computador.
 
-Nuestro dataset son 40.680 filas y 20 MB en RAM. La flota real de Waymo genera del orden de
+Nuestro dataset son 40.680 filas y unos 20 MB en RAM. La flota real de Waymo genera del orden de
 **200.000 detecciones por segmento**, y hay 798 segmentos solo en el conjunto de entrenamiento:
 unos 160 millones de filas. Eso ya no lo abre pandas en un portátil.
 
@@ -548,10 +483,10 @@ unos 160 millones de filas. Eso ya no lo abre pandas en un portátil.
 
 | Concepto | Qué es |
 |---|---|
-| **Apache Spark** | Motor que reparte el cómputo entre muchas máquinas. Trabaja con DataFrames distribuidos |
-| **Databricks** | Plataforma comercial que ofrece Spark gestionado, notebooks colaborativos y almacenamiento |
-| **Delta Lake** | Formato de almacenamiento sobre Parquet que añade transacciones, versionado e histórico |
-| **Unity Catalog** | Catálogo de datos con permisos y trazabilidad de origen a nivel de organización |
+| **Apache Spark** | Motor que reparte el cómputo entre muchas máquinas, con DataFrames distribuidos |
+| **Databricks** | Plataforma comercial con Spark gestionado, notebooks colaborativos y almacenamiento |
+| **Delta Lake** | Formato sobre Parquet que añade transacciones, versionado e histórico |
+| **Unity Catalog** | Catálogo con permisos y trazabilidad de origen a nivel de organización |
 
 ### El mismo análisis, en los dos mundos
 
@@ -586,71 +521,118 @@ con_kmh.count()     # AQUÍ ocurre todo, y de una sola pasada por los datos
 Spark acumula las tres operaciones, las optimiza en conjunto y recorre los datos **una vez**. Por
 eso puede procesar terabytes: nunca carga todo en memoria.
 
-Esto tiene una consecuencia práctica incómoda: **el error aparece lejos de donde está la causa**.
-Un nombre de columna mal escrito en la línea 2 revienta en el `count()` de la línea 20. Es la
-queja número uno de quien viene de pandas.
+Esto tiene una consecuencia incómoda: **el error aparece lejos de donde está la causa**. Un
+nombre de columna mal escrito en la línea 2 revienta en el `count()` de la línea 20. Es la queja
+número uno de quien viene de pandas.
 
 ### Cuándo hace falta
 
 | Situación | Herramienta |
 |---|---|
 | Los datos caben en RAM (hasta unos pocos GB) | **pandas**. Levantar un clúster para esto es tirar plata |
-| No caben, pero caben en el disco de una máquina | **Parquet leído por trozos**, o Polars, o DuckDB |
+| No caben en RAM, pero sí en el disco de una máquina | **Parquet leído por trozos**, o Polars, o DuckDB |
 | No caben en una máquina | **Spark / Databricks** |
 | Caben, pero el proceso debe repetirse y mantenerse | **Kedro** (con pandas por debajo) |
+"""
+    ),
+    md(
+        """
+### Kedro y Databricks no compiten: se combinan
 
-**Kedro y Databricks no compiten.** Kedro corre sobre Databricks: se cambia el tipo de dataset en
-`catalog.yml` de `pandas.CSVDataset` a `spark.SparkDataset` y **los nodos siguen siendo los
-mismos**. Esa es exactamente la ventaja de haber separado el catálogo del análisis.
+Aquí es donde se cobra todo lo del bloque 2. Para llevar **este mismo proyecto** a Databricks no
+se toca ningún nodo: se cambia el tipo de dataset en `catalog.yml`.
 
 ```yaml
-# El mismo catálogo, apuntando a Spark y Delta Lake en vez de a un CSV local.
+# Lo que tenemos hoy — pandas, CSV en disco local
+detecciones_crudas:
+  type: pandas.CSVDataset
+  filepath: ../datos/crudos/detecciones_waymo_like.csv
+
+detecciones_limpias:
+  type: pandas.ParquetDataset
+  filepath: data/03_primary/detecciones_limpias.parquet
+```
+
+```yaml
+# Lo mismo en Databricks — Spark y Delta Lake
 detecciones_crudas:
   type: spark.SparkDataset
-  filepath: dbfs:/mnt/waymo/detecciones
+  filepath: dbfs:/mnt/waymo/01_raw/detecciones
   file_format: delta
+
+detecciones_limpias:
+  type: spark.SparkDataset
+  filepath: dbfs:/mnt/waymo/03_primary/detecciones_limpias
+  file_format: delta
+  save_args:
+    mode: overwrite
 ```
+
+**Los nodos no se enteran.** Lo que sí habría que revisar es el cuerpo de las funciones: nuestros
+nodos usan la API de pandas, y sobre un DataFrame de Spark hay que usar la de PySpark. Kedro
+resuelve el *dónde*; el *cómo* sigue siendo tuyo.
+
+> Ese matiz importa y conviene no vendértelo de más: separar el catálogo **no** hace tu código
+> mágicamente distribuido. Lo que hace es que la migración sea un trabajo acotado y localizado
+> en los nodos, en vez de una reescritura del proyecto entero.
 """
     ),
     md(
         """
 ### Si quieres probarlo por tu cuenta
 
-**Databricks Free Edition** (antes Community Edition) permite crear una cuenta gratuita con un
-clúster pequeño en <https://databricks.com/learn/free-edition>. Alcanza de sobra para este
-dataset.
-
-Pasos, una vez dentro:
+**Databricks Free Edition** permite crear una cuenta gratuita con un clúster pequeño en
+<https://databricks.com/learn/free-edition>. Alcanza de sobra para este dataset.
 
 1. **Workspace → Import**: sube `01_alumno_exploracion.ipynb`. Databricks lee `.ipynb`.
 2. Crea un clúster (el más pequeño) y espera a que arranque, unos 5 minutos.
-3. Sube el CSV en **Catalog → Add data**, o léelo directo desde la URL raw de GitHub.
+3. Sube el CSV en **Catalog → Add data**, o léelo desde la URL raw de GitHub.
 4. El notebook corre **tal cual con pandas** en el nodo maestro: 40.000 filas no necesitan Spark.
 5. Para ver la diferencia, reescribe un bloque con PySpark y compara.
 
-> **No es parte de la evaluación** y no hace falta para el proyecto. Está aquí para que sepan que
-> existe y, sobre todo, para que sepan **cuándo no lo necesitan**: que es casi siempre, en un
+> **No es parte de la evaluación** y no hace falta para el proyecto. Está aquí para que sepas que
+> existe y, sobre todo, para que sepas **cuándo no lo necesitas**: que es casi siempre, en un
 > proyecto de esta asignatura.
 """
     ),
+    # ------------------------------------------------------------------
     md(
         """
 ---
-## Cierre
+# Cierre · Hacia dónde sigue esto
 
-Tres ideas para llevarse:
+El pipeline que acabas de ejecutar entrega `detecciones_limpias.parquet`. **Ese archivo es el
+punto de partida de lo que viene**, y por eso este notebook no es un extra: es la bisagra entre
+la EA1 y el resto de la asignatura.
+
+| Experiencia | Pipeline que se sumará al proyecto | Consume |
+|---|---|---|
+| **EA1** · Datos | `calidad` · `preprocesamiento` | El CSV crudo |
+| **EA2** · Supervisado | `supervisado` — partición sin fuga, entrenamiento, evaluación por clase | `detecciones_limpias` |
+| **EA3** · No supervisado | `no_supervisado` — segmentación, reducción de dimensionalidad | `detecciones_limpias` |
+| **EFT** | Integra las tres | Todo el grafo |
+
+Se enchufan en `pipeline_registry.py` sin tocar lo que ya existe. Ese es el motivo de haber
+montado el proyecto ahora y no más adelante: **cada experiencia añade nodos, no reescribe el
+análisis anterior.**
+
+---
+
+### Tres ideas para llevarse
 
 1. **Un notebook que funciona no es un proceso que funciona.** El notebook depende del orden en
    que ejecutaste las celdas; un pipeline declara sus dependencias y las resuelve solo.
-2. **Separar el catálogo del análisis es lo que permite cambiar de escala sin reescribir.** El
-   mismo nodo lee de un CSV local o de un Delta Lake en la nube: cambia el YAML, no el código.
+2. **Separar el catálogo y los parámetros del análisis** es lo que permite cambiar de origen, de
+   formato o de escala sin reescribir. Y es lo que permite que una decisión de limpieza la
+   cambie alguien que no programa.
 3. **Escalar es la última respuesta, no la primera.** Antes de un clúster hay tipos bien
    elegidos, Parquet y lectura por trozos. Un `float32` en vez de un `float64` reduce la memoria
    a la mitad, y eso es gratis.
 
-Lo que hace que este notebook funcione, por cierto, no es Kedro: es que las funciones de
-`src/eda.py` se escribieron puras desde el principio —sin `print`, sin gráficos, sin estado—.
-Por eso pudieron convertirse en nodos sin tocar una línea.
+Y una cuarta, que es la que sostiene a las otras: nada de esto habría sido posible si
+`src/eda.py` se hubiera escrito con `print` y gráficos dentro. **Las funciones puras no son una
+manía de estilo: son lo que permite que el mismo código sirva en un notebook, en un test y en un
+pipeline de producción.**
 """
     ),
 ]

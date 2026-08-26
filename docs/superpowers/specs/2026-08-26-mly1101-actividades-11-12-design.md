@@ -40,7 +40,9 @@ propio caso de negocio y su propio dataset**, y el repositorio solo sabía opera
 | Numerar los archivos `02` y `03` aunque sean las actividades 1.1 y 1.2 | Renumerar todo a `11`, `12`, `13` | Rompería los enlaces de Colab ya publicados. El número de actividad va en la primera celda |
 | La plantilla de proyecto **cae al dataset de la asignatura** si el equipo no configuró el suyo | Dejar las celdas rotas hasta que alguien complete `RUTA_MI_DATASET` | Una plantilla con celdas rotas impide distinguir "error mío" de "error de la plantilla", y no se puede verificar con `nbconvert` |
 | Kedro ejecutable, Databricks conceptual | Ambos ejecutables | Databricks exige cuenta y clúster; no se puede pedir en clase. Lo que sí aporta es el código equivalente lado a lado |
-| Construir el proyecto Kedro con `%%writefile` | `kedro new` con un *starter* | `kedro new` es interactivo y genera decenas de archivos irrelevantes. Escribir las cuatro piezas a mano **es** la explicación |
+| **El proyecto Kedro vive en el repositorio** (`kedro_mly1101/`), versionado y testeado | Crearlo dentro de una celda con `%%writefile` y descartarlo | *(Corregido el mismo día, tras revisión.)* Un proyecto que se crea y se borra en una celda no es base para EA2 ni EA3. El notebook ahora **lee y ejecuta el proyecto real** en vez de fabricar uno de juguete |
+| Las decisiones de limpieza en `conf/base/parameters.yml` | Escritas dentro de los nodos | Cambiar un umbral o una variante de escritura no debería exigir tocar Python ni saber programar. Cada bloque del YAML es una fila de la tabla de decisiones de la EA1 |
+| `marcar antes que eliminar` en todos los nodos de limpieza | `dropna()` sobre las filas con valores imposibles | El resto de la fila era válido. Solo se eliminan los duplicados exactos |
 | Los nodos de Kedro **reutilizan `src/eda.py`** | Reescribir el análisis dentro del pipeline | El punto pedagógico es que industrializar no exige reescribir: es el premio de haber escrito funciones puras |
 | `pandas` fijado en `<3` | Aceptar pandas 3 | En pandas 3 una columna de texto deja de tener `dtype == object`. El material enseña a leer ese `object` y Colab sigue en 2.x |
 | E501 fuera de las reglas de ruff | Ignorarlo solo en `contenido_*.py` | También choca con los f-strings de salida alineada de `calcular_nota.py` y con tablas en docstrings. Partirlos empeora el código |
@@ -63,13 +65,28 @@ estado.
 punteros y no los objetos apuntados: la comparación honesta contra `ndarray.nbytes` requiere
 sumar ambos.
 
-### 3.2 Fuentes de contenido
+### 3.2 El pipeline `kedro_mly1101/`
+
+Proyecto Kedro versionado, con dos pipelines y nueve nodos:
+
+| Pipeline | Nodos | Qué hace |
+|---|---|---|
+| `calidad` | 4, **independientes entre sí** | Diagnóstico: radiografía por columna, desbalance, reglas de dominio, patrón de faltantes |
+| `preprocesamiento` | 5, **encadenados** | Normaliza categorías → descubre nulos ocultos → marca imposibles → quita duplicados y constantes → resume |
+
+Entrega `data/03_primary/detecciones_limpias.parquet`, **la entrada de la EA2**. Las pipelines de
+EA2 y EA3 se registran en `pipeline_registry.py` sin tocar lo existente.
+
+Los nodos reutilizan `src/eda.py` sin reimplementar nada; `src/kedro_mly1101/__init__.py` añade
+la carpeta `src/` del repositorio al `sys.path` porque es lo primero que Kedro importa.
+
+### 3.3 Fuentes de contenido
 
 `herramientas/contenido_actividad11.py`, `contenido_actividad12.py`, `contenido_proyecto.py` y
 `contenido_kedro.py`, todas reutilizando `md` / `md_docente` / `code` de `contenido_semana01.py`.
 `construir_notebooks.py` genera nueve notebooks.
 
-### 3.3 Entorno
+### 3.4 Entorno
 
 `pyproject.toml` + `uv.lock` + `.python-version`. Extras `kedro` y `waymo` fuera del conjunto por
 defecto. `requirements.txt` se mantiene alineado a mano para quien prefiera pip.
@@ -126,6 +143,23 @@ Medidas el 2026-08-26 sobre `detecciones_waymo_like.csv` (semilla 42, 40.680 fil
 | Nulos de `speed_mps` por momento del día | Noche 4,08 % · Día 1,47 % · Amanecer 0,91 % |
 | Censo de Waymo (798 segmentos de training) | 793 soleados / 5 con lluvia |
 
+Y lo que produce el pipeline sobre el dataset completo:
+
+| Magnitud | Crudo | Limpio |
+|---|---|---|
+| Filas | 40.680 | 40.200 (−480 duplicados exactos) |
+| Columnas | 16 | 15 (−`sensor_version`, constante) |
+| Categorías de `object_type` | 7 | 4 |
+| Categorías de `weather` | 11 | 3 |
+| Celdas faltantes | 2.862 | **4.420 (+1.558)** |
+
+El aumento de faltantes es correcto y contraintuitivo: no aparecen faltantes nuevos, se cuentan
+los que estaban disfrazados de `-1` o `"N/D"`. Si esa cifra bajara sería la señal de que se
+eliminaron filas en vez de marcarlas, y hay un test que lo fija.
+
+El patrón MNAR que la rúbrica documenta queda medido por el nodo `medir_sesgo_de_faltantes`:
+**33,8 % de velocidad faltante en LEVEL_2 nocturno contra 0,36 % en LEVEL_1 nocturno**.
+
 ---
 
 ## 6. Verificación
@@ -150,11 +184,11 @@ rm -rf notebooks/kedro_mly1101 notebooks/salidas_act12 notebooks/salidas_proyect
 
 | Qué | Estado |
 |---|---|
-| Tests | ✅ 111 (32 nuevos: 15 de `fuentes`, 17 de `formatos`) |
+| Tests | ✅ 127 (48 nuevos: 15 de `fuentes`, 17 de `formatos`, 16 del pipeline Kedro) |
 | `ruff check` | ✅ limpio |
 | Los cinco notebooks resueltos ejecutan completos | ✅ |
 | Ningún notebook de alumno filtra la pauta | ✅ |
-| El pipeline de Kedro corre 4/4 nodos | ✅ |
+| El pipeline de Kedro corre 9/9 nodos sobre el proyecto versionado | ✅ |
 
 ### 6.2 Tres hallazgos al armar el entorno con uv
 
@@ -187,5 +221,7 @@ Los tres corregidos, y los tres vale la pena tener escritos porque volverán a a
 |---|---|
 | Antes de la clase | Ejecutar los notebooks 02, 03 y 10 en Colab, como se hizo con el 01 |
 | Semana 2 | Preprocesamiento aplicado: imputación por grupo, codificación, escalado y `Pipeline` |
+| EA2 | Pipeline `supervisado` en `kedro_mly1101/`: partición sin fuga, entrenamiento, evaluación **por clase** (el desbalance de `CYCLIST` al 1,9 % ya está sembrado) |
+| EA3 | Pipeline `no_supervisado`: segmentación y reducción de dimensionalidad sobre el mismo Parquet |
 | Cuando Colab migre a pandas 3 | Migrar el material: `dtype == object` deja de valer y hay que reescribir esas celdas y sus tests |
 | Cuando se amplíe la EA1 | Extender la rúbrica más allá de la Semana 1 |
