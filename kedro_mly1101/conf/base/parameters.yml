@@ -98,3 +98,25 @@ modelo:
 # La variable excluida a propósito, para poder medir el efecto de incluirla.
 fuga:
   variable: num_lidar_points
+
+# ---------------------------------------------------------------------------
+# EA3 · Aprendizaje no supervisado
+# ---------------------------------------------------------------------------
+# La pregunta: sin decirle a nadie qué es cada objeto, ¿aparecen grupos
+# naturales? ¿Y coinciden con los tipos que el sensor etiquetó?
+agrupamiento:
+  variables:
+    - box_length
+    - box_width
+    - box_height
+    - speed_mps
+    - num_lidar_points
+
+  # object_type NO se usa para agrupar. Se guarda para contrastar después si la
+  # estructura que apareció sola tiene una lectura de dominio.
+  etiqueta_de_contraste: object_type
+
+  k_a_probar: [2, 3, 4, 5, 6, 8]
+  k: 4
+  muestra_silueta: 5000
+  semilla: 42

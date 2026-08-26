@@ -21,6 +21,8 @@ uv run kedro run               # todo: datos y modelo
 uv run kedro run --pipeline calidad            # solo el diagnóstico
 uv run kedro run --pipeline preprocesamiento   # solo la limpieza
 uv run kedro run --pipeline supervisado        # solo el modelamiento
+uv run kedro run --pipeline no_supervisado     # solo el agrupamiento
+uv run kedro run --pipeline waymo_real         # TODO, sobre datos reales de Waymo
 ```
 
 Las salidas van a `data/`, que **no se versiona**: se regenera en un par de segundos.
@@ -46,7 +48,10 @@ src/kedro_mly1101/
     calidad/              diagnóstico: 4 nodos independientes  (EA1 · Act. 1.3)
     preprocesamiento/     limpieza: 5 nodos encadenados        (EA1 · tabla de decisiones)
     supervisado/          modelamiento: 8 nodos                (EA2)
-data/                     salidas. No se versiona
+    no_supervisado/       agrupamiento y PCA: 7 nodos          (EA3)
+    ingesta/              traduccion de Waymo real: 2 nodos
+data/                     salidas del recorrido sintetico. No se versiona
+data/waymo/               salidas del recorrido real.        No se versiona
 ```
 
 ### Las capas del catálogo
@@ -129,13 +134,122 @@ aquí se justifica por cómo se generaron los datos, no por la diferencia que se
 
 ---
 
+## El pipeline `no_supervisado` (EA3)
+
+**La pregunta:** sin decirle a nadie qué es cada objeto, ¿aparecen grupos naturales? ¿Y coinciden
+con los tipos que el sensor etiquetó?
+
+Es la contracara de la EA2: allí había etiqueta y se medía el acierto; aquí no la hay y hay que
+**justificar** que la estructura encontrada significa algo. `object_type` viaja en la tabla pero
+**no entra en el agrupamiento**: se usa solo para contrastar después.
+
+### Lo que salió, y por qué es mejor que un resultado limpio
+
+| | Sintético | Real (40 segmentos) |
+|---|---|---|
+| Silueta máxima | **k = 3** (0,473), luego cae | **sin codo**: sube hasta 0,610 en k = 8 |
+| ¿Los grupos recuperan el tipo de objeto? | Parcialmente | **No** |
+| PCA: 2 componentes explican | 70,2 % | 74,5 % |
+
+En los datos reales, tres de los cuatro grupos son ~100 % `vehicle` y el cuarto mezcla peatones y
+señalética casi mitad y mitad. El agrupamiento **no descubrió los tipos de objeto**: descubrió
+estructura de tamaño y densidad de puntos, que es otra cosa.
+
+Y la silueta no tiene máximo, así que el criterio automático para elegir `k` **falla**. Ambas
+cosas son el material de clase:
+
+> No existe "el k correcto". La inercia siempre baja al añadir grupos; la silueta a veces tampoco
+> decide. La decisión final es de dominio: **cuántos grupos son útiles para quien va a usar el
+> resultado.**
+
+---
+
+## Los datos REALES de Waymo: `kedro run --pipeline waymo_real`
+
+**El mismo análisis, sobre datos reales, sin duplicar un solo nodo.** El pipeline `waymo_real`
+reutiliza `calidad`, `preprocesamiento`, `supervisado` y `no_supervisado` remapeando su entrada:
+donde leían el CSV sintético, leen la salida de la ingesta de Waymo. Esa es, en una línea, la
+razón de haber separado el catálogo del análisis.
+
+```bash
+# 1. Aceptar los términos en https://waymo.com/open/terms/ con tu cuenta de Google
+brew install --cask google-cloud-sdk
+gcloud auth login
+
+# 2. Descargar VARIOS segmentos (no uno: ver más abajo)
+python herramientas/descargar_waymo.py --muestra 40     # ~40 MB
+
+# 3. Correr el análisis completo sobre ellos
+cd kedro_mly1101 && uv run kedro run --pipeline waymo_real
+```
+
+Los datos **no están en el repositorio**: la licencia de Waymo es de uso no comercial y prohíbe
+redistribuirlos. Sin ellos, `kedro run` funciona igual; solo `waymo_real` los necesita.
+
+### Por qué varios segmentos y no uno
+
+Con un solo segmento **no se puede partir en entrenamiento y prueba sin fuga**: las ~18.000
+detecciones comparten clima, hora y ubicación, así que cualquier corte deja las dos mitades
+contaminadas. El pipeline no hace un apaño cayendo a una partición al azar —sería justo la mala
+práctica que el material enseña a evitar—: **falla, y el error dice qué descargar.**
+
+### Tres traducciones que no son un cambio de nombre
+
+Están en `src/waymo.py::traducir_esquema`, con tests:
+
+1. **La velocidad es un vector.** Waymo da `speed.x` y `speed.y`; la rapidez es su módulo.
+   Quedarse con `speed.x` da valores plausibles y equivocados.
+2. **El tipo de objeto es un entero**, no una cadena. Y existe el `0` (*unknown*), que el
+   sintético no tiene.
+3. **El `NaN` de la dificultad NO es un dato faltante.** Waymo solo rellena
+   `difficulty_level.detection` cuando la detección es difícil; vacío significa `LEVEL_1`. En el
+   segmento verificado son **15.356 `NaN` de 18.633**: tratarlos como faltantes borraría el 82 %
+   de los datos y dejaría una sola clase.
+
+   Es el **reverso exacto** del defecto que se estudia en la Actividad 1.3, donde un `-1`
+   disfraza un faltante. Aquí un faltante disfraza un valor.
+
+### Lo que cambia al pasar del mock a lo real
+
+| | Sintético | Real (40 segmentos) |
+|---|---|---|
+| Filas | 40.680 | **530.396** |
+| Segmentos | 153 | 40 |
+| % `cyclist` | 1,94 % | **0,45 %** |
+| % `LEVEL_2` | 11,1 % | 12,3 % |
+| Mediana `speed_mps` | 5,35 | **0,01** (casi todo está detenido) |
+| Clima | 3 categorías sucias | **100 % `sunny`** |
+| Defectos de calidad encontrados | 10 | **0** |
+| F1 de la clase minoritaria (EA2) | 0,46 | **0,089** |
+
+**Las dos últimas filas son las que hay que discutir en clase.**
+
+La limpieza no encuentra nada porque **el Waymo Open Dataset está curado**: los 10 defectos son
+sintéticos y se inyectaron para que hubiera algo que descubrir. Lo que se aprende a detectar
+existe en el mundo real; en *este* dataset publicado, no.
+
+Y el modelo, que sobre el sintético alcanzaba 0,46 de F1 en la clase minoritaria, **cae a 0,089
+sobre datos reales**: acierta el 5,9 % de las detecciones difíciles. El problema resulta ser
+mucho más duro de lo que el mock sugería.
+
+> Es la lección más incómoda del curso y la más valiosa: **un buen resultado sobre datos de
+> juguete no predice nada.** El dataset sintético sirve para aprender el método; para saber si el
+> método funciona hay que salir a los datos de verdad.
+
+Y el `100 % sunny` es el sesgo de muestreo del censo —793 de 798 segmentos soleados—, ahora
+visible en los datos con los que se entrena.
+
+---
+
 ## Tests
 
 ```bash
-uv run pytest tests/test_pipeline_kedro.py tests/test_pipeline_supervisado.py -v
+uv run pytest tests/test_pipeline_kedro.py tests/test_pipeline_supervisado.py \
+              tests/test_pipeline_no_supervisado.py tests/test_ingesta_waymo.py -v
 ```
 
-31 tests, desde la raíz del repositorio. Los nodos son funciones normales de Python, así que se
+60 tests, desde la raíz del repositorio. Los que necesitan datos reales de Waymo **se saltan** si
+no están descargados, así que `pytest` pasa en limpio sin credenciales. Los nodos son funciones normales de Python, así que se
 prueban sin levantar catálogo, ni runner, ni sesión — que es justamente una de las ventajas del
 pipeline sobre el notebook.
 
@@ -150,12 +264,16 @@ decisión de limpieza, los tests dicen qué pauta quedó desalineada.
 |---|---|---|---|
 | **EA1** · Datos | `calidad` · `preprocesamiento` | El CSV crudo | ✅ |
 | **EA2** · Supervisado | `supervisado` — partición sin fuga, entrenamiento, evaluación por clase | `detecciones_limpias` | ✅ |
-| **EA3** · No supervisado | `no_supervisado` — segmentación, reducción de dimensionalidad | `detecciones_limpias` | ⏳ |
+| **EA3** · No supervisado | `no_supervisado` — agrupamiento y reducción de dimensionalidad | `detecciones_limpias` | ✅ |
+| — | `ingesta` + `waymo_real` — el mismo análisis sobre datos reales | Parquet de Waymo | ✅ |
 
 Se registran en `pipeline_registry.py` sin tocar lo que ya existe. Cada experiencia **añade
 nodos, no reescribe el análisis anterior**. Que `supervisado` corra después de
 `preprocesamiento` no está escrito en ninguna parte: se deduce de que consume
 `detecciones_limpias`, que el otro produce.
 
-Sobre llevar esto a Databricks (cambiar `pandas.CSVDataset` por `spark.SparkDataset` y qué
-implica de verdad), ver el bloque 7 del notebook 04.
+Lo que falta es el **material docente** de EA2 y EA3 —notebooks de alumno y solucionario, y
+ampliar la rúbrica—, no el código: los pipelines ya corren y están medidos.
+
+Sobre llevar esto a Databricks (cambiar `pandas.CSVDataset` por `spark.SparkDataset` y qué implica
+de verdad), ver el bloque 7 del notebook 04.

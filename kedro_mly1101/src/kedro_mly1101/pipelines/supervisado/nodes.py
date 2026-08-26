@@ -87,6 +87,18 @@ def particionar(tabla: pd.DataFrame, config: dict) -> pd.DataFrame:
     DataFrames: así el reparto queda auditable fila a fila y se puede comprobar
     después que ningún segmento aparece en ambos lados.
     """
+    n_grupos = tabla[config["grupo"]].nunique()
+    if n_grupos < 2:
+        raise ValueError(
+            f"Solo hay {n_grupos} valor de '{config['grupo']}' en los datos, y hacen "
+            "falta al menos 2 para partir sin fuga.\n\n"
+            "Con un solo segmento, todas las detecciones comparten clima, hora y "
+            "ubicación: cualquier corte deja entrenamiento y prueba contaminados, y "
+            "la métrica mediría memoria, no generalización.\n\n"
+            "Si estás usando datos reales de Waymo, descarga varios segmentos:\n"
+            "    python herramientas/descargar_waymo.py --muestra 40"
+        )
+
     separador = GroupShuffleSplit(
         n_splits=1, test_size=config["proporcion_prueba"], random_state=config["semilla"]
     )

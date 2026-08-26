@@ -44,7 +44,12 @@ estructural.
    con licencia incompatible.
 
 5. **Nunca agregues datos reales de Waymo al repositorio.** Su licencia es de uso no comercial y
-   prohíbe la redistribución. `datos/waymo_real/` está en `.gitignore`.
+   prohíbe la redistribución. `datos/waymo_real/` está en `.gitignore`. El pipeline `waymo_real`
+   los lee de ahí y **se salta limpio** si no están: `pytest` y `kedro run` funcionan sin ellos.
+
+   Para el recorrido supervisado hacen falta **varios segmentos**
+   (`descargar_waymo.py --muestra 40`): con uno solo no se puede partir en entrenamiento y prueba
+   sin fuga, y el pipeline falla a propósito con un mensaje que lo explica en vez de apañarlo.
 
 6. **Las cifras de la pauta y de la rúbrica deben verificarse contra el CSV**, no citarse de
    memoria. Si cambias `--filas` o la semilla, todas las cifras del solucionario, del guion de
@@ -56,8 +61,9 @@ estructural.
    material completo.
 
 8. **El pipeline de `kedro_mly1101/` SÍ se versiona; sus salidas (`data/`) no.** Es la columna
-   de ingeniería del curso, no un ejemplo desechable: la de EA2 (`supervisado`) ya está ahí y
-   la de EA3 se registrará igual. Sus nodos **reutilizan `src/eda.py`**, nunca reimplementan el análisis, y las decisiones
+   de ingeniería del curso: `calidad`, `preprocesamiento`, `supervisado` (EA2),
+   `no_supervisado` (EA3) e `ingesta`. El pipeline `waymo_real` corre **el mismo grafo sobre
+   datos reales remapeando su entrada**: nunca dupliques nodos para datos reales. Sus nodos **reutilizan `src/eda.py`**, nunca reimplementan el análisis, y las decisiones
    de limpieza viven en `conf/base/parameters.yml`, no en el código.
 
 9. **La rúbrica usa dos numeraciones y ambas son necesarias.** Los PPT definen IL 1.1, 1.2 y 1.3
@@ -69,8 +75,9 @@ estructural.
 
 ```bash
 uv sync                                        # entorno reproducible (pyproject.toml + uv.lock)
-uv run pytest                                  # 142 tests; sin el extra waymo, 1 se salta
-cd kedro_mly1101 && uv run kedro run && cd ..  # el pipeline debe correr 17/17 nodos
+uv run pytest                                  # 171 tests; algunos se saltan sin datos/extras
+cd kedro_mly1101 && uv run kedro run && cd ..  # sintético: 24/24 nodos
+# Con datos reales descargados:  uv run kedro run --pipeline waymo_real   # 26/26 nodos
 uv run python herramientas/construir_notebooks.py   # regenera los nueve notebooks
 
 # Los cinco notebooks con código resuelto deben ejecutar completos:
@@ -119,12 +126,14 @@ es sobre `google.cloud.storage`.
 | EA1 Semana 1 · Act. 1.2 Estructuras y almacenamiento | ✅ completa y verificada |
 | EA1 Semana 1 · Act. 1.3 EDA | ✅ completa y verificada |
 | Plantilla de proyecto de equipo | ✅ ejecuta de extremo a extremo |
-| Pipeline Kedro (`kedro_mly1101/`) | ✅ 17 nodos en 3 pipelines, versionado, 31 tests |
+| Pipeline Kedro (`kedro_mly1101/`) | ✅ 24 nodos en 4 pipelines, versionado, 60 tests |
 | EA2 · pipeline `supervisado` | ✅ corre y está medido; **falta el material docente** |
+| EA3 · pipeline `no_supervisado` | ✅ corre y está medido; **falta el material docente** |
+| Datos reales de Waymo (`waymo_real`) | ✅ 26/26 nodos sobre 530.396 detecciones reales |
 | Notebook opcional de Kedro y Databricks | ✅ usa el pipeline real; Databricks queda conceptual |
 | EA1 semanas siguientes | ⏳ pendiente (la EA1 son 20 h en total) |
-| EA2 · notebooks y rúbrica | ⏳ pendiente (el pipeline ya existe) |
-| EA3 / EFT | ⏳ pendiente |
+| EA2 y EA3 · notebooks y rúbrica | ⏳ pendiente (los pipelines ya existen y están medidos) |
+| EFT | ⏳ pendiente |
 
 Todo está verificado, incluido `notebooks/00_opcional_waymo_real.ipynb`: se ejecutó de extremo a
 extremo el 2026-08-13 contra el segmento real `10023947602400723454_1120_000_1140_000`

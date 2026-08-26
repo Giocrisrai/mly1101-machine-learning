@@ -98,3 +98,136 @@ fuga_de_variable:
   filepath: data/07_model_output/fuga_de_variable.csv
   save_args:
     index: false
+
+# --------------------------------------------------------------------------
+# EA3 · Aprendizaje no supervisado
+# --------------------------------------------------------------------------
+matriz_escalada:
+  type: pandas.ParquetDataset
+  filepath: data/04_feature/matriz_escalada.parquet
+
+busqueda_de_k:
+  type: pandas.CSVDataset
+  filepath: data/07_model_output/busqueda_de_k.csv
+  save_args:
+    index: false
+
+detecciones_agrupadas:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/detecciones_agrupadas.parquet
+
+perfil_de_grupos:
+  type: pandas.CSVDataset
+  filepath: data/07_model_output/perfil_de_grupos.csv
+  save_args:
+    index: false
+
+grupos_vs_etiqueta:
+  type: pandas.CSVDataset
+  filepath: data/07_model_output/grupos_vs_etiqueta.csv
+  save_args:
+    index: false
+
+varianza_pca:
+  type: pandas.CSVDataset
+  filepath: data/07_model_output/varianza_pca.csv
+  save_args:
+    index: false
+
+proyeccion_2d:
+  type: pandas.ParquetDataset
+  filepath: data/07_model_output/proyeccion_2d.parquet
+
+# --------------------------------------------------------------------------
+# Datos REALES de Waymo (opcionales)
+#
+# NO están en el repositorio: la licencia de Waymo es de uso no comercial y
+# prohíbe redistribuirlos. Se descargan con herramientas/descargar_waymo.py
+# tras aceptar los términos en https://waymo.com/open/terms/
+#
+# Sin ellos, `kedro run` (el pipeline por defecto) funciona igual: solo el
+# pipeline `waymo_real` los necesita.
+# --------------------------------------------------------------------------
+# Varios segmentos, no uno: con un solo segmento no se puede partir en
+# entrenamiento y prueba sin fuga (todas las detecciones comparten contexto).
+#   python herramientas/descargar_waymo.py --muestra 40
+waymo_muestra:
+  type: partitions.PartitionedDataset
+  path: ../datos/waymo_real/muestra
+  dataset: pandas.ParquetDataset
+  filename_suffix: ".parquet"
+
+detecciones_reales:
+  type: pandas.ParquetDataset
+  filepath: data/01_raw/detecciones_reales.parquet
+
+comparacion_real_vs_sintetico:
+  type: pandas.CSVDataset
+  filepath: data/02_intermediate/comparacion_real_vs_sintetico.csv
+  save_args:
+    index: false
+
+# --------------------------------------------------------------------------
+# Salidas del recorrido sobre datos REALES (pipeline `waymo_real`)
+#
+# Son los mismos nodos que producen las salidas de arriba, remapeados. Van a
+# carpetas aparte para poder comparar los dos recorridos lado a lado.
+# --------------------------------------------------------------------------
+resumen_calidad_real:
+  type: pandas.CSVDataset
+  filepath: data/waymo/02_intermediate/resumen_calidad.csv
+  save_args: {index: true}
+
+valores_imposibles_real:
+  type: pandas.CSVDataset
+  filepath: data/waymo/02_intermediate/valores_imposibles.csv
+  save_args: {index: false}
+
+nulos_por_grupo_real:
+  type: pandas.CSVDataset
+  filepath: data/waymo/02_intermediate/nulos_por_grupo.csv
+  save_args: {index: true}
+
+detecciones_limpias_reales:
+  type: pandas.ParquetDataset
+  filepath: data/waymo/03_primary/detecciones_limpias.parquet
+
+informe_limpieza_real:
+  type: pandas.CSVDataset
+  filepath: data/waymo/03_primary/informe_limpieza.csv
+  save_args: {index: false}
+
+metricas_por_clase_real:
+  type: pandas.CSVDataset
+  filepath: data/waymo/07_model_output/metricas_por_clase.csv
+  save_args: {index: false}
+
+matriz_confusion_real:
+  type: pandas.CSVDataset
+  filepath: data/waymo/07_model_output/matriz_confusion.csv
+  save_args: {index: true}
+
+fuga_de_variable_real:
+  type: pandas.CSVDataset
+  filepath: data/waymo/07_model_output/fuga_de_variable.csv
+  save_args: {index: false}
+
+perfil_de_grupos_real:
+  type: pandas.CSVDataset
+  filepath: data/waymo/07_model_output/perfil_de_grupos.csv
+  save_args: {index: false}
+
+grupos_vs_etiqueta_real:
+  type: pandas.CSVDataset
+  filepath: data/waymo/07_model_output/grupos_vs_etiqueta.csv
+  save_args: {index: false}
+
+busqueda_de_k_real:
+  type: pandas.CSVDataset
+  filepath: data/waymo/07_model_output/busqueda_de_k.csv
+  save_args: {index: false}
+
+varianza_pca_real:
+  type: pandas.CSVDataset
+  filepath: data/waymo/07_model_output/varianza_pca.csv
+  save_args: {index: false}

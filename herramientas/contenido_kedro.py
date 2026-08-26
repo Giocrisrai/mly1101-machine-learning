@@ -713,6 +713,186 @@ decir es sesgo de confirmación, el mismo del que se habla en la Actividad 1.1.
     md(
         """
 ---
+# Bloque 10 · Aprendizaje no supervisado (EA3)
+
+El mismo `kedro run` siguió más allá del modelo. El pipeline `no_supervisado` toma
+`detecciones_limpias` y hace la pregunta contraria a la del bloque 8:
+
+> Sin decirle a nadie qué es cada objeto, ¿aparecen **grupos naturales**? ¿Y coinciden con los
+> tipos que el sensor etiquetó?
+
+Es la contracara de la EA2. Allí había una etiqueta y se medía el acierto; aquí no hay etiqueta y
+hay que **justificar** que la estructura encontrada significa algo.
+
+**`object_type` viaja en la tabla pero no entra en el agrupamiento.** Se guarda para contrastar
+después, que es distinto de usarla.
+
+### Escalar antes de agrupar no es opcional
+
+K-medias mide distancias euclídeas. Sin escalar, `num_lidar_points` —que llega a miles— aplasta a
+`box_height` —que ronda 1,7—, y el resultado sería un agrupamiento por número de puntos disfrazado
+de agrupamiento por objeto.
+"""
+    ),
+    code(
+        """
+D = PROYECTO / "data" / "07_model_output"
+
+print("=== ¿Cuántos grupos? ===")
+print(pd.read_csv(D / "busqueda_de_k.csv").to_string(index=False))
+"""
+    ),
+    md(
+        """
+**La inercia siempre baja al añadir grupos**, así que por sí sola no decide nada: si le hicieras
+caso, terminarías con un grupo por fila. La silueta sí penaliza los grupos que se solapan, y aquí
+tiene su máximo en **k = 3**.
+
+Usamos **k = 4** de todos modos. La tabla siguiente muestra por qué esa discrepancia es
+interesante en vez de un error: el cuarto grupo tiene sentido de dominio aunque la métrica
+prefiera tres. **La silueta propone; el conocimiento del dominio dispone** — la misma idea que con
+los atípicos en la Actividad 1.3.
+"""
+    ),
+    code(
+        """
+print("=== Perfil de cada grupo (medias de las variables escaladas) ===")
+print(pd.read_csv(D / "perfil_de_grupos.csv").to_string(index=False))
+
+print("\\n=== ¿Los grupos coinciden con el tipo de objeto? (% por grupo) ===")
+print(pd.read_csv(D / "grupos_vs_etiqueta.csv").to_string(index=False))
+"""
+    ),
+    md(
+        """
+### Cómo se lee esa tabla
+
+**No es una evaluación.** El algoritmo nunca vio `object_type`, así que no puede "acertar" ni
+"fallar". Es una comprobación de sentido:
+
+- Hay **dos grupos que son 100 % `vehicle`**, y conviene mirar su perfil antes de llamarlo un
+  error. Uno tiene 19.927 filas y medidas normales; el otro solo 573 (1,5 %) con `box_length` casi
+  **cinco desviaciones típicas** por encima de la media y `box_height` otro tanto.
+
+  Esos son los **buses**. El agrupamiento redescubrió solo los mismos atípicos legítimos que en la
+  Actividad 1.3 había que aprender a *no* eliminar. No encontró un cuarto tipo de objeto: encontró
+  una subestructura real dentro de uno.
+- Un grupo mezcla peatones y señalética: ambos son pequeños y están quietos, así que **por
+  geometría se parecen** aunque para el negocio no tengan nada que ver.
+- Y un cuarto grupo se define por tener muchos más puntos láser (`num_lidar_points` a +2,3 σ): son
+  los objetos **cercanos**, de cualquier tipo. El algoritmo agrupó por distancia al sensor, que es
+  una propiedad de la medición, no del objeto.
+
+> Un agrupamiento sin interpretar no es un hallazgo. "Grupo 2" no le sirve a nadie: hay que poder
+> decir *"objetos grandes y rápidos"* o *"objetos pequeños y estáticos"*, y eso sale del perfil,
+> no del algoritmo.
+"""
+    ),
+    code(
+        """
+print("=== Reducción de dimensionalidad (PCA) ===")
+varianza = pd.read_csv(D / "varianza_pca.csv")
+print(varianza.to_string(index=False))
+print()
+n90 = int((varianza["varianza_acumulada"] < 0.90).sum() + 1)
+print(f"Con {n90} de {len(varianza)} componentes se conserva el 90 % de la varianza.")
+print("Eso mide cuánta redundancia hay entre las variables: si bastan pocas, varias")
+print("de las originales estaban diciendo casi lo mismo.")
+"""
+    ),
+    md(
+        """
+---
+# Bloque 11 · Y ahora, con datos reales
+
+Todo lo anterior corrió sobre el dataset **sintético**. El pipeline `waymo_real` hace exactamente
+lo mismo sobre datos reales del Waymo Open Dataset:
+
+```bash
+python herramientas/descargar_waymo.py --muestra 40      # ~40 MB
+cd kedro_mly1101 && kedro run --pipeline waymo_real
+```
+
+**No duplica ni un solo nodo.** Reutiliza `calidad`, `preprocesamiento`, `supervisado` y
+`no_supervisado` remapeando su entrada: donde leían el CSV, leen la salida de la ingesta de Waymo.
+Es la demostración de por qué separar el catálogo del análisis valía la pena.
+
+### Por qué 40 segmentos y no uno
+
+Con un solo segmento **no se puede partir en entrenamiento y prueba sin fuga**: sus ~18.000
+detecciones comparten clima, hora y ubicación. El pipeline no lo apaña cayendo a una partición al
+azar —sería la mala práctica que llevamos toda la sesión evitando—: **falla, y el error dice qué
+descargar.**
+
+### Tres traducciones que no son un cambio de nombre
+
+1. **La velocidad es un vector.** Waymo da `speed.x` y `speed.y`; la rapidez es su módulo.
+   Quedarse con `speed.x` da valores plausibles y equivocados.
+2. **El tipo de objeto es un entero**, no una cadena. Y existe el `0` (*unknown*).
+3. **El `NaN` de la dificultad NO es un dato faltante.** Waymo solo rellena
+   `difficulty_level.detection` cuando la detección es difícil; vacío significa `LEVEL_1`. Son
+   **15.356 `NaN` de 18.633**: tratarlos como faltantes borraría el 82 % de los datos.
+
+   Es el **reverso exacto** del defecto de la Actividad 1.3, donde un `-1` disfraza un faltante.
+   Aquí un faltante disfraza un valor.
+"""
+    ),
+    code(
+        """
+RUTA_REAL = PROYECTO / "data" / "waymo" / "07_model_output" / "metricas_por_clase.csv"
+
+if RUTA_REAL.exists():
+    print("=== EA2 sobre datos REALES de Waymo ===")
+    print(pd.read_csv(RUTA_REAL).to_string(index=False))
+else:
+    print("No hay resultados del recorrido real en esta máquina.")
+    print("Para generarlos:")
+    print("   python herramientas/descargar_waymo.py --muestra 40")
+    print("   cd kedro_mly1101 && kedro run --pipeline waymo_real")
+"""
+    ),
+    md(
+        """
+### Lo que cambia al pasar del mock a lo real
+
+Cifras medidas el 2026-08-26 sobre 40 segmentos (530.396 detecciones):
+
+| | Sintético | Real |
+|---|---|---|
+| Filas · segmentos | 40.680 · 153 | **530.396** · 40 |
+| % `cyclist` | 1,94 % | **0,45 %** |
+| Mediana `speed_mps` | 5,35 | **0,01** — casi todo está detenido |
+| Clima | 3 categorías sucias | **100 % `sunny`** |
+| Defectos de calidad encontrados | 10 | **0** |
+| EA2 · exactitud | 0,897 | 0,781 |
+| EA2 · **F1 de la clase minoritaria** | **0,462** | **0,089** |
+| EA3 · silueta | máximo en k = 3 | **sin codo**: sube hasta k = 8 |
+
+**Las tres últimas filas son la clase entera.**
+
+**La limpieza no encuentra nada.** El Waymo Open Dataset está curado: los 10 defectos son
+sintéticos y se inyectaron para que hubiera algo que descubrir. Lo que aprendiste a detectar
+existe en el mundo real; en *este* dataset publicado, no.
+
+**El modelo se desploma.** De 0,46 a **0,089** de F1 en la clase minoritaria: acierta el 5,9 % de
+las detecciones difíciles. El problema es mucho más duro de lo que el mock sugería.
+
+> Es la lección más incómoda del curso y la más valiosa: **un buen resultado sobre datos de
+> juguete no predice nada.** El dataset sintético sirve para aprender el método; para saber si el
+> método funciona hay que salir a los datos de verdad.
+
+**Y la silueta deja de tener máximo**, así que el criterio automático para elegir `k` falla. No
+existe "el k correcto": la decisión final es de dominio, no de métrica.
+
+Por último, ese **100 % `sunny`** no es casualidad: es el sesgo de muestreo del censo —793 de 798
+segmentos soleados— visible ahora en los datos con los que se entrena el modelo. El bloque de
+ética de la Actividad 1.1 deja de ser una advertencia y pasa a ser una propiedad medible del
+dataset que tienes delante.
+"""
+    ),
+    md(
+        """
+---
 # Cierre · Hacia dónde sigue esto
 
 El grafo que acabas de ejecutar va del CSV crudo a las métricas por clase. **Ese es el proceso
@@ -722,12 +902,12 @@ completo de Machine Learning**, declarado como dependencias y ejecutado con un c
 |---|---|---|---|---|
 | **EA1** · Datos | `calidad` · `preprocesamiento` | 4 + 5 | El CSV crudo | ✅ |
 | **EA2** · Supervisado | `supervisado` | 8 | `detecciones_limpias` | ✅ |
-| **EA3** · No supervisado | `no_supervisado` | — | `detecciones_limpias` | ⏳ |
+| **EA3** · No supervisado | `no_supervisado` | 7 | `detecciones_limpias` | ✅ |
+| — · Datos reales | `ingesta` + `waymo_real` | 26 | Los Parquet de Waymo | ✅ |
 | **EFT** | Integra las tres | — | Todo el grafo | ⏳ |
 
-La de EA3 se enchufará en `pipeline_registry.py` sin tocar nada de lo anterior. Ese es el motivo
-de haber montado el proyecto ahora y no más adelante: **cada experiencia añade nodos, no reescribe
-el análisis previo.**
+Cada experiencia **añadió nodos, no reescribió el análisis previo**. Y el recorrido sobre datos
+reales no duplicó ninguno: remapeó la entrada del grafo que ya existía.
 
 ---
 

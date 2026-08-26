@@ -178,16 +178,57 @@ def test_comparar_particiones_reporta_los_segmentos_compartidos(limpias: pd.Data
     assert comparacion.loc[0, "clase_minoritaria"] == "LEVEL_2"
 
 
-def test_las_tres_pipelines_se_registran_y_el_grafo_encadena() -> None:
+def test_el_grafo_completo_encadena_las_cuatro_pipelines() -> None:
     """supervisado consume lo que produce preprocesamiento, sin decírselo a nadie."""
     from kedro_mly1101.pipeline_registry import register_pipelines
 
     pipelines = register_pipelines()
-    assert set(pipelines) == {"calidad", "preprocesamiento", "supervisado", "__default__"}
+    assert {
+        "calidad",
+        "preprocesamiento",
+        "supervisado",
+        "no_supervisado",
+        "ingesta",
+        "waymo_real",
+        "__default__",
+    } == set(pipelines)
 
     assert "detecciones_limpias" in pipelines["supervisado"].inputs()
+    assert "detecciones_limpias" in pipelines["no_supervisado"].inputs()
 
     completo = pipelines["__default__"]
     externas = {e for e in completo.inputs() if not e.startswith("params:")}
     assert externas == {"detecciones_crudas"}       # solo el CSV crudo entra de fuera
-    assert len(completo.nodes) == 17
+    assert len(completo.nodes) == 24
+
+
+def test_el_recorrido_real_reutiliza_los_mismos_nodos() -> None:
+    """waymo_real no duplica nodos: remapea la entrada del grafo de siempre.
+
+    Si alguien copiara y pegara los nodos para los datos reales, este test seguiria
+    pasando en numero pero las dos versiones se desincronizarian. Lo que se fija
+    aqui es que la entrada del analisis viene de la ingesta, no del CSV.
+    """
+    from kedro_mly1101.pipeline_registry import register_pipelines
+
+    pipelines = register_pipelines()
+    real = pipelines["waymo_real"]
+
+    # 24 nodos de analisis + 2 de ingesta.
+    assert len(real.nodes) == len(pipelines["__default__"].nodes) + 2
+
+    externas = {e for e in real.inputs() if not e.startswith("params:")}
+    assert "waymo_muestra" in externas          # los Parquet reales
+    assert "detecciones_reales" not in externas  # la produce la ingesta, no entra de fuera
+
+
+def test_con_un_solo_segmento_el_error_explica_por_que(limpias: pd.DataFrame) -> None:
+    """El fallo real al correr el pipeline sobre UN segmento de Waymo.
+
+    No se hace un apaño cayendo a una particion al azar: eso seria justo la mala
+    practica que el material ensena a evitar. Se falla, y se explica que hacer.
+    """
+    un_segmento = limpias.assign(segment_id="seg_0000")
+    tabla = sup.preparar_variables(un_segmento, CONFIG, FUGA)
+    with pytest.raises(ValueError, match="descargar_waymo.py --muestra"):
+        sup.particionar(tabla, CONFIG)

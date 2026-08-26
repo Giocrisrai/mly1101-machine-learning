@@ -17,7 +17,7 @@ Problema → Datos → Exploración → Preprocesamiento → Modelamiento → Ev
 |---|---|---|
 | **EA1** · Análisis y preprocesamiento de datos | Fuentes, estructuras, exploración y calidad de datos | ✅ Semana 1 completa (Act. 1.1, 1.2 y 1.3) |
 | **EA2** · Aprendizaje supervisado | Regresión y clasificación | 🔧 pipeline listo; material docente ⏳ |
-| **EA3** · Aprendizaje no supervisado | Segmentación, reducción de dimensionalidad | ⏳ |
+| **EA3** · Aprendizaje no supervisado | Segmentación, reducción de dimensionalidad | 🔧 pipeline listo; material docente ⏳ |
 | **EFT** · Evaluación final transversal | Integra los tres RA (40 % de la nota) | ⏳ |
 
 ---
@@ -98,18 +98,42 @@ uv sync --extra kedro
 cd kedro_mly1101 && uv run kedro run
 ```
 
-**17 nodos** en tres pipelines, del CSV crudo al modelo evaluado:
+**24 nodos** en cuatro pipelines, del CSV crudo al modelo evaluado y a los grupos descubiertos:
 
 | Experiencia | Pipeline | Nodos | Consume | Estado |
 |---|---|---|---|---|
 | **EA1** · Datos | `calidad` · `preprocesamiento` | 4 + 5 | El CSV crudo | ✅ |
 | **EA2** · Supervisado | `supervisado` | 8 | `detecciones_limpias` | ✅ |
-| **EA3** · No supervisado | `no_supervisado` | — | `detecciones_limpias` | ⏳ |
+| **EA3** · No supervisado | `no_supervisado` | 7 | `detecciones_limpias` | ✅ |
 
 El pipeline `supervisado` responde una pregunta con sustancia: **¿se puede anticipar qué
 detecciones van a ser difíciles?** Alcanza un 90 % de exactitud con un F1 de **0,46 en la clase
 minoritaria** — se pierde el 60 % de las detecciones difíciles, que eran justo las que
 interesaban. Ese contraste es el material de clase, no un defecto que haya que tapar.
+
+### Y lo mismo sobre datos REALES de Waymo
+
+```bash
+python herramientas/descargar_waymo.py --muestra 40      # ~40 MB, tras aceptar los términos
+cd kedro_mly1101 && uv run kedro run --pipeline waymo_real
+```
+
+**No duplica ni un nodo:** reutiliza el mismo grafo remapeando su entrada. 530.396 detecciones
+reales, y unos resultados bastante más sobrios que los del dataset sintético:
+
+| | Sintético | Real |
+|---|---|---|
+| Filas | 40.680 | **530.396** |
+| % `cyclist` | 1,94 % | **0,45 %** |
+| Clima | 3 categorías sucias | **100 % `sunny`** |
+| Defectos de calidad encontrados | 10 | **0** — Waymo está curado |
+| F1 de la clase minoritaria | 0,46 | **0,089** |
+
+> Esa última fila es la lección más incómoda del curso: **un buen resultado sobre datos de juguete
+> no predice nada.** El sintético sirve para aprender el método; para saber si el método funciona
+> hay que salir a los datos de verdad.
+
+Los detalles están en [`kedro_mly1101/README.md`](kedro_mly1101/README.md).
 
 Cada experiencia **añade nodos, no reescribe el análisis anterior**. Los detalles, las decisiones
 de diseño y qué cambiaría en Databricks están en
@@ -269,7 +293,8 @@ herramientas/
 
 kedro_mly1101/       el pipeline reproducible (Kedro). Versionado; sus salidas no
   conf/base/            catalog.yml (dónde vive el dato) y parameters.yml (las decisiones)
-  src/.../pipelines/    calidad, preprocesamiento (EA1) y supervisado (EA2)
+  src/.../pipelines/    calidad, preprocesamiento (EA1), supervisado (EA2),
+                        no_supervisado (EA3) e ingesta (Waymo real)
 
 tests/               pytest de todo lo anterior
 docs/                guiones de clase, rúbrica y documentos de diseño
@@ -301,13 +326,15 @@ Editar los `.ipynb` directamente funciona hasta el siguiente build, que los sobr
 uv run pytest        # o simplemente `pytest` si ya activaste el entorno
 ```
 
-**142 tests en total**, repartidos así:
+**171 tests en total**, repartidos así:
 
 | Archivo | Tests | Qué verifica |
 |---|---|---|
 | `tests/test_generar_dataset.py` | 19 | Reproducibilidad byte a byte y presencia de **cada uno de los 10 defectos** |
 | `tests/test_pipeline_kedro.py` | 16 | Los nodos de calidad y limpieza, y que el grafo se construya sin ciclos |
-| `tests/test_pipeline_supervisado.py` | 15 | La partición sin fuga, el entrenamiento y las dos mediciones de fuga |
+| `tests/test_pipeline_supervisado.py` | 16 | La partición sin fuga, el entrenamiento y las dos mediciones de fuga |
+| `tests/test_pipeline_no_supervisado.py` | 14 | El escalado antes de agrupar, la elección de k y la interpretación |
+| `tests/test_ingesta_waymo.py` | 13 | Las tres traducciones del esquema real de Waymo (3 se saltan sin datos) |
 | `tests/test_formatos.py` | 17 | El benchmark de formatos de la Act. 1.2: peso, tiempos y pérdida de tipos |
 | `tests/test_fuentes.py` | 15 | La lectura desde SQL, JSON anidado y texto libre de la Act. 1.1 |
 | `tests/test_eda.py` | 14 | Las utilidades de diagnóstico de `src/eda.py` |
