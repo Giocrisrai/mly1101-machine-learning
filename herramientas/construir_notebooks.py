@@ -4,12 +4,14 @@
 
 Genera, para la Semana 1 completa:
 
-| Notebook | Actividad | Fuente |
-|---|---|---|
-| ``02_alumno_fuentes.ipynb`` / ``02_docente_fuentes.ipynb``         | 1.1 · IL1.1 | ``contenido_actividad11.py`` |
-| ``03_alumno_estructuras.ipynb`` / ``03_docente_estructuras.ipynb`` | 1.2 · IL1.2 | ``contenido_actividad12.py`` |
-| ``01_alumno_exploracion.ipynb`` / ``01_docente_solucionario.ipynb``| 1.3 · IL1.3 | ``contenido_semana01.py`` |
-| ``00_opcional_waymo_real.ipynb``                                   | opcional    | ``contenido_waymo.py`` |
+| Actividad   | Notebooks                                  | Fuente                     |
+|-------------|--------------------------------------------|----------------------------|
+| 1.1 · IL1.1 | ``02_alumno_fuentes`` / ``02_docente_*``   | ``contenido_actividad11``  |
+| 1.2 · IL1.2 | ``03_alumno_estructuras`` / ``03_docente_*``| ``contenido_actividad12``  |
+| 1.3 · IL1.3 | ``01_alumno_exploracion`` / ``01_docente_*``| ``contenido_semana01``     |
+| transversal | ``10_proyecto_equipo_plantilla``           | ``contenido_proyecto``     |
+| opcional    | ``04_opcional_kedro_databricks``           | ``contenido_kedro``        |
+| opcional    | ``00_opcional_waymo_real``                 | ``contenido_waymo``        |
 
 El número del archivo no coincide con el de la actividad por una razón histórica: el
 notebook de EDA se publicó primero como ``01`` y sus enlaces de Colab ya circulan. El
@@ -31,6 +33,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from contenido_actividad11 import CELDAS_ACT11  # noqa: E402
 from contenido_actividad12 import CELDAS_ACT12  # noqa: E402
+from contenido_kedro import CELDAS_KEDRO  # noqa: E402
+from contenido_proyecto import CELDAS_PROYECTO  # noqa: E402
 from contenido_semana01 import CELDAS, URL_REPO  # noqa: E402
 from contenido_waymo import CELDAS_WAYMO  # noqa: E402
 
@@ -135,6 +139,10 @@ def main() -> None:
         # Actividad 1.3 — Análisis exploratorio de datos
         construir(CELDAS, "01_alumno_exploracion.ipynb", para_docente=False),
         construir(CELDAS, "01_docente_solucionario.ipynb", para_docente=True),
+        # Plantilla del proyecto de equipo (una sola versión, sin solucionario)
+        construir(CELDAS_PROYECTO, "10_proyecto_equipo_plantilla.ipynb", para_docente=False),
+        # Opcional — Kedro ejecutable y Databricks conceptual
+        construir(CELDAS_KEDRO, "04_opcional_kedro_databricks.ipynb", para_docente=False),
         # Opcional — datos reales de Waymo
         construir(CELDAS_WAYMO, "00_opcional_waymo_real.ipynb", para_docente=True),
     ]

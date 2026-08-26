@@ -1,7 +1,8 @@
 # Rúbrica de evaluación — EA1 · Análisis y Preprocesamiento de Datos
 
 **Asignatura:** MLY1101 Machine Learning · **Experiencia:** EA1 (20 h)
-**Entregable evaluado en la Semana 1:** notebook desarrollado + mini-informe de calidad de datos.
+**Entregable evaluado en la Semana 1:** los tres notebooks de actividad desarrollados + la
+plantilla de proyecto (`10_proyecto_equipo_plantilla.ipynb`) con el mini-informe de calidad.
 
 > Esta rúbrica cubre lo trabajado en la **Semana 1**. La EA1 completa abarca 20 horas, así que
 > corresponde ampliarla cuando se sumen las semanas siguientes (preprocesamiento aplicado,
@@ -11,16 +12,39 @@
 
 ## Resultado de aprendizaje
 
-**RA1:** *Implementa estrategias y técnicas de preprocesamiento en el diseño de soluciones de
-Machine Learning, considerando el tratamiento responsable de la información.*
+**RA1:** *Recopila, a través de un trabajo colaborativo, sets de datos representativos y de
+calidad, a partir de distintas fuentes (texto plano, archivos CSV, otros) para responder a las
+necesidades del contexto de negocio, considerando aspectos éticos.*
 
-| Indicador | Dónde se evidencia | Peso |
+### ⚠️ Dos numeraciones distintas: cómo se relacionan
+
+Los PPT de la asignatura definen **tres indicadores de logro oficiales**, uno por actividad. Esta
+rúbrica evalúa con **cinco dimensiones de corrección**, que son más finas porque necesitan
+distinguir niveles dentro de un mismo indicador. No son listas rivales: las cinco dimensiones son
+la forma de evidenciar los tres indicadores.
+
+| Indicador oficial (PPT) | Actividad | Se evidencia en las dimensiones |
 |---|---|---|
-| IL1 · Explora un conjunto de datos e identifica su estructura y tipos de variables | Bloques 1 y 2 (TODO 1–6) | 20 % |
-| IL2 · Identifica problemas de calidad de datos y los cuantifica | Bloques 3 y 4 (TODO 7–15) | 30 % |
-| IL3 · Fundamenta decisiones de preprocesamiento | Bloque 5 (TODO 16–17) + informe | 25 % |
-| IL4 · Reconoce implicancias éticas y sesgos en los datos | Bloque 6 (TODO 18) + informe | 15 % |
-| IL5 · Comunica el análisis con orden y documentación | Notebook completo + informe | 10 % |
+| **IL 1.1** Identifica diversas fuentes de datos y herramientas de trabajo colaborativo | 1.1 · `02_alumno_fuentes` | D1 (estructura), D4 (ética), D5 (documentación) |
+| **IL 1.2** Utiliza estructuras de datos en Python para almacenamiento y manipulación eficiente | 1.2 · `03_alumno_estructuras` | D1 (estructura), D3 (decisiones), D5 |
+| **IL 1.3** Realiza un EDA para detectar anomalías y asegurar la calidad de la información | 1.3 · `01_alumno_exploracion` | D2 (calidad), D3, D4 |
+
+**Al reportar la nota a la coordinación se usa la numeración oficial (IL 1.1, 1.2, 1.3); al
+corregir se usan las cinco dimensiones**, que es lo que recibe `calcular_nota.py`.
+
+### Las cinco dimensiones de corrección
+
+| Dimensión | Dónde se evidencia | Peso |
+|---|---|---|
+| **D1** · Explora un conjunto de datos, identifica su estructura, sus fuentes y sus tipos de variables | Act. 1.1 completa · Act. 1.2 bloques 1–4 · Act. 1.3 bloques 1–2 | 20 % |
+| **D2** · Identifica problemas de calidad de datos y los cuantifica | Act. 1.3 bloques 3 y 4 (TODO 7–15) | 30 % |
+| **D3** · Fundamenta decisiones de preprocesamiento y de almacenamiento | Act. 1.2 bloque 6 · Act. 1.3 bloque 5 · tabla de decisiones del proyecto | 25 % |
+| **D4** · Reconoce implicancias éticas y sesgos en los datos | Act. 1.1 bloque 6 · Act. 1.3 bloque 6 · ficha de fuentes | 15 % |
+| **D5** · Comunica el análisis con orden y documentación | Los tres notebooks + el mini-informe | 10 % |
+
+> En el resto de este documento, y en `calcular_nota.py`, las dimensiones se siguen llamando
+> `IL1` … `IL5` por compatibilidad con la herramienta y con las entregas ya corregidas. Son las
+> mismas D1 … D5 de la tabla de arriba.
 
 ---
 
@@ -81,21 +105,35 @@ coordinación de la línea.
 
 ---
 
-## IL1 · Exploración e identificación de variables (20 %)
+## D1 / IL1 · Fuentes, estructura e identificación de variables (20 %)
+
+Cubre las actividades **1.1** y **1.2** completas, más los bloques 1 y 2 de la **1.3**.
 
 | Nivel | Criterio observable |
 |---|---|
-| **4** | Además de clasificar correctamente las variables, distingue el tipo de pandas del tipo estadístico y explica por qué `id_interno` y `sensor_version` no son variables predictoras, con el argumento correcto (cardinalidad y varianza cero) |
-| **3** | Clasifica correctamente las 16 columnas y describe qué representa una fila del dataset |
-| **2** | Clasifica la mayoría, pero confunde discreta con continua o no distingue nominal de ordinal |
-| **1** | Ejecuta `.info()` y `.describe()` sin interpretarlos |
+| **4** | Todo lo del nivel 3, y además: trae datos desde las tres naturalezas de fuente sin ayuda; explica por qué `id_interno` y `sensor_version` no son variables predictoras con el argumento correcto (cardinalidad y varianza cero); **explica por qué una asignación con índice desalineado no lanza error** |
+| **3** | Clasifica correctamente las 16 columnas y describe qué representa una fila; lee el dataset desde CSV, SQL y JSON anidado; distingue `.loc` de `.iloc` con un ejemplo propio; optimiza los tipos con un ahorro medido |
+| **2** | Clasifica la mayoría de las variables pero confunde discreta con continua, o resuelve las fuentes estructuradas y se pierde en el JSON anidado y el texto libre |
+| **1** | Ejecuta `.info()` y `.describe()` sin interpretarlos; solo lee el CSV; usa `.loc` e `.iloc` indistintamente |
 
-**Evidencia mínima esperada:** TODO 1–4 completos, y una respuesta correcta a *"¿qué representa
-una fila?"* (una detección de un objeto en un instante, no un objeto ni un segmento).
+**Evidencia mínima esperada:**
+
+| De la actividad | Qué debe estar |
+|---|---|
+| **1.1** | Los 11 TODO en verde y la ficha con las 3 fuentes, cada una con licencia y fecha |
+| **1.2** | Los 15 TODO en verde, con especial atención al bloque 4 (`.loc` / `.iloc`) |
+| **1.3** | TODO 1–4 y una respuesta correcta a *"¿qué representa una fila?"* (una detección de un objeto en un instante, no un objeto ni un segmento) |
+
+**Lo primero que hay que mirar al corregir la Actividad 1.2** es si puede explicar por qué la
+asignación desalineada del TODO 7 dejó 771 `NaN` de 789 y 18 valores cruzados. Si no lo entiende,
+no entendió el índice, y eso vuelve a morder en todas las semanas siguientes.
+
+**Señal de copia:** los tiempos medidos en el bloque 1 de la Actividad 1.2 varían por máquina y
+por ejecución. Dos entregas con tiempos idénticos al milisegundo son la misma entrega.
 
 ---
 
-## IL2 · Identificación y cuantificación de problemas de calidad (30 %)
+## D2 / IL2 · Identificación y cuantificación de problemas de calidad (30 %)
 
 Este es el indicador de mayor peso: es el núcleo de la sesión.
 
@@ -126,7 +164,7 @@ redondear o contar de otra manera), pero **no** se acepta una afirmación sin ci
 
 ---
 
-## IL3 · Fundamentación de las decisiones de preprocesamiento (25 %)
+## D3 / IL3 · Fundamentación de las decisiones de preprocesamiento y almacenamiento (25 %)
 
 | Nivel | Criterio observable |
 |---|---|
@@ -134,6 +172,12 @@ redondear o contar de otra manera), pero **no** se acepta una afirmación sin ci
 | **3** | La tabla de decisiones está completa, cada decisión tiene justificación, y la función `limpiar()` es coherente con lo declarado |
 | **2** | Aplica transformaciones correctas pero las justifica con "para limpiar los datos" |
 | **1** | Usa `dropna()` y `drop_duplicates()` sin criterio |
+
+**De la Actividad 1.2 se suma la decisión de almacenamiento.** La tabla del cierre debe elegir
+formato por etapa (crudo / procesado / entrega) **justificando con las cifras que midió el propio
+alumno**, no con las de la pauta. La respuesta esperada es: crudos en el formato en que llegaron
+—no se reescribe la evidencia de origen—, procesados en Parquet, entrega al negocio en Excel. Lo
+que se evalúa es la justificación, no la elección.
 
 **Señal de alerta en la corrección:** si el dataset limpio del alumno ya **no tiene buses**
 (`box_length.max() < 12`), eliminó outliers legítimos. Eso baja el indicador a *En desarrollo*
@@ -150,7 +194,7 @@ assert set(limpio["object_type"].unique()) == {"vehicle", "pedestrian", "cyclist
 
 ---
 
-## IL4 · Tratamiento responsable de la información (15 %)
+## D4 / IL4 · Tratamiento responsable de la información (15 %)
 
 | Nivel | Criterio observable |
 |---|---|
@@ -158,6 +202,12 @@ assert set(limpio["object_type"].unique()) == {"vehicle", "pedestrian", "cyclist
 | **3** | Identifica la sub-representación de la conducción nocturna y de los ciclistas, y nombra al grupo en riesgo |
 | **2** | Menciona la ética de forma genérica, sin anclarla en los datos analizados |
 | **1** | No aborda el punto o lo reduce a "hay que cuidar los datos personales" |
+
+**De la Actividad 1.1 se suman dos evidencias:** la lista de chequeo de privacidad de la ficha de
+fuentes (licencia verificada, no supuesta; riesgo de reidentificación revisado) y el TODO 10, que
+exige encadenar sesgo → decisión técnica → consecuencia sobre un grupo concreto. La cifra de
+referencia es que de noche falta el 4,08 % de las velocidades contra el 0,91 % al amanecer: un
+factor de 4,5.
 
 **Ideas que corresponde reconocer como correctas:**
 - Un promedio global oculta a las minorías: 97 % de exactitud global puede convivir con 60 % en
@@ -169,7 +219,7 @@ assert set(limpio["object_type"].unique()) == {"vehicle", "pedestrian", "cyclist
 
 ---
 
-## IL5 · Comunicación y documentación (10 %)
+## D5 / IL5 · Comunicación y documentación (10 %)
 
 | Nivel | Criterio observable |
 |---|---|

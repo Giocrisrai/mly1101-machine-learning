@@ -191,7 +191,7 @@ def main() -> None:
         peso = "~23 KB" if args.solo_stats else "~1 MB"
         print(f"\nDescargando {len(disponibles)} segmentos ({peso} cada uno)…")
         muestra = descargar_muestra(gsutil, disponibles, solo_stats=args.solo_stats)
-        print(f"\nListo. Ahora puedes ejecutar:  python herramientas/analizar_sesgo_waymo.py")
+        print("\nListo. Ahora puedes ejecutar:  python herramientas/analizar_sesgo_waymo.py")
         print(f"Datos en: {muestra.relative_to(RAIZ)}")
         return
 

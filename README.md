@@ -15,7 +15,7 @@ Problema → Datos → Exploración → Preprocesamiento → Modelamiento → Ev
 
 | Experiencia | Contenido | Estado |
 |---|---|---|
-| **EA1** · Análisis y preprocesamiento de datos | Exploración, calidad de datos, preparación | ✅ Semana 1 disponible |
+| **EA1** · Análisis y preprocesamiento de datos | Fuentes, estructuras, exploración y calidad de datos | ✅ Semana 1 completa (Act. 1.1, 1.2 y 1.3) |
 | **EA2** · Aprendizaje supervisado | Regresión y clasificación | ⏳ |
 | **EA3** · Aprendizaje no supervisado | Segmentación, reducción de dimensionalidad | ⏳ |
 | **EFT** · Evaluación final transversal | Integra los tres RA (40 % de la nota) | ⏳ |
@@ -68,7 +68,8 @@ vienen los datos → cómo se almacenan y manipulan → qué tan sucios están.
 
 | Documento | Para qué |
 |---|---|
-| [`docs/guion_clase_semana01.md`](docs/guion_clase_semana01.md) | Guion minuto a minuto: preguntas para el curso, momentos críticos, qué recortar si falta tiempo |
+| [`docs/guion_clase_actividades_11_12.md`](docs/guion_clase_actividades_11_12.md) | Guion de las actividades 1.1 y 1.2: coreografía de sala, qué preguntar antes de mostrar la cifra, qué recortar y en qué orden |
+| [`docs/guion_clase_semana01.md`](docs/guion_clase_semana01.md) | Guion minuto a minuto de la Actividad 1.3 (EDA): preguntas para el curso, momentos críticos, qué recortar si falta tiempo |
 | [`docs/rubrica_ea1.md`](docs/rubrica_ea1.md) | Rúbrica por indicador de logro, mapeada al RA1, con las cifras exactas para corregir |
 | [`docs/superpowers/specs/2026-08-12-mly1101-semana01-eda-design.md`](docs/superpowers/specs/2026-08-12-mly1101-semana01-eda-design.md) | Especificación completa: decisiones de diseño, catálogo de defectos, protocolo de verificación |
 

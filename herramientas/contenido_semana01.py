@@ -42,7 +42,7 @@ CELDAS: list[dict] = [
     # BLOQUE 0 — El problema antes del algoritmo (15 min)
     # ======================================================================
     md(
-        f"""
+        """
 # MLY1101 · Machine Learning — Semana 01
 ## EA1 · Análisis y Preprocesamiento de Datos
 

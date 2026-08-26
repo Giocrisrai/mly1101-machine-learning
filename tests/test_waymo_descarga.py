@@ -112,10 +112,14 @@ def test_el_403_se_traduce_a_un_mensaje_sobre_la_cuenta(monkeypatch, tmp_path: P
     la traducción del error solo se puede probar con las excepciones reales del
     cliente de Google Cloud.
     """
-    exceptions = pytest.importorskip(
-        "google.api_core.exceptions",
+    # Se guarda por google.cloud.storage y NO por google.api_core: este ultimo
+    # llega de rebote como dependencia de kedro, asi que estar presente no
+    # significa que el extra `waymo` este instalado.
+    pytest.importorskip(
+        "google.cloud.storage",
         reason="requiere el extra waymo: uv sync --extra waymo",
     )
+    from google.api_core import exceptions
 
     class BlobFalso:
         def download_to_filename(self, ruta):

@@ -15,10 +15,22 @@ estructural.
 
 ## Reglas del repositorio
 
-1. **Los `.ipynb` son artefactos generados. No los edites a mano.** El contenido vive en
-   `herramientas/contenido_semana01.py` y `herramientas/contenido_waymo.py`; los notebooks salen
-   de `python herramientas/construir_notebooks.py`. Editar el `.ipynb` funciona hasta el
-   siguiente build, que lo sobrescribe.
+1. **Los `.ipynb` son artefactos generados. No los edites a mano.** El contenido vive en los
+   módulos `herramientas/contenido_*.py`; los notebooks salen de
+   `python herramientas/construir_notebooks.py`. Editar el `.ipynb` funciona hasta el siguiente
+   build, que lo sobrescribe.
+
+   | Fuente | Genera | Actividad |
+   |---|---|---|
+   | `contenido_actividad11.py` | `02_alumno_fuentes` + `02_docente_fuentes` | 1.1 · IL1.1 |
+   | `contenido_actividad12.py` | `03_alumno_estructuras` + `03_docente_estructuras` | 1.2 · IL1.2 |
+   | `contenido_semana01.py` | `01_alumno_exploracion` + `01_docente_solucionario` | 1.3 · IL1.3 |
+   | `contenido_proyecto.py` | `10_proyecto_equipo_plantilla` | transversal |
+   | `contenido_kedro.py` | `04_opcional_kedro_databricks` | opcional |
+   | `contenido_waymo.py` | `00_opcional_waymo_real` | opcional |
+
+   El número del archivo **no** coincide con el de la actividad: el notebook de EDA se publicó
+   primero como `01` y sus enlaces de Colab ya circulan.
 
 2. **El notebook del alumno y el solucionario salen de la misma fuente.** Una celda de código
    declara su versión resuelta y, opcionalmente, su versión con `TODO`. Nunca crees dos versiones
@@ -38,15 +50,41 @@ estructural.
    memoria. Si cambias `--filas` o la semilla, todas las cifras del solucionario, del guion de
    clase y de la rúbrica quedan obsoletas.
 
+7. **`pandas` está fijado por debajo de 3.0 a propósito.** En pandas 3 una columna de texto deja
+   de tener `dtype == object` y pasa a `str`. Varias celdas del material —y sus tests— enseñan
+   justamente a leer ese `object`, y Colab sigue en la serie 2.x. No subas el tope sin migrar el
+   material completo.
+
+8. **La rúbrica usa dos numeraciones y ambas son necesarias.** Los PPT definen IL 1.1, 1.2 y 1.3
+   (uno por actividad); la corrección usa cinco dimensiones D1–D5, que en el código y en
+   `calcular_nota.py` se siguen llamando `IL1`…`IL5`. La tabla de correspondencia está al
+   principio de `docs/rubrica_ea1.md`.
+
 ## Verificación obligatoria antes de dar algo por terminado
 
 ```bash
-pytest -q                                    # 68 tests (58 + 10 de Waymo, que se saltan sin datos)
-python herramientas/construir_notebooks.py   # regenera los tres notebooks
-cd notebooks && python -m jupyter nbconvert --to notebook --execute --stdout \
-    01_docente_solucionario.ipynb > /dev/null   # el solucionario debe ejecutar completo
-grep -c "Pauta docente" notebooks/01_alumno_exploracion.ipynb   # debe dar 0
+uv sync                                        # entorno reproducible (pyproject.toml + uv.lock)
+uv run pytest                                  # 111 tests; sin extras: 110 passed, 1 skipped
+uv run python herramientas/construir_notebooks.py   # regenera los nueve notebooks
+
+# Los cinco notebooks con código resuelto deben ejecutar completos:
+for nb in 02_docente_fuentes 03_docente_estructuras 01_docente_solucionario \
+          10_proyecto_equipo_plantilla 04_opcional_kedro_databricks; do
+  uv run python -m jupyter nbconvert --to notebook --execute --stdout \
+      --output-dir=/tmp notebooks/$nb.ipynb > /dev/null && echo "$nb OK"
+done
+
+# Ningún notebook de alumno puede filtrar la pauta (todos deben dar 0):
+grep -c "Pauta docente" notebooks/0[123]_alumno*.ipynb notebooks/10_proyecto*.ipynb
+
+# Limpiar los artefactos que dejan los notebooks al ejecutarse:
+rm -rf notebooks/kedro_mly1101 notebooks/salidas_act12 notebooks/salidas_proyecto
 ```
+
+El notebook 04 necesita el extra de Kedro: `uv sync --extra kedro`. Ojo con un efecto lateral
+que ya mordió una vez: **Kedro arrastra `google-api-core`**, así que un `importorskip` sobre
+`google.api_core` deja de saltarse aunque el extra `waymo` no esté instalado. El guard correcto
+es sobre `google.cloud.storage`.
 
 ## Convenciones
 
@@ -58,15 +96,24 @@ grep -c "Pauta docente" notebooks/01_alumno_exploracion.ipynb   # debe dar 0
 
 ## Entorno
 
-- pyenv, no el Python de Homebrew. Global 3.13.1.
+- **`uv` es el gestor del entorno** (`pyproject.toml` + `uv.lock` + `.python-version`). Usa
+  `uv run <comando>` en vez de activar el entorno a mano. `requirements.txt` se mantiene
+  alineado para quien prefiera pip.
+- pyenv por debajo, no el Python de Homebrew. Global 3.13.1.
 - Los notebooks deben funcionar **también** en Google Colab: la primera celda detecta el entorno
   y clona el repositorio.
+- Extras opcionales: `uv sync --extra kedro` (notebook 04) y `uv sync --extra waymo`
+  (notebook 00).
 
 ## Estado actual
 
 | Experiencia | Estado |
 |---|---|
-| EA1 Semana 1 | ✅ completa y verificada |
+| EA1 Semana 1 · Act. 1.1 Fuentes y colaboración | ✅ completa y verificada |
+| EA1 Semana 1 · Act. 1.2 Estructuras y almacenamiento | ✅ completa y verificada |
+| EA1 Semana 1 · Act. 1.3 EDA | ✅ completa y verificada |
+| Plantilla de proyecto de equipo | ✅ ejecuta de extremo a extremo |
+| Notebook opcional de Kedro y Databricks | ✅ el pipeline corre; Databricks queda conceptual |
 | EA1 semanas siguientes | ⏳ pendiente (la EA1 son 20 h en total) |
 | EA2 / EA3 / EFT | ⏳ pendiente |
 
