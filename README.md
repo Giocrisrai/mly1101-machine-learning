@@ -28,17 +28,30 @@ Problema → Datos → Exploración → Preprocesamiento → Modelamiento → Ev
 entrenar cualquier modelo, hay que responder si se puede confiar en las detecciones del sensor
 LiDAR.
 
-| Notebook | Para quién | Abrir |
+La Semana 1 son **tres actividades** que comparten el mismo dataset y se encadenan: de dónde
+vienen los datos → cómo se almacenan y manipulan → qué tan sucios están.
+
+| Act. | Indicador | Notebook del alumno | Solucionario docente |
+|---|---|---|---|
+| **1.1** Fuentes de datos y trabajo colaborativo | IL 1.1 | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/02_alumno_fuentes.ipynb) `02_alumno_fuentes.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/02_docente_fuentes.ipynb) |
+| **1.2** Estructuras de datos y almacenamiento | IL 1.2 | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/03_alumno_estructuras.ipynb) `03_alumno_estructuras.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/03_docente_estructuras.ipynb) |
+| **1.3** Análisis exploratorio de datos (EDA) | IL 1.3 | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/01_alumno_exploracion.ipynb) `01_alumno_exploracion.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/01_docente_solucionario.ipynb) |
+
+| Notebook transversal | Para quién | Abrir |
 |---|---|---|
-| `notebooks/01_alumno_exploracion.ipynb` | Estudiantes (18 ejercicios con TODO y autochequeo) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/01_alumno_exploracion.ipynb) |
-| `notebooks/01_docente_solucionario.ipynb` | Docente (código resuelto + pauta + criterios de logro) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/01_docente_solucionario.ipynb) |
-| `notebooks/00_opcional_waymo_real.ipynb` | Quien quiera repetirlo con datos reales de Waymo | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/00_opcional_waymo_real.ipynb) |
+| `10_proyecto_equipo_plantilla.ipynb` | El equipo la copia y la rellena con **su** dataset | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/10_proyecto_equipo_plantilla.ipynb) |
+| `04_opcional_kedro_databricks.ipynb` | Quien quiera ver el análisis como pipeline reproducible | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/04_opcional_kedro_databricks.ipynb) |
+| `00_opcional_waymo_real.ipynb` | Quien quiera repetirlo con datos reales de Waymo | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/00_opcional_waymo_real.ipynb) |
+
+> **El número del archivo no coincide con el de la actividad.** El notebook de EDA se publicó
+> primero como `01` y sus enlaces ya circulan, así que se mantuvo. El número de actividad está
+> declarado en la primera celda de cada notebook.
 
 > Los enlaces de Colab apuntan a `github.com/Giocrisrai/mly1101-machine-learning`. Si publicas el
 > repositorio con otro nombre, actualiza `URL_REPO` en `herramientas/contenido_semana01.py` y en
 > este README, y vuelve a ejecutar `python herramientas/construir_notebooks.py`.
 
-### Estructura de la sesión (4 h)
+### Estructura de la sesión de EDA · Actividad 1.3 (4 h)
 
 | Bloque | Min | Foco |
 |---|---|---|
@@ -85,7 +98,77 @@ los datos disponibles. No hay que instalar nada.
 > notebook abierto desde GitHub, no una señal de problema. Hay que pulsar **"Ejecutar de todos
 > modos"**. Si no se les advierte, la mitad del curso se detiene ahí.
 
-### Opción B — Local
+### Opción B — Haz un fork y trabaja sobre esta base (recomendada para el proyecto)
+
+El proyecto de equipo se construye **encima** de este repositorio, no al lado. Un integrante hace
+el fork y el resto colabora sobre él.
+
+```bash
+# 1. Fork desde la web: botón "Fork" en github.com/Giocrisrai/mly1101-machine-learning
+# 2. Clonar TU fork (cambia TU-USUARIO)
+git clone https://github.com/TU-USUARIO/mly1101-machine-learning.git
+cd mly1101-machine-learning
+
+# 3. Dejar el original como "upstream" para poder traer material nuevo después
+git remote add upstream https://github.com/Giocrisrai/mly1101-machine-learning.git
+git fetch upstream
+
+# 4. Trabajar siempre en una rama, nunca en main
+git checkout -b eda-nuestro-dataset
+```
+
+Cuando se publique material de una semana nueva, se trae así sin perder su trabajo:
+
+```bash
+git fetch upstream && git merge upstream/main
+```
+
+**Importante:** los enlaces de Colab de este README apuntan al repositorio original. Para abrir
+los notebooks de *tu* fork, cambia `Giocrisrai` por tu usuario en la URL de Colab, o actualiza
+`URL_REPO` en `herramientas/contenido_semana01.py` y vuelve a generar los notebooks.
+
+### Opción C — Entorno local con `uv`
+
+[`uv`](https://docs.astral.sh/uv/) es el gestor de entornos y dependencias de Astral. Crea el
+entorno, resuelve las versiones y las deja fijadas en `uv.lock`, de modo que **todos los
+integrantes del equipo y el docente ejecutan exactamente las mismas versiones**.
+
+```bash
+# Instalar uv (una sola vez)
+curl -LsSf https://astral.sh/uv/install.sh | sh        # macOS y Linux
+# En Windows:  powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# Crear el entorno e instalar todo, incluidas las herramientas de desarrollo
+uv sync
+
+# Ejecutar cualquier cosa dentro del entorno, sin activarlo
+uv run pytest
+uv run python herramientas/construir_notebooks.py
+uv run jupyter lab notebooks/03_alumno_estructuras.ipynb
+```
+
+`uv sync` instala las dependencias de la asignatura más el grupo `dev` (pytest, JupyterLab,
+nbconvert, ruff). Los extras se piden aparte porque no todo el mundo los necesita:
+
+```bash
+uv sync --extra kedro     # notebook 04: pipeline reproducible
+uv sync --extra waymo     # notebook 00: descarga de datos reales de Waymo
+```
+
+| Archivo | Para qué |
+|---|---|
+| `pyproject.toml` | Dependencias declaradas, extras y configuración de pytest y ruff |
+| `uv.lock` | Versiones exactas resueltas. **Va versionado**: es lo que hace reproducible el entorno |
+| `.python-version` | Versión de Python que `uv` usa por defecto (3.13) |
+
+> **`pandas` está fijado por debajo de 3.0 a propósito.** En pandas 3 una columna de texto deja de
+> tener `dtype == object` y pasa a `str`, y varias celdas del material enseñan justamente a leer
+> ese `object`. Google Colab sigue en la serie 2.x, así que el tope mantiene alineado lo local con
+> lo que ocurre en clase.
+
+### Opción D — Local con `pip`
+
+Si prefieres no instalar `uv`, `requirements.txt` sigue funcionando:
 
 ```bash
 git clone https://github.com/Giocrisrai/mly1101-machine-learning.git
@@ -128,19 +211,33 @@ Misma semilla ⇒ archivo idéntico byte a byte.
 ## Estructura del repositorio
 
 ```
+pyproject.toml       dependencias, extras y configuración de pytest/ruff (entorno con uv)
+uv.lock              versiones exactas: es lo que hace reproducible el entorno
+requirements.txt     el mismo entorno para quien prefiera pip
+
 datos/crudos/        dataset de trabajo (versionado, para que Colab funcione con un clic)
-src/generar_dataset.py   generador determinista del dataset
-src/eda.py               utilidades de diagnóstico de calidad de datos
-notebooks/           los tres notebooks de la Semana 1
+
+src/
+  generar_dataset.py    generador determinista del dataset
+  eda.py                utilidades de diagnóstico de calidad de datos      (Act. 1.3)
+  fuentes.py            lectura desde SQL, JSON anidado y texto libre      (Act. 1.1)
+  formatos.py           benchmark de formatos y pérdida de tipos           (Act. 1.2)
+  waymo.py              descarga de segmentos reales
+
+notebooks/           los notebooks generados. NO se editan a mano
+
 herramientas/
-  contenido_semana01.py     fuente única del contenido de la clase
+  contenido_actividad11.py  fuente única de la Actividad 1.1
+  contenido_actividad12.py  fuente única de la Actividad 1.2
+  contenido_semana01.py     fuente única de la Actividad 1.3
   contenido_waymo.py        fuente del notebook de datos reales
-  construir_notebooks.py    genera los tres .ipynb
+  construir_notebooks.py    genera todos los .ipynb
   calcular_nota.py          rúbrica → nota de 1,0 a 7,0
   descargar_waymo.py        descarga segmentos reales de Waymo
   analizar_sesgo_waymo.py   análisis de sesgo sobre varios segmentos
-tests/               pytest del generador, de las utilidades y del mapeo de Waymo
-docs/                guion de clase y documento de diseño
+
+tests/               pytest de todo lo anterior
+docs/                guiones de clase, rúbrica y documentos de diseño
 ```
 
 ### Los notebooks se generan, no se editan a mano
@@ -166,18 +263,28 @@ Editar los `.ipynb` directamente funciona hasta el siguiente build, que los sobr
 ## Tests
 
 ```bash
-pytest
+uv run pytest        # o simplemente `pytest` si ya activaste el entorno
 ```
 
-**68 tests en total**, repartidos así:
+**111 tests en total**, repartidos así:
 
 | Archivo | Tests | Qué verifica |
 |---|---|---|
 | `tests/test_generar_dataset.py` | 19 | Reproducibilidad byte a byte y presencia de **cada uno de los 10 defectos** |
+| `tests/test_formatos.py` | 17 | El benchmark de formatos de la Act. 1.2: peso, tiempos y pérdida de tipos |
+| `tests/test_fuentes.py` | 15 | La lectura desde SQL, JSON anidado y texto libre de la Act. 1.1 |
 | `tests/test_eda.py` | 14 | Las utilidades de diagnóstico de `src/eda.py` |
 | `tests/test_calcular_nota.py` | 14 | La conversión de rúbrica a nota (escala 1,0–7,0, exigencia 60 %) |
 | `tests/test_analisis_sesgo.py` | 11 | La lógica del análisis de sesgo, incluida la unidad de análisis |
+| `tests/test_waymo_descarga.py` | 11 | La descarga de Waymo y la traducción de sus errores (1 se salta sin el extra `waymo`) |
 | `tests/test_mapeo_waymo.py` | 10 | El mapeo al esquema real de Waymo (se saltan sin datos descargados) |
+
+Dos de esos tests existen para dejar por escrito matices que el material afirma y que serían
+fáciles de aceptar sin comprobar:
+
+- `test_el_csv_pierde_los_tipos_y_el_parquet_no` — el hallazgo central de la Actividad 1.2.
+- `test_con_pocas_filas_el_parquet_puede_pesar_mas` — el matiz honesto: con unos cientos de filas
+  el encabezado de Parquet pesa más de lo que ahorra, y el CSV gana.
 
 Si un test del generador falla, el solucionario dejó de coincidir con lo que reciben los
 alumnos.

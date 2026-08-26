@@ -106,8 +106,16 @@ def test_descargar_segmento_baja_los_dos_componentes(monkeypatch, tmp_path: Path
 
 
 def test_el_403_se_traduce_a_un_mensaje_sobre_la_cuenta(monkeypatch, tmp_path: Path) -> None:
-    """El error más confuso de Colab: la cuenta abierta no es la registrada en Waymo."""
-    from google.api_core import exceptions
+    """El error más confuso de Colab: la cuenta abierta no es la registrada en Waymo.
+
+    Se salta si no está instalado el extra ``waymo`` (``uv sync --extra waymo``):
+    la traducción del error solo se puede probar con las excepciones reales del
+    cliente de Google Cloud.
+    """
+    exceptions = pytest.importorskip(
+        "google.api_core.exceptions",
+        reason="requiere el extra waymo: uv sync --extra waymo",
+    )
 
     class BlobFalso:
         def download_to_filename(self, ruta):

@@ -1,0 +1,60 @@
+[project]
+name = "mly1101-machine-learning"
+version = "2026.2.0"
+description = "Material docente de MLY1101 Machine Learning — Duoc UC, semestre 2026-2"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Giocrisrai Godoy Bonillo", email = "gi.godoy@profesor.duoc.cl" }]
+
+# Estas son las mismas versiones que trae Google Colab, para que lo que funciona
+# en clase funcione también en local y al revés.
+dependencies = [
+    # pandas se fija por debajo de 3.0 a propósito: en pandas 3 una columna de
+    # texto deja de tener dtype `object` y pasa a `str`, y varias celdas del
+    # material (y sus tests) enseñan justamente a leer ese `object`. Google Colab
+    # sigue en la serie 2.x, así que este tope mantiene alineado lo local con lo
+    # que ocurre en clase. Ver "Trabajo futuro" en el spec de la Semana 1.
+    "pandas>=2.2,<3",
+    "numpy>=1.24,<3",
+    "scipy>=1.11",     # correlaciones de rango (Spearman) que usa pandas por debajo
+    "matplotlib>=3.7",
+    "seaborn>=0.13",
+    "pyarrow>=14.0",   # Parquet: notebooks 02, 03 y el opcional de Waymo
+    "openpyxl>=3.1",   # Excel: comparación de formatos de la Actividad 1.2
+]
+
+[project.optional-dependencies]
+# Descarga de segmentos reales del Waymo Open Dataset (notebook 00).
+# Requiere además haber aceptado los términos en https://waymo.com/open/terms/
+waymo = ["google-cloud-storage>=2.14"]
+
+# Pipeline reproducible del notebook 04. Se instala aparte porque arrastra
+# bastantes dependencias y no hace falta para las actividades 1.1 a 1.3.
+kedro = ["kedro>=0.19", "kedro-datasets[pandas]>=3.0"]
+
+[dependency-groups]
+# Herramientas de trabajo, no de la asignatura. `uv sync` las instala por defecto.
+dev = [
+    "pytest>=7.4",
+    "jupyterlab>=4.0",
+    "nbconvert>=7.0",
+    "ipykernel>=6.29",
+    "ruff>=0.6",
+]
+
+[tool.uv]
+package = false          # es un repositorio de material, no una librería instalable
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "herramientas"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = ["notebooks"]  # los .ipynb son artefactos generados
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP"]

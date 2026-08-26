@@ -2,13 +2,21 @@
 
     python herramientas/construir_notebooks.py
 
-Genera:
-- notebooks/01_alumno_exploracion.ipynb    (celdas con TODO, sin las respuestas)
-- notebooks/01_docente_solucionario.ipynb  (código resuelto + pauta docente)
-- notebooks/00_opcional_waymo_real.ipynb   (datos reales de Waymo, opcional)
+Genera, para la Semana 1 completa:
+
+| Notebook | Actividad | Fuente |
+|---|---|---|
+| ``02_alumno_fuentes.ipynb`` / ``02_docente_fuentes.ipynb``         | 1.1 · IL1.1 | ``contenido_actividad11.py`` |
+| ``03_alumno_estructuras.ipynb`` / ``03_docente_estructuras.ipynb`` | 1.2 · IL1.2 | ``contenido_actividad12.py`` |
+| ``01_alumno_exploracion.ipynb`` / ``01_docente_solucionario.ipynb``| 1.3 · IL1.3 | ``contenido_semana01.py`` |
+| ``00_opcional_waymo_real.ipynb``                                   | opcional    | ``contenido_waymo.py`` |
+
+El número del archivo no coincide con el de la actividad por una razón histórica: el
+notebook de EDA se publicó primero como ``01`` y sus enlaces de Colab ya circulan. El
+número de actividad está declarado en la primera celda de cada notebook.
 
 Editar los .ipynb a mano es una mala idea: el siguiente build los sobrescribe.
-Edita ``herramientas/contenido_semana01.py`` y vuelve a ejecutar este script.
+Edita el módulo de contenido correspondiente y vuelve a ejecutar este script.
 """
 
 from __future__ import annotations
@@ -21,6 +29,8 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from contenido_actividad11 import CELDAS_ACT11  # noqa: E402
+from contenido_actividad12 import CELDAS_ACT12  # noqa: E402
 from contenido_semana01 import CELDAS, URL_REPO  # noqa: E402
 from contenido_waymo import CELDAS_WAYMO  # noqa: E402
 
@@ -116,8 +126,16 @@ def construir(celdas: list[dict], nombre_archivo: str, para_docente: bool) -> Pa
 
 def main() -> None:
     construidos = [
+        # Actividad 1.1 — Fuentes de datos y trabajo colaborativo
+        construir(CELDAS_ACT11, "02_alumno_fuentes.ipynb", para_docente=False),
+        construir(CELDAS_ACT11, "02_docente_fuentes.ipynb", para_docente=True),
+        # Actividad 1.2 — Estructuras de datos y almacenamiento
+        construir(CELDAS_ACT12, "03_alumno_estructuras.ipynb", para_docente=False),
+        construir(CELDAS_ACT12, "03_docente_estructuras.ipynb", para_docente=True),
+        # Actividad 1.3 — Análisis exploratorio de datos
         construir(CELDAS, "01_alumno_exploracion.ipynb", para_docente=False),
         construir(CELDAS, "01_docente_solucionario.ipynb", para_docente=True),
+        # Opcional — datos reales de Waymo
         construir(CELDAS_WAYMO, "00_opcional_waymo_real.ipynb", para_docente=True),
     ]
     for ruta in construidos:

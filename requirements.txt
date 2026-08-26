@@ -1,10 +1,22 @@
-# Dependencias de la asignatura MLY1101.
-# En Google Colab ya vienen todas instaladas: este archivo es para trabajo local.
-pandas>=2.0
-numpy>=1.24
+# Dependencias de la asignatura MLY1101 (vía pip).
+# En Google Colab ya vienen casi todas instaladas: este archivo es para trabajo local.
+#
+# La fuente de verdad para el entorno reproducible es `pyproject.toml` + `uv.lock`
+# (ver "Opción C — Entorno local con uv" en el README). Este archivo se mantiene
+# alineado a mano para quien prefiera pip.
+
+pandas>=2.2,<3             # <3 a propósito: en pandas 3 una columna de texto deja de ser `object`
+numpy>=1.24,<3
+scipy>=1.11                # correlaciones de rango (Spearman) que usa pandas por debajo
 matplotlib>=3.7
 seaborn>=0.13
+pyarrow>=14.0              # Parquet: notebooks 02, 03 y el opcional de Waymo
+openpyxl>=3.1              # Excel: comparación de formatos de la Actividad 1.2
+
+# Herramientas de trabajo
 jupyterlab>=4.0
 pytest>=7.4
-pyarrow>=14.0              # lectura de Parquet (notebook opcional de Waymo)
-google-cloud-storage>=2.14 # descarga de Waymo en Colab (ahí ya viene instalado)
+
+# Extras (instalar solo si se usan esos notebooks)
+# google-cloud-storage>=2.14   # notebook 00: descarga de datos reales de Waymo
+# kedro>=0.19                  # notebook 04: pipeline reproducible

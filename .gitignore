@@ -14,6 +14,10 @@ venv/
 # Salidas de trabajo del alumno
 notebooks/*_resuelto.ipynb
 salidas/
+salidas_act12/           # exportaciones del benchmark de formatos (Actividad 1.2)
+notebooks/salidas_act12/
+kedro_mly1101/           # proyecto Kedro que genera el notebook 04
+notebooks/kedro_mly1101/
 
 # macOS
 .DS_Store
