@@ -43,6 +43,7 @@ propio caso de negocio y su propio dataset**, y el repositorio solo sabía opera
 | **El proyecto Kedro vive en el repositorio** (`kedro_mly1101/`), versionado y testeado | Crearlo dentro de una celda con `%%writefile` y descartarlo | *(Corregido el mismo día, tras revisión.)* Un proyecto que se crea y se borra en una celda no es base para EA2 ni EA3. El notebook ahora **lee y ejecuta el proyecto real** en vez de fabricar uno de juguete |
 | Las decisiones de limpieza en `conf/base/parameters.yml` | Escritas dentro de los nodos | Cambiar un umbral o una variante de escritura no debería exigir tocar Python ni saber programar. Cada bloque del YAML es una fila de la tabla de decisiones de la EA1 |
 | `marcar antes que eliminar` en todos los nodos de limpieza | `dropna()` sobre las filas con valores imposibles | El resto de la fila era válido. Solo se eliminan los duplicados exactos |
+| Cada regla de dominio declara su `columna` además de su `condicion` | Deducir la columna del texto con `expresion.split()[0]` | **Defecto encontrado en revisión.** Una regla que menciona dos columnas (`num_lidar_points < 0 or speed_mps > 100`) limpiaba solo la primera, y en silencio |
 | Los nodos de Kedro **reutilizan `src/eda.py`** | Reescribir el análisis dentro del pipeline | El punto pedagógico es que industrializar no exige reescribir: es el premio de haber escrito funciones puras |
 | `pandas` fijado en `<3` | Aceptar pandas 3 | En pandas 3 una columna de texto deja de tener `dtype == object`. El material enseña a leer ese `object` y Colab sigue en 2.x |
 | E501 fuera de las reglas de ruff | Ignorarlo solo en `contenido_*.py` | También choca con los f-strings de salida alineada de `calcular_nota.py` y con tablas en docstrings. Partirlos empeora el código |
@@ -67,15 +68,32 @@ sumar ambos.
 
 ### 3.2 El pipeline `kedro_mly1101/`
 
-Proyecto Kedro versionado, con dos pipelines y nueve nodos:
+Proyecto Kedro versionado, con **tres pipelines y 17 nodos**, del CSV crudo a las métricas:
 
 | Pipeline | Nodos | Qué hace |
 |---|---|---|
 | `calidad` | 4, **independientes entre sí** | Diagnóstico: radiografía por columna, desbalance, reglas de dominio, patrón de faltantes |
 | `preprocesamiento` | 5, **encadenados** | Normaliza categorías → descubre nulos ocultos → marca imposibles → quita duplicados y constantes → resume |
+| `supervisado` (EA2) | 8 | Prepara variables → parte por segmento → entrena → evalúa por clase → mide dos tipos de fuga |
 
-Entrega `data/03_primary/detecciones_limpias.parquet`, **la entrada de la EA2**. Las pipelines de
-EA2 y EA3 se registran en `pipeline_registry.py` sin tocar lo existente.
+El orden entre pipelines no está escrito en ninguna parte: `supervisado` consume
+`detecciones_limpias`, que `preprocesamiento` produce, y Kedro deduce el resto. La de EA3 se
+registrará igual, sin tocar lo existente.
+
+#### Dos decisiones del pipeline supervisado que se tomaron midiendo
+
+**El objetivo no es `object_type`.** Era el candidato natural, pero se resuelve al **99,98 %** con
+cualquier partición: el generador sortea las dimensiones por tipo de objeto y basta el largo de la
+caja. Un ejercicio donde todo sale perfecto no enseña a evaluar. Se cambió a
+`detection_difficulty`, que está desbalanceado 88,9 / 11,1 y da 90 % de exactitud con **F1 de 0,46
+en la clase minoritaria**: el caso de manual de que el promedio oculta a la minoría.
+
+**La demostración de fuga por partición se midió antes de escribirla, y salió en cero.** Se
+mantiene el nodo, pero el material lo declara: en este dataset sintético cada detección se sortea
+de forma independiente dentro del segmento, así que la dependencia que la fuga explotaría no
+existe (−0,005, con 153 segmentos compartidos contra 0). Se añadió en su lugar una fuga que **sí**
+se manifiesta: incluir `num_lidar_points`, del que se deriva la etiqueta, infla el F1-macro de
+0,7025 a 0,7543. Presentar una demostración de un efecto inexistente habría sido engañoso.
 
 Los nodos reutilizan `src/eda.py` sin reimplementar nada; `src/kedro_mly1101/__init__.py` añade
 la carpeta `src/` del repositorio al `sys.path` porque es lo primero que Kedro importa.
@@ -184,11 +202,11 @@ rm -rf notebooks/kedro_mly1101 notebooks/salidas_act12 notebooks/salidas_proyect
 
 | Qué | Estado |
 |---|---|
-| Tests | ✅ 127 (48 nuevos: 15 de `fuentes`, 17 de `formatos`, 16 del pipeline Kedro) |
+| Tests | ✅ 142 (63 nuevos: 15 de `fuentes`, 17 de `formatos`, 16 del pipeline de datos, 15 del supervisado) |
 | `ruff check` | ✅ limpio |
 | Los cinco notebooks resueltos ejecutan completos | ✅ |
 | Ningún notebook de alumno filtra la pauta | ✅ |
-| El pipeline de Kedro corre 9/9 nodos sobre el proyecto versionado | ✅ |
+| El pipeline de Kedro corre 17/17 nodos sobre el proyecto versionado | ✅ |
 
 ### 6.2 Tres hallazgos al armar el entorno con uv
 
@@ -221,7 +239,7 @@ Los tres corregidos, y los tres vale la pena tener escritos porque volverán a a
 |---|---|
 | Antes de la clase | Ejecutar los notebooks 02, 03 y 10 en Colab, como se hizo con el 01 |
 | Semana 2 | Preprocesamiento aplicado: imputación por grupo, codificación, escalado y `Pipeline` |
-| EA2 | Pipeline `supervisado` en `kedro_mly1101/`: partición sin fuga, entrenamiento, evaluación **por clase** (el desbalance de `CYCLIST` al 1,9 % ya está sembrado) |
+| EA2 | **Material docente** del pipeline `supervisado`, que ya existe y está medido: notebooks de alumno y solucionario, y ampliar la rúbrica al RA2 |
 | EA3 | Pipeline `no_supervisado`: segmentación y reducción de dimensionalidad sobre el mismo Parquet |
 | Cuando Colab migre a pandas 3 | Migrar el material: `dtype == object` deja de valer y hay que reescribir esas celdas y sus tests |
 | Cuando se amplíe la EA1 | Extender la rúbrica más allá de la Semana 1 |

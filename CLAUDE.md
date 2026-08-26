@@ -56,8 +56,8 @@ estructural.
    material completo.
 
 8. **El pipeline de `kedro_mly1101/` SÍ se versiona; sus salidas (`data/`) no.** Es la columna
-   de ingeniería del curso, no un ejemplo desechable: las pipelines de EA2 y EA3 se registran
-   ahí. Sus nodos **reutilizan `src/eda.py`**, nunca reimplementan el análisis, y las decisiones
+   de ingeniería del curso, no un ejemplo desechable: la de EA2 (`supervisado`) ya está ahí y
+   la de EA3 se registrará igual. Sus nodos **reutilizan `src/eda.py`**, nunca reimplementan el análisis, y las decisiones
    de limpieza viven en `conf/base/parameters.yml`, no en el código.
 
 9. **La rúbrica usa dos numeraciones y ambas son necesarias.** Los PPT definen IL 1.1, 1.2 y 1.3
@@ -69,8 +69,8 @@ estructural.
 
 ```bash
 uv sync                                        # entorno reproducible (pyproject.toml + uv.lock)
-uv run pytest                                  # 127 tests; sin el extra waymo, 1 se salta
-cd kedro_mly1101 && uv run kedro run && cd ..  # el pipeline debe correr 9/9 nodos
+uv run pytest                                  # 142 tests; sin el extra waymo, 1 se salta
+cd kedro_mly1101 && uv run kedro run && cd ..  # el pipeline debe correr 17/17 nodos
 uv run python herramientas/construir_notebooks.py   # regenera los nueve notebooks
 
 # Los cinco notebooks con código resuelto deben ejecutar completos:
@@ -119,10 +119,12 @@ es sobre `google.cloud.storage`.
 | EA1 Semana 1 · Act. 1.2 Estructuras y almacenamiento | ✅ completa y verificada |
 | EA1 Semana 1 · Act. 1.3 EDA | ✅ completa y verificada |
 | Plantilla de proyecto de equipo | ✅ ejecuta de extremo a extremo |
-| Pipeline Kedro (`kedro_mly1101/`) | ✅ 9 nodos, versionado, 16 tests |
+| Pipeline Kedro (`kedro_mly1101/`) | ✅ 17 nodos en 3 pipelines, versionado, 31 tests |
+| EA2 · pipeline `supervisado` | ✅ corre y está medido; **falta el material docente** |
 | Notebook opcional de Kedro y Databricks | ✅ usa el pipeline real; Databricks queda conceptual |
 | EA1 semanas siguientes | ⏳ pendiente (la EA1 son 20 h en total) |
-| EA2 / EA3 / EFT | ⏳ pendiente |
+| EA2 · notebooks y rúbrica | ⏳ pendiente (el pipeline ya existe) |
+| EA3 / EFT | ⏳ pendiente |
 
 Todo está verificado, incluido `notebooks/00_opcional_waymo_real.ipynb`: se ejecutó de extremo a
 extremo el 2026-08-13 contra el segmento real `10023947602400723454_1120_000_1140_000`

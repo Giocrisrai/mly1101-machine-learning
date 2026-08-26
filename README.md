@@ -16,7 +16,7 @@ Problema → Datos → Exploración → Preprocesamiento → Modelamiento → Ev
 | Experiencia | Contenido | Estado |
 |---|---|---|
 | **EA1** · Análisis y preprocesamiento de datos | Fuentes, estructuras, exploración y calidad de datos | ✅ Semana 1 completa (Act. 1.1, 1.2 y 1.3) |
-| **EA2** · Aprendizaje supervisado | Regresión y clasificación | ⏳ |
+| **EA2** · Aprendizaje supervisado | Regresión y clasificación | 🔧 pipeline listo; material docente ⏳ |
 | **EA3** · Aprendizaje no supervisado | Segmentación, reducción de dimensionalidad | ⏳ |
 | **EFT** · Evaluación final transversal | Integra los tres RA (40 % de la nota) | ⏳ |
 
@@ -98,14 +98,18 @@ uv sync --extra kedro
 cd kedro_mly1101 && uv run kedro run
 ```
 
-Nueve nodos: cuatro de diagnóstico y cinco de limpieza. Producen el diagnóstico de calidad y
-`detecciones_limpias.parquet`, que es **lo que consumirá la EA2** para entrenar el primer modelo.
+**17 nodos** en tres pipelines, del CSV crudo al modelo evaluado:
 
-| Experiencia | Pipeline | Consume | Estado |
-|---|---|---|---|
-| **EA1** · Datos | `calidad` · `preprocesamiento` | El CSV crudo | ✅ |
-| **EA2** · Supervisado | `supervisado` | `detecciones_limpias` | ⏳ |
-| **EA3** · No supervisado | `no_supervisado` | `detecciones_limpias` | ⏳ |
+| Experiencia | Pipeline | Nodos | Consume | Estado |
+|---|---|---|---|---|
+| **EA1** · Datos | `calidad` · `preprocesamiento` | 4 + 5 | El CSV crudo | ✅ |
+| **EA2** · Supervisado | `supervisado` | 8 | `detecciones_limpias` | ✅ |
+| **EA3** · No supervisado | `no_supervisado` | — | `detecciones_limpias` | ⏳ |
+
+El pipeline `supervisado` responde una pregunta con sustancia: **¿se puede anticipar qué
+detecciones van a ser difíciles?** Alcanza un 90 % de exactitud con un F1 de **0,46 en la clase
+minoritaria** — se pierde el 60 % de las detecciones difíciles, que eran justo las que
+interesaban. Ese contraste es el material de clase, no un defecto que haya que tapar.
 
 Cada experiencia **añade nodos, no reescribe el análisis anterior**. Los detalles, las decisiones
 de diseño y qué cambiaría en Databricks están en
@@ -265,7 +269,7 @@ herramientas/
 
 kedro_mly1101/       el pipeline reproducible (Kedro). Versionado; sus salidas no
   conf/base/            catalog.yml (dónde vive el dato) y parameters.yml (las decisiones)
-  src/.../pipelines/    calidad (diagnóstico) y preprocesamiento (limpieza)
+  src/.../pipelines/    calidad, preprocesamiento (EA1) y supervisado (EA2)
 
 tests/               pytest de todo lo anterior
 docs/                guiones de clase, rúbrica y documentos de diseño
@@ -297,12 +301,13 @@ Editar los `.ipynb` directamente funciona hasta el siguiente build, que los sobr
 uv run pytest        # o simplemente `pytest` si ya activaste el entorno
 ```
 
-**127 tests en total**, repartidos así:
+**142 tests en total**, repartidos así:
 
 | Archivo | Tests | Qué verifica |
 |---|---|---|
 | `tests/test_generar_dataset.py` | 19 | Reproducibilidad byte a byte y presencia de **cada uno de los 10 defectos** |
-| `tests/test_pipeline_kedro.py` | 16 | Los nodos del pipeline y que el grafo se construya sin ciclos |
+| `tests/test_pipeline_kedro.py` | 16 | Los nodos de calidad y limpieza, y que el grafo se construya sin ciclos |
+| `tests/test_pipeline_supervisado.py` | 15 | La partición sin fuga, el entrenamiento y las dos mediciones de fuga |
 | `tests/test_formatos.py` | 17 | El benchmark de formatos de la Act. 1.2: peso, tiempos y pérdida de tipos |
 | `tests/test_fuentes.py` | 15 | La lectura desde SQL, JSON anidado y texto libre de la Act. 1.1 |
 | `tests/test_eda.py` | 14 | Las utilidades de diagnóstico de `src/eda.py` |

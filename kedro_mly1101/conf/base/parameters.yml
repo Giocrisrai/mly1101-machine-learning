@@ -22,12 +22,31 @@ centinelas:
 
 # Reglas de dominio: describen filas IMPOSIBLES, no atípicas.
 # Un bus de 15 m es atípico y legítimo; una altura de 0 m es imposible.
+#
+# Cada regla declara DOS cosas y las dos hacen falta:
+#   condicion: qué filas son inválidas (se evalúa con DataFrame.eval)
+#   columna:   cuál es el dato que hay que marcar como faltante
+#
+# Podría parecer redundante, porque casi siempre la columna es la que abre la
+# condición. No lo es: en cuanto una regla menciona dos columnas
+# ("num_lidar_points < 0 or speed_mps > 100") deducir la columna del texto
+# limpiaría solo la primera, y en silencio. Declararla es lo que evita ese fallo.
 reglas_dominio:
-  altura nula o negativa: box_height <= 0
-  largo negativo: box_length < 0
-  ancho negativo: box_width < 0
-  velocidad superior a 100 m/s: speed_mps > 100
-  puntos laser negativos: num_lidar_points < 0
+  altura nula o negativa:
+    condicion: box_height <= 0
+    columna: box_height
+  largo negativo:
+    condicion: box_length < 0
+    columna: box_length
+  ancho negativo:
+    condicion: box_width < 0
+    columna: box_width
+  velocidad superior a 100 m/s:
+    condicion: speed_mps > 100
+    columna: speed_mps
+  puntos laser negativos:
+    condicion: num_lidar_points < 0
+    columna: num_lidar_points
 
 # Columnas que no aportan información a un modelo.
 # sensor_version es constante (varianza cero); id_interno es casi único, así que
@@ -41,3 +60,41 @@ sesgo:
   grupos:
     - time_of_day
     - detection_difficulty
+
+# ---------------------------------------------------------------------------
+# EA2 · Aprendizaje supervisado
+# ---------------------------------------------------------------------------
+# La pregunta: ¿se puede anticipar qué detecciones van a ser DIFÍCILES a partir
+# de la geometría del objeto y de dónde está?
+#
+# Se descartó clasificar object_type, que parecía lo natural: se resuelve al
+# 99,98 % porque el generador sortea las dimensiones por tipo de objeto. Un
+# ejercicio donde todo sale perfecto no enseña a evaluar.
+modelo:
+  objetivo: detection_difficulty
+
+  # El segmento es la unidad de AGRUPACIÓN para partir el dataset.
+  # No es una variable del modelo: si lo fuera, aprendería a reconocer segmentos.
+  grupo: segment_id
+
+  # num_lidar_points NO está en esta lista, y es deliberado: la etiqueta se
+  # deriva de esa columna, así que incluirla sería contarle al modelo la
+  # respuesta. El nodo comparar_fuga_de_variable mide cuánto infla la métrica.
+  variables:
+    - box_length
+    - box_width
+    - box_height
+    - box_center_x
+    - box_center_y
+    - box_center_z
+    - speed_mps
+
+  proporcion_prueba: 0.25
+  semilla: 42
+
+  n_arboles: 200
+  profundidad_maxima: 12
+
+# La variable excluida a propósito, para poder medir el efecto de incluirla.
+fuga:
+  variable: num_lidar_points

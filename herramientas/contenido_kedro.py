@@ -374,7 +374,8 @@ print("Pipeline completo:", "Pipeline execution completed" in salida)
 
 assert resultado.returncode == 0, f"el pipeline falló:\\n{salida[-2000:]}"
 assert ejecutados == len(completo.nodes), "no se ejecutaron todos los nodos"
-print("\\n✅ Los nueve nodos corrieron y dejaron sus salidas en kedro_mly1101/data/")
+print(f"\\n✅ Los {len(completo.nodes)} nodos corrieron: del CSV crudo a las métricas del modelo.")
+print("   Las salidas quedaron en kedro_mly1101/data/")
 """
     ),
     code(
@@ -599,22 +600,134 @@ resuelve el *dónde*; el *cómo* sigue siendo tuyo.
     md(
         """
 ---
+# Bloque 8 · Del dato al modelo, sin salir del pipeline
+
+El `kedro run` que acabas de lanzar **no paró en la limpieza**. Siguió con el pipeline
+`supervisado`, que consume `detecciones_limpias` y entrena un clasificador.
+
+En ningún archivo está escrito que el modelamiento va después de la limpieza. Kedro lo dedujo de
+que uno consume lo que el otro produce. Eso es el proceso completo de Machine Learning declarado
+como un grafo:
+
+```
+CSV crudo → calidad → preprocesamiento → detecciones_limpias.parquet → supervisado → métricas
+```
+
+### La pregunta que responde
+
+> ¿Se puede anticipar qué detecciones van a ser **difíciles** a partir de la geometría del objeto
+> y de dónde está?
+
+Si se pudiera, el equipo de percepción sabría de antemano en qué situaciones no conviene confiar
+en el sensor.
+
+**Se descartó clasificar `object_type`**, que parecía lo natural. Sobre este dataset se resuelve
+al 99,98 % con cualquier partición, porque el generador sortea las dimensiones **por tipo de
+objeto** y basta el largo de la caja para acertar. Un ejercicio donde todo sale perfecto no
+enseña nada sobre evaluación.
+"""
+    ),
+    code(
+        """
+metricas = pd.read_csv(PROYECTO / "data" / "07_model_output" / "metricas_por_clase.csv")
+print("=== Métricas por clase ===")
+print(metricas.to_string(index=False))
+
+print("\\n=== Matriz de confusión (filas = real, columnas = predicho) ===")
+print(pd.read_csv(PROYECTO / "data" / "07_model_output" / "matriz_confusion.csv", index_col=0))
+"""
+    ),
+    md(
+        """
+### Mira la fila que nadie mira
+
+La exactitud ronda el **90 %**. Suena bien. Ahora mira la fila de `LEVEL_2`:
+
+| | Precisión | Recall | F1 |
+|---|---|---|---|
+| `LEVEL_1` (88,9 % de los datos) | 0,93 | 0,96 | 0,94 |
+| **`LEVEL_2` (11,1 %)** | **0,54** | **0,40** | **0,46** |
+
+Un recall de 0,40 significa que **el modelo se pierde el 60 % de las detecciones difíciles**, que
+son exactamente las que queríamos anticipar. El 90 % de exactitud se lo debe casi entero a acertar
+la clase mayoritaria, que es la fácil.
+
+> *Un promedio global oculta a la minoría.* Es la misma idea del bloque de sesgo de la Actividad
+> 1.1, ahora con un modelo entrenado delante y una cifra que la demuestra.
+
+Por eso el pipeline guarda `metricas_por_clase.csv` y no un único número. **Un modelo no se
+reporta con una cifra.**
+"""
+    ),
+    md(
+        """
+---
+# Bloque 9 · Dos fugas de información, y solo una se nota
+
+El pipeline mide las dos en vez de afirmarlas. El resultado es más interesante de lo esperado.
+"""
+    ),
+    code(
+        """
+print("=== Fuga por variable derivada ===")
+print(pd.read_csv(PROYECTO / "data" / "07_model_output" / "fuga_de_variable.csv").to_string(index=False))
+
+print("\\n=== Fuga por agrupación (partición) ===")
+print(pd.read_csv(PROYECTO / "data" / "07_model_output" / "comparacion_particiones.csv").to_string(index=False))
+"""
+    ),
+    md(
+        """
+### La primera sí se nota: `num_lidar_points`
+
+La etiqueta `detection_difficulty` **la asigna el sensor a partir del número de puntos láser**.
+Incluir esa columna entre las variables predictoras no es informativo: es contarle al modelo la
+respuesta con otras palabras.
+
+El F1-macro sube de **0,70 a 0,75**. El modelo parece mejor y no sirve para nada, porque en el
+momento en que quisieras predecir la dificultad ya tendrías la dificultad.
+
+Es el error más común en la práctica y el más difícil de ver: **no hay ningún síntoma, solo un
+resultado sospechosamente bueno**.
+
+### La segunda no se nota, y eso también hay que saber decirlo
+
+Partir el dataset al azar por fila deja **153 segmentos a caballo** entre entrenamiento y prueba,
+contra 0 al partir por segmento. La fuga existe, es medible en segmentos compartidos… y la
+métrica **no se mueve** (−0,005).
+
+No es un fallo del ejercicio: es una propiedad de este dataset. El generador sortea cada detección
+de forma independiente dentro del segmento, así que la dependencia entre filas que la fuga
+explotaría **no existe aquí**. En datos reales de Waymo, donde los fotogramas consecutivos siguen
+al mismo objeto, sí existe.
+
+> La conclusión no es *"partir por grupo da igual"*. Es una más incómoda y más útil: **un riesgo
+> que no se manifiesta en tus datos de prueba sigue siendo un riesgo.** La partición por grupo se
+> justifica por cómo se generaron los datos, no por la diferencia que se mide hoy.
+
+Y de paso, la lección de método: el pipeline **midió** las dos, y una salió en cero. Medir y
+reportar un cero es parte del trabajo; elegir solo las mediciones que confirman lo que ibas a
+decir es sesgo de confirmación, el mismo del que se habla en la Actividad 1.1.
+"""
+    ),
+    md(
+        """
+---
 # Cierre · Hacia dónde sigue esto
 
-El pipeline que acabas de ejecutar entrega `detecciones_limpias.parquet`. **Ese archivo es el
-punto de partida de lo que viene**, y por eso este notebook no es un extra: es la bisagra entre
-la EA1 y el resto de la asignatura.
+El grafo que acabas de ejecutar va del CSV crudo a las métricas por clase. **Ese es el proceso
+completo de Machine Learning**, declarado como dependencias y ejecutado con un comando.
 
-| Experiencia | Pipeline que se sumará al proyecto | Consume |
-|---|---|---|
-| **EA1** · Datos | `calidad` · `preprocesamiento` | El CSV crudo |
-| **EA2** · Supervisado | `supervisado` — partición sin fuga, entrenamiento, evaluación por clase | `detecciones_limpias` |
-| **EA3** · No supervisado | `no_supervisado` — segmentación, reducción de dimensionalidad | `detecciones_limpias` |
-| **EFT** | Integra las tres | Todo el grafo |
+| Experiencia | Pipeline | Nodos | Consume | Estado |
+|---|---|---|---|---|
+| **EA1** · Datos | `calidad` · `preprocesamiento` | 4 + 5 | El CSV crudo | ✅ |
+| **EA2** · Supervisado | `supervisado` | 8 | `detecciones_limpias` | ✅ |
+| **EA3** · No supervisado | `no_supervisado` | — | `detecciones_limpias` | ⏳ |
+| **EFT** | Integra las tres | — | Todo el grafo | ⏳ |
 
-Se enchufan en `pipeline_registry.py` sin tocar lo que ya existe. Ese es el motivo de haber
-montado el proyecto ahora y no más adelante: **cada experiencia añade nodos, no reescribe el
-análisis anterior.**
+La de EA3 se enchufará en `pipeline_registry.py` sin tocar nada de lo anterior. Ese es el motivo
+de haber montado el proyecto ahora y no más adelante: **cada experiencia añade nodos, no reescribe
+el análisis previo.**
 
 ---
 

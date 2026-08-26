@@ -40,9 +40,12 @@ def auditar_dominio(detecciones: pd.DataFrame, reglas: dict) -> pd.DataFrame:
     """Cuenta las filas que violan cada regla de dominio.
 
     Las reglas llegan desde ``parameters.yml``: son decisiones del negocio, no del
-    código, y por eso viven en configuración.
+    código, y por eso viven en configuración. Cada una trae ``condicion`` (qué
+    filas son inválidas) y ``columna`` (qué dato marcar); para auditar basta la
+    primera.
     """
-    return eda.valores_imposibles(detecciones, reglas)
+    condiciones = {nombre: regla["condicion"] for nombre, regla in reglas.items()}
+    return eda.valores_imposibles(detecciones, condiciones)
 
 
 def medir_sesgo(detecciones: pd.DataFrame, sesgo: dict) -> pd.DataFrame:

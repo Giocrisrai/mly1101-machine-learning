@@ -49,16 +49,21 @@ def descubrir_faltantes(detecciones: pd.DataFrame, centinelas: dict) -> pd.DataF
 def marcar_imposibles(detecciones: pd.DataFrame, reglas: dict) -> pd.DataFrame:
     """Pone en ``NaN`` los valores que violan una regla de dominio.
 
+    Cada regla trae su ``columna`` declarada en ``parameters.yml``. **No se deduce
+    del texto de la condición**: una regla que menciona dos columnas
+    (``num_lidar_points < 0 or speed_mps > 100``) dejaría la segunda sin limpiar y
+    sin avisar.
+
     Ojo con la distinción que se evalúa en la rúbrica: se marca lo **imposible**
     (una altura de 0 m), no lo **atípico legítimo** (un bus de 15 m). El criterio
     estadístico propone; el conocimiento del dominio dispone.
     """
     limpio = detecciones.copy()
-    for expresion in reglas.values():
-        columna = expresion.split()[0]
+    for nombre, regla in reglas.items():
+        columna = regla["columna"]
         if columna not in limpio.columns:
             continue
-        malas = limpio.eval(expresion)
+        malas = limpio.eval(regla["condicion"])
         limpio.loc[malas.fillna(False), columna] = pd.NA
     return limpio
 

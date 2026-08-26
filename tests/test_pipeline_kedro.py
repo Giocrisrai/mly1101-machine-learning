@@ -56,10 +56,10 @@ MAPAS = {
     "weather": {"lluvia": "rain", "soleado": "sunny", "niebla": "fog"},
 }
 REGLAS = {
-    "altura nula o negativa": "box_height <= 0",
-    "largo negativo": "box_length < 0",
-    "velocidad superior a 100 m/s": "speed_mps > 100",
-    "puntos laser negativos": "num_lidar_points < 0",
+    "altura nula o negativa": {"condicion": "box_height <= 0", "columna": "box_height"},
+    "largo negativo": {"condicion": "box_length < 0", "columna": "box_length"},
+    "velocidad superior a 100 m/s": {"condicion": "speed_mps > 100", "columna": "speed_mps"},
+    "puntos laser negativos": {"condicion": "num_lidar_points < 0", "columna": "num_lidar_points"},
 }
 
 
@@ -135,7 +135,9 @@ def test_marcar_imposibles_no_elimina_filas(sucio: pd.DataFrame) -> None:
 def test_marcar_imposibles_respeta_los_atipicos_legitimos() -> None:
     """Un bus de 15 m es atipico y legitimo: ninguna regla debe tocarlo."""
     buses = pd.DataFrame({"box_length": [4.4, 15.0, 18.0], "box_height": [1.6, 3.2, 3.4]})
-    limpio = prep.marcar_imposibles(buses, {"largo negativo": "box_length < 0"})
+    limpio = prep.marcar_imposibles(
+        buses, {"largo negativo": {"condicion": "box_length < 0", "columna": "box_length"}}
+    )
     assert limpio["box_length"].notna().all()
     assert limpio["box_length"].max() == 18.0
 
@@ -177,21 +179,45 @@ def test_el_pipeline_completo_es_coherente(sucio: pd.DataFrame) -> None:
     assert (limpio["speed_mps"].dropna() <= 100).all()
 
 
-def test_las_pipelines_se_registran_y_el_grafo_es_valido() -> None:
-    """Que el registro construya sin ciclos ni dependencias colgando."""
+def test_las_pipelines_de_la_ea1_se_registran_y_su_grafo_es_valido() -> None:
+    """Que las dos pipelines de la EA1 construyan sin ciclos ni cabos sueltos.
+
+    El grafo COMPLETO (con la de EA2 encadenada) se comprueba en
+    ``tests/test_pipeline_supervisado.py``; aqui solo la parte de datos.
+    """
     from kedro_mly1101.pipeline_registry import register_pipelines
 
     pipelines = register_pipelines()
-    assert set(pipelines) == {"calidad", "preprocesamiento", "__default__"}
+    assert {"calidad", "preprocesamiento"} <= set(pipelines)
 
-    completo = pipelines["__default__"]
-    # Lo unico que el pipeline espera de fuera son los datos crudos y los parametros.
-    entradas = {e for e in completo.inputs() if not e.startswith("params:")}
+    ea1 = pipelines["calidad"] + pipelines["preprocesamiento"]
+    assert len(ea1.nodes) == 9
+
+    # Lo unico que espera de fuera son los datos crudos y los parametros.
+    entradas = {e for e in ea1.inputs() if not e.startswith("params:")}
     assert entradas == {"detecciones_crudas"}
+
     # ``outputs()`` devuelve solo las salidas LIBRES: ``detecciones_limpias`` no
     # esta ahi porque la consume ``resumir_la_limpieza``. Que sea intermedia no le
     # quita valor: esta en el catalogo, asi que se persiste igual.
-    producidos = {salida for nodo in completo.nodes for salida in nodo.outputs}
+    producidos = {salida for nodo in ea1.nodes for salida in nodo.outputs}
     assert "detecciones_limpias" in producidos
-    assert "informe_limpieza" in completo.outputs()
-    assert len(completo.nodes) == 9
+    assert "informe_limpieza" in ea1.outputs()
+
+
+def test_una_regla_con_dos_columnas_marca_la_columna_declarada() -> None:
+    """El defecto que motivó declarar la columna: deducirla del texto fallaba.
+
+    Con ``columna`` deducida de la condicion, esta regla habria marcado
+    ``num_lidar_points`` y dejado ``speed_mps`` sucia sin avisar.
+    """
+    df = pd.DataFrame({"num_lidar_points": [10, -1, 20], "speed_mps": [1.0, 2.0, 340.0]})
+    regla = {
+        "sensor fuera de rango": {
+            "condicion": "num_lidar_points < 0 or speed_mps > 100",
+            "columna": "speed_mps",
+        }
+    }
+    limpio = prep.marcar_imposibles(df, regla)
+    assert limpio["speed_mps"].isna().sum() == 2      # las dos filas que violan la regla
+    assert limpio["num_lidar_points"].notna().all()   # esta columna no se tocó

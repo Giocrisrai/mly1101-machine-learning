@@ -59,3 +59,42 @@ informe_limpieza:
   filepath: data/03_primary/informe_limpieza.csv
   save_args:
     index: false
+
+# --------------------------------------------------------------------------
+# EA2 · Aprendizaje supervisado
+# --------------------------------------------------------------------------
+tabla_modelamiento:
+  type: pandas.ParquetDataset
+  filepath: data/04_feature/tabla_modelamiento.parquet
+
+particion_por_segmento:
+  type: pandas.ParquetDataset
+  filepath: data/05_model_input/particion_por_segmento.parquet
+
+clasificador:
+  type: pickle.PickleDataset
+  filepath: data/06_models/clasificador.pickle
+
+metricas_por_clase:
+  type: pandas.CSVDataset
+  filepath: data/07_model_output/metricas_por_clase.csv
+  save_args:
+    index: false
+
+matriz_confusion:
+  type: pandas.CSVDataset
+  filepath: data/07_model_output/matriz_confusion.csv
+  save_args:
+    index: true
+
+comparacion_particiones:
+  type: pandas.CSVDataset
+  filepath: data/07_model_output/comparacion_particiones.csv
+  save_args:
+    index: false
+
+fuga_de_variable:
+  type: pandas.CSVDataset
+  filepath: data/07_model_output/fuga_de_variable.csv
+  save_args:
+    index: false
