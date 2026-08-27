@@ -16,8 +16,8 @@ Problema → Datos → Exploración → Preprocesamiento → Modelamiento → Ev
 | Experiencia | Contenido | Estado |
 |---|---|---|
 | **EA1** · Análisis y preprocesamiento de datos | Fuentes, estructuras, exploración y calidad de datos | ✅ Semana 1 completa (Act. 1.1, 1.2 y 1.3) |
-| **EA2** · Aprendizaje supervisado | Regresión y clasificación | 🔧 pipeline listo; material docente ⏳ |
-| **EA3** · Aprendizaje no supervisado | Segmentación, reducción de dimensionalidad | 🔧 pipeline listo; material docente ⏳ |
+| **EA2** · Aprendizaje supervisado | Clasificación, partición sin fuga, evaluación por clase | ✅ disponible |
+| **EA3** · Aprendizaje no supervisado | Segmentación y reducción de dimensionalidad | ✅ disponible |
 | **EFT** · Evaluación final transversal | Integra los tres RA (40 % de la nota) | ⏳ |
 
 ---
@@ -70,7 +70,8 @@ vienen los datos → cómo se almacenan y manipulan → qué tan sucios están.
 |---|---|
 | [`docs/guion_clase_actividades_11_12.md`](docs/guion_clase_actividades_11_12.md) | Guion de las actividades 1.1 y 1.2: coreografía de sala, qué preguntar antes de mostrar la cifra, qué recortar y en qué orden |
 | [`docs/guion_clase_semana01.md`](docs/guion_clase_semana01.md) | Guion minuto a minuto de la Actividad 1.3 (EDA): preguntas para el curso, momentos críticos, qué recortar si falta tiempo |
-| [`docs/rubrica_ea1.md`](docs/rubrica_ea1.md) | Rúbrica por indicador de logro, mapeada al RA1, con las cifras exactas para corregir |
+| [`docs/rubrica_ea1.md`](docs/rubrica_ea1.md) | Rúbrica de la EA1, mapeada al RA1, con las cifras exactas para corregir |
+| [`docs/rubrica_ea2.md`](docs/rubrica_ea2.md) · [`docs/rubrica_ea3.md`](docs/rubrica_ea3.md) | Rúbricas de EA2 y EA3, con las cifras de referencia medidas |
 | [`docs/superpowers/specs/2026-08-12-mly1101-semana01-eda-design.md`](docs/superpowers/specs/2026-08-12-mly1101-semana01-eda-design.md) | Especificación completa: decisiones de diseño, catálogo de defectos, protocolo de verificación |
 
 ### Evaluar las entregas
@@ -84,6 +85,36 @@ python herramientas/calcular_nota.py --csv docs/ejemplo_notas.csv   # el curso c
 
 El modo CSV entrega también el promedio del curso y el porcentaje de aprobación. Si tu sede usa
 otra exigencia, `--exigencia 0.5`.
+
+---
+
+## EA2 y EA3 · Modelamiento
+
+Las dos experiencias parten del **mismo dataset limpio** que produce la EA1 y hacen preguntas
+opuestas.
+
+| Exp. | Sesión | Notebook del alumno | Solucionario | Rúbrica |
+|---|---|---|---|---|
+| **EA2** | Supervisado · 4 h · 17 TODO | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/05_alumno_supervisado.ipynb) `05_alumno_supervisado.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/05_docente_supervisado.ipynb) | [`rubrica_ea2.md`](docs/rubrica_ea2.md) |
+| **EA3** | No supervisado · 4 h · 11 TODO | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/06_alumno_no_supervisado.ipynb) `06_alumno_no_supervisado.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/06_docente_no_supervisado.ipynb) | [`rubrica_ea3.md`](docs/rubrica_ea3.md) |
+
+**Los dos notebooks reutilizan los nodos del pipeline**, no una copia. Esos módulos solo importan
+pandas, así que funcionan en Colab **sin instalar Kedro**.
+
+### Los dos momentos que cargan cada sesión
+
+**EA2 — el baseline.** Los alumnos entrenan un bosque aleatorio que alcanza un **89,65 %** de
+exactitud. Después descubren que un modelo que **responde siempre lo mismo, sin mirar los datos**,
+saca **88,96 %**. Siete décimas de diferencia. Y sin embargo el F1-macro pasa de 0,47 a 0,70.
+
+> Dos métricas sobre el mismo modelo, con conclusiones opuestas. Esa es la sesión.
+
+**EA3 — los buses.** El agrupamiento encuentra cuatro grupos; el más pequeño (1,5 % de las filas,
+`box_length` a casi **cinco desviaciones típicas**) son los **buses**: los mismos atípicos
+legítimos que en la EA1 se aprendió a *no* eliminar. Aparecen solos, sin que nadie se lo pidiera.
+
+> Si en la EA1 hubieran hecho caso al criterio IQR y eliminado los atípicos, este grupo no
+> existiría.
 
 ---
 
@@ -285,6 +316,8 @@ herramientas/
   contenido_actividad11.py  fuente única de la Actividad 1.1
   contenido_actividad12.py  fuente única de la Actividad 1.2
   contenido_semana01.py     fuente única de la Actividad 1.3
+  contenido_ea2.py          fuente única de la EA2 (supervisado)
+  contenido_ea3.py          fuente única de la EA3 (no supervisado)
   contenido_waymo.py        fuente del notebook de datos reales
   construir_notebooks.py    genera todos los .ipynb
   calcular_nota.py          rúbrica → nota de 1,0 a 7,0
@@ -326,12 +359,12 @@ Editar los `.ipynb` directamente funciona hasta el siguiente build, que los sobr
 uv run pytest        # o simplemente `pytest` si ya activaste el entorno
 ```
 
-**171 tests en total**, repartidos así:
+**173 tests en total**, repartidos así:
 
 | Archivo | Tests | Qué verifica |
 |---|---|---|
 | `tests/test_generar_dataset.py` | 19 | Reproducibilidad byte a byte y presencia de **cada uno de los 10 defectos** |
-| `tests/test_pipeline_kedro.py` | 16 | Los nodos de calidad y limpieza, y que el grafo se construya sin ciclos |
+| `tests/test_pipeline_kedro.py` | 18 | Los nodos de calidad y limpieza, y que el grafo se construya sin ciclos |
 | `tests/test_pipeline_supervisado.py` | 16 | La partición sin fuga, el entrenamiento y las dos mediciones de fuga |
 | `tests/test_pipeline_no_supervisado.py` | 14 | El escalado antes de agrupar, la elección de k y la interpretación |
 | `tests/test_ingesta_waymo.py` | 13 | Las tres traducciones del esquema real de Waymo (3 se saltan sin datos) |

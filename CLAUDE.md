@@ -25,6 +25,8 @@ estructural.
    | `contenido_actividad11.py` | `02_alumno_fuentes` + `02_docente_fuentes` | 1.1 · IL1.1 |
    | `contenido_actividad12.py` | `03_alumno_estructuras` + `03_docente_estructuras` | 1.2 · IL1.2 |
    | `contenido_semana01.py` | `01_alumno_exploracion` + `01_docente_solucionario` | 1.3 · IL1.3 |
+   | `contenido_ea2.py` | `05_alumno_supervisado` + `05_docente_supervisado` | EA2 · RA2 |
+   | `contenido_ea3.py` | `06_alumno_no_supervisado` + `06_docente_no_supervisado` | EA3 · RA3 |
    | `contenido_proyecto.py` | `10_proyecto_equipo_plantilla` | transversal |
    | `contenido_kedro.py` | `04_opcional_kedro_databricks` | opcional |
    | `contenido_waymo.py` | `00_opcional_waymo_real` | opcional |
@@ -60,13 +62,19 @@ estructural.
    justamente a leer ese `object`, y Colab sigue en la serie 2.x. No subas el tope sin migrar el
    material completo.
 
-8. **El pipeline de `kedro_mly1101/` SÍ se versiona; sus salidas (`data/`) no.** Es la columna
+8. **Los nodos de limpieza deben dejar las columnas numéricas como `float`, no `object`.**
+   Usa `np.nan`, nunca `pd.NA`: en una columna numérica, `pd.NA` la degrada a `object` y
+   scikit-learn revienta mucho más tarde con un `TypeError` sobre `NAType`. El pipeline lo
+   ocultaba porque escribe a Parquet y al releer vuelve a `float`; los notebooks de EA2 y EA3
+   llaman los nodos **en proceso** y ahí sí falla. Hay dos tests que lo fijan.
+
+9. **El pipeline de `kedro_mly1101/` SÍ se versiona; sus salidas (`data/`) no.** Es la columna
    de ingeniería del curso: `calidad`, `preprocesamiento`, `supervisado` (EA2),
    `no_supervisado` (EA3) e `ingesta`. El pipeline `waymo_real` corre **el mismo grafo sobre
    datos reales remapeando su entrada**: nunca dupliques nodos para datos reales. Sus nodos **reutilizan `src/eda.py`**, nunca reimplementan el análisis, y las decisiones
    de limpieza viven en `conf/base/parameters.yml`, no en el código.
 
-9. **La rúbrica usa dos numeraciones y ambas son necesarias.** Los PPT definen IL 1.1, 1.2 y 1.3
+10. **La rúbrica usa dos numeraciones y ambas son necesarias.** Los PPT definen IL 1.1, 1.2 y 1.3
    (uno por actividad); la corrección usa cinco dimensiones D1–D5, que en el código y en
    `calcular_nota.py` se siguen llamando `IL1`…`IL5`. La tabla de correspondencia está al
    principio de `docs/rubrica_ea1.md`.
@@ -75,13 +83,14 @@ estructural.
 
 ```bash
 uv sync                                        # entorno reproducible (pyproject.toml + uv.lock)
-uv run pytest                                  # 171 tests; algunos se saltan sin datos/extras
+uv run pytest                                  # 173 tests; algunos se saltan sin datos/extras
 cd kedro_mly1101 && uv run kedro run && cd ..  # sintético: 24/24 nodos
 # Con datos reales descargados:  uv run kedro run --pipeline waymo_real   # 26/26 nodos
 uv run python herramientas/construir_notebooks.py   # regenera los nueve notebooks
 
 # Los cinco notebooks con código resuelto deben ejecutar completos:
 for nb in 02_docente_fuentes 03_docente_estructuras 01_docente_solucionario \
+          05_docente_supervisado 06_docente_no_supervisado \
           10_proyecto_equipo_plantilla 04_opcional_kedro_databricks; do
   uv run python -m jupyter nbconvert --to notebook --execute --stdout \
       --output-dir=/tmp notebooks/$nb.ipynb > /dev/null && echo "$nb OK"
@@ -127,12 +136,11 @@ es sobre `google.cloud.storage`.
 | EA1 Semana 1 · Act. 1.3 EDA | ✅ completa y verificada |
 | Plantilla de proyecto de equipo | ✅ ejecuta de extremo a extremo |
 | Pipeline Kedro (`kedro_mly1101/`) | ✅ 24 nodos en 4 pipelines, versionado, 60 tests |
-| EA2 · pipeline `supervisado` | ✅ corre y está medido; **falta el material docente** |
-| EA3 · pipeline `no_supervisado` | ✅ corre y está medido; **falta el material docente** |
+| EA2 · notebooks, rúbrica y pipeline | ✅ completo y verificado |
+| EA3 · notebooks, rúbrica y pipeline | ✅ completo y verificado |
 | Datos reales de Waymo (`waymo_real`) | ✅ 26/26 nodos sobre 530.396 detecciones reales |
 | Notebook opcional de Kedro y Databricks | ✅ usa el pipeline real; Databricks queda conceptual |
 | EA1 semanas siguientes | ⏳ pendiente (la EA1 son 20 h en total) |
-| EA2 y EA3 · notebooks y rúbrica | ⏳ pendiente (los pipelines ya existen y están medidos) |
 | EFT | ⏳ pendiente |
 
 Todo está verificado, incluido `notebooks/00_opcional_waymo_real.ipynb`: se ejecutó de extremo a

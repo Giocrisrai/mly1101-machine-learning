@@ -13,6 +13,7 @@ definición no aportan nada.
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 
 import eda
@@ -40,7 +41,11 @@ def descubrir_faltantes(detecciones: pd.DataFrame, centinelas: dict) -> pd.DataF
     limpio = detecciones.copy()
     for columna, centinela in centinelas.items():
         if columna in limpio.columns:
-            limpio[columna] = limpio[columna].replace(centinela, pd.NA)
+            # ``np.nan`` y no ``pd.NA``: en una columna numérica, ``pd.NA`` la
+            # convierte a ``object``, y scikit-learn no sabe qué hacer con eso.
+            # El error aparece mucho más tarde, al entrenar, con un TypeError
+            # sobre NAType que no dice nada de dónde vino.
+            limpio[columna] = eda.a_numerico(limpio[columna].replace(centinela, np.nan))
     if "timestamp_micros" in limpio.columns:
         limpio["timestamp_micros"] = eda.a_numerico(limpio["timestamp_micros"])
     return limpio
@@ -64,7 +69,9 @@ def marcar_imposibles(detecciones: pd.DataFrame, reglas: dict) -> pd.DataFrame:
         if columna not in limpio.columns:
             continue
         malas = limpio.eval(regla["condicion"])
-        limpio.loc[malas.fillna(False), columna] = pd.NA
+        # ``np.nan``, por el mismo motivo que en ``descubrir_faltantes``: mantener
+        # la columna numérica en vez de degradarla a ``object``.
+        limpio.loc[malas.fillna(False), columna] = np.nan
     return limpio
 
 

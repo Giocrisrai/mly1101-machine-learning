@@ -221,3 +221,37 @@ def test_una_regla_con_dos_columnas_marca_la_columna_declarada() -> None:
     limpio = prep.marcar_imposibles(df, regla)
     assert limpio["speed_mps"].isna().sum() == 2      # las dos filas que violan la regla
     assert limpio["num_lidar_points"].notna().all()   # esta columna no se tocó
+
+
+def test_la_limpieza_conserva_los_dtypes_numericos(sucio: pd.DataFrame) -> None:
+    """Fijado tras un fallo real: los nodos escribian ``pd.NA``, no ``np.nan``.
+
+    En una columna numerica, ``pd.NA`` la degrada a ``object``. El pipeline no se
+    enteraba porque escribe a Parquet y al releer vuelve a float; pero llamando los
+    nodos EN PROCESO --que es lo que hacen los notebooks de la EA2 y la EA3-- el
+    fallo aparecia mucho despues, al entrenar, con un TypeError sobre NAType que no
+    decia nada de donde venia.
+    """
+    paso = prep.descubrir_faltantes(sucio, {"num_lidar_points": -1})
+    paso = prep.marcar_imposibles(paso, REGLAS)
+    limpio = prep.quitar_duplicados_y_constantes(paso, ["sensor_version"])
+
+    for columna in ["num_lidar_points", "box_height", "box_length", "timestamp_micros"]:
+        assert pd.api.types.is_numeric_dtype(limpio[columna]), (
+            f"{columna} quedo como {limpio[columna].dtype}; scikit-learn no lo acepta"
+        )
+    # Y los faltantes siguen ahi: la correccion no puede haberlos borrado.
+    assert limpio["num_lidar_points"].isna().sum() > 0
+    assert limpio["box_height"].isna().sum() > 0
+
+
+def test_el_dataset_limpio_es_utilizable_por_scikit_learn(sucio: pd.DataFrame) -> None:
+    """La comprobacion de extremo a extremo del fallo anterior."""
+    from sklearn.impute import SimpleImputer
+
+    paso = prep.descubrir_faltantes(sucio, {"num_lidar_points": -1})
+    limpio = prep.marcar_imposibles(paso, REGLAS)
+
+    columnas = ["box_height", "box_length", "num_lidar_points"]
+    imputado = SimpleImputer(strategy="median").fit_transform(limpio[columnas])
+    assert imputado.shape == (len(limpio), len(columnas))
