@@ -107,7 +107,7 @@ dataset, el solucionario y la rúbrica.
 
 ### 3.5 `docs/` — material docente
 
-`guion_clase_semana01.md` (minuto a minuto), `rubrica_ea1.md` (evaluación por indicador) y esta
+`guion_clase_semana01.md` (minuto a minuto), `rubrica_ra1.md` (evaluación por indicador) y esta
 especificación.
 
 ### 3.6 Flujo de datos
@@ -227,7 +227,7 @@ Diseño de los `assert`: mensaje en español que **orienta sin dar la respuesta*
 
 ### 5.4 Evaluación
 
-`docs/rubrica_ea1.md`, cinco indicadores mapeados al RA1, con el peso mayor (30 %) en la
+`docs/rubrica_ra1.md`, cinco indicadores mapeados al RA1, con el peso mayor (30 %) en la
 identificación y cuantificación de problemas de calidad.
 
 ---
@@ -425,4 +425,4 @@ clase, donde reemplazan una discusión hipotética por uno medido.
 | EA2 | Aprendizaje supervisado. El desbalance de `CYCLIST` (1,9 %) y las métricas por clase quedaron sembrados en esta sesión |
 | EA3 | Aprendizaje no supervisado sobre el mismo dominio: segmentación de detecciones, reducción de dimensionalidad |
 | EFT | El mismo dataset o su versión real de Waymo, integrando los tres RA |
-| Cuando se amplíe la EA1 | Extender `docs/rubrica_ea1.md`: hoy cubre solo la Semana 1 de las 20 h de la experiencia |
+| Cuando se amplíe la EA1 | Extender `docs/rubrica_ra1.md`: hoy cubre solo la Semana 1 de las 20 h de la experiencia |

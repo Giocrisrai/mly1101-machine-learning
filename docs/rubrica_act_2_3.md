@@ -1,13 +1,21 @@
-# Rúbrica de evaluación — EA3 · Aprendizaje no supervisado
+# Pauta de la Actividad 2.3 · Modelamiento no supervisado
 
 **Asignatura:** MLY1101 Machine Learning · **Notebook:** `06_alumno_no_supervisado.ipynb`
-**Entregable:** notebook con los 11 TODO resueltos + informe de segmentación.
+**Horas del programa:** 12 (la actividad más larga) · **Entregable:** notebook con los 11 TODO +
+informe de segmentación.
 
-**RA3:** *Aplica técnicas de aprendizaje no supervisado para descubrir patrones y estructuras en
-conjuntos de datos, interpretando los resultados en función del contexto del negocio.*
+**RA2:** *Aplica modelos estadísticos al conjunto de datos procesados para interpretarlos,
+utilizando metodologías ágiles, con la finalidad de obtener conocimientos relevantes que
+permitan responder a las necesidades del contexto de negocio, considerando aspectos éticos.*
 
-> Escala, conversión a nota y calculadora: las mismas de la EA1
-> ([`rubrica_ea1.md`](rubrica_ea1.md)).
+**IL 2.3:** *Elabora algoritmos de aprendizaje no supervisado para descubrir patrones ocultos en
+los datos.*
+
+> ⚠️ **Pauta formativa, no instrumento sumativo.** La evaluación calificada del RA2 es la
+> **Evaluación Parcial 2**, junto con la Actividad 2.2, sobre uno de los casos oficiales.
+
+> Escala, conversión a nota y calculadora: las mismas del RA1
+> ([`rubrica_ra1.md`](rubrica_ra1.md)).
 
 ---
 
@@ -67,7 +75,7 @@ magnitud (`num_lidar_points` frente a `box_height`).
 
 | Nivel | Criterio observable |
 |---|---|
-| **4** | Identifica el grupo pequeño como objetos de gran tamaño (**buses**) y lo conecta con los atípicos legítimos de la EA1; reconoce que el grupo de muchos puntos agrupa por una propiedad de la **medición**, no del objeto |
+| **4** | Identifica el grupo pequeño como objetos de gran tamaño (**buses**) y lo conecta con los atípicos legítimos de la Actividad 1.3; reconoce que el grupo de muchos puntos agrupa por una propiedad de la **medición**, no del objeto |
 | **3** | Nombra los cuatro grupos con lenguaje de dominio, apoyándose en el perfil |
 | **2** | Describe los grupos con los números del perfil, sin traducirlos a lenguaje de dominio |
 | **1** | Deja los grupos como "grupo 0, grupo 1" |
@@ -82,7 +90,7 @@ magnitud (`num_lidar_points` frente a `box_height`).
 | **3** | **+4,90** | **+4,68** | +0,57 | +0,05 | **573** | **1,51 %** |
 
 > **El momento clave de la sesión.** El grupo 3 son los buses: los mismos atípicos legítimos que
-> en la EA1 se aprendió a **no** eliminar. Si el alumno hace esa conexión sin ayuda, es
+> en la Actividad 1.3 se aprendió a **no** eliminar. Si el alumno hace esa conexión sin ayuda, es
 > **Destacado**.
 
 ---

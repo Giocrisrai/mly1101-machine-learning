@@ -638,7 +638,7 @@ respuesta correcta y valiente: entonces expliquen qué haría falta.)*
 ---
 ## 9 · Autoevaluación
 
-Antes de entregar, revisen contra la rúbrica (`docs/rubrica_ea1.md`). Marquen solo lo que
+Antes de entregar, revisen contra la rúbrica (`docs/rubrica_ra1.md`). Marquen solo lo que
 puedan demostrar señalando una celda del notebook.
 
 | | Criterio | ¿Dónde está la evidencia? |

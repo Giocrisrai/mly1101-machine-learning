@@ -1,18 +1,31 @@
-# Rúbrica de evaluación — EA2 · Aprendizaje supervisado
+# Pauta de la Actividad 2.2 · Modelamiento supervisado
 
 **Asignatura:** MLY1101 Machine Learning · **Notebook:** `05_alumno_supervisado.ipynb`
-**Entregable:** notebook con los 17 TODO resueltos + informe de modelamiento.
+**Horas del programa:** 6 · **Entregable:** notebook con los 17 TODO + informe de modelamiento.
 
-**RA2:** *Implementa modelos de aprendizaje supervisado para resolver problemas de predicción,
-evaluando su desempeño con métricas pertinentes al contexto del negocio.*
+**RA2:** *Aplica modelos estadísticos al conjunto de datos procesados para interpretarlos,
+utilizando metodologías ágiles, con la finalidad de obtener conocimientos relevantes que
+permitan responder a las necesidades del contexto de negocio, considerando aspectos éticos.*
 
-> La escala, la conversión a nota y la calculadora son **las mismas de la EA1**: ver
-> [`rubrica_ea1.md`](rubrica_ea1.md) y `herramientas/calcular_nota.py`. Aquí solo cambian los
+**IL 2.2:** *Construye modelos de aprendizaje supervisado para problemas de regresión y
+clasificación según la naturaleza del caso.*
+
+> ⚠️ **Esto es una pauta formativa, no el instrumento sumativo.** La evaluación calificada del
+> RA2 es la **Evaluación Parcial 2** (*Construcción e interpretación de modelos*, 40 % de la
+> ponderación parcial), que se rinde sobre uno de los casos oficiales —Telco, Housing o
+> Spotify— y usa la rúbrica institucional de indicadores ponderados por % de logro. Esta pauta
+> sirve para acompañar y retroalimentar la actividad.
+
+> **Alcance:** la actividad cubre **clasificación**. La regresión, que el IL2.2 también
+> menciona, se trabaja en la Parcial 2 sobre *House Prices*.
+
+> La escala, la conversión a nota y la calculadora son **las mismas del RA1**: ver
+> [`rubrica_ra1.md`](rubrica_ra1.md) y `herramientas/calcular_nota.py`. Aquí solo cambian los
 > indicadores.
 
 ---
 
-## Las cinco dimensiones
+## Las cinco dimensiones de la pauta
 
 | Dim. | Qué evalúa | Dónde se evidencia | Peso |
 |---|---|---|---|

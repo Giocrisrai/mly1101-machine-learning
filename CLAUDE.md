@@ -3,6 +3,29 @@
 Contexto del repositorio para asistentes de código. Complementa, no reemplaza, al `CLAUDE.md`
 global del usuario.
 
+## ⚠️ La estructura oficial, y por qué importa
+
+El **Programa de Asignatura** (`docs/programa_oficial.md`) define 108 h, 3 RA con **cuatro
+indicadores cada uno**, y no coincide con la intuición:
+
+| RA | Qué es realmente | Actividades (horas) |
+|---|---|---|
+| **RA1** | Recopila datos de calidad | 1.1 Fuentes (6) · 1.2 Estructuras (6) · 1.3 EDA (6) · 1.4 Ética (5) |
+| **RA2** | Aplica modelos estadísticos — **supervisado Y no supervisado** | 2.1 CRISP-DM (6) · 2.2 Supervisado (6) · 2.3 No supervisado (12) · 2.4 Interpretación (5) |
+| **RA3** | **Hiperparámetros, ensamble y validación cruzada** | 3.1 Ajuste (6) · 3.2 Ensamble (6) · 3.3 Robustez (11) |
+
+**El error que ya se cometió una vez:** asumir que "RA2 = supervisado" y "RA3 = no supervisado".
+Los dos están en el **RA2**; el RA3 es optimización. Antes de citar un RA o un IL, mirar el
+programa.
+
+**Los datasets también se dividen:** las actividades usan el hilo de Waymo; las **evaluaciones
+parciales y el EFT** se rinden sobre los casos oficiales (*Telco Churn*, *House Prices*,
+*Spotify Tracks*). No mezclar.
+
+**El instrumento sumativo no es esta rúbrica.** Las pautas de `docs/` son formativas. Las
+evaluaciones calificadas son las tres Parciales (30/40/30 → 60 % final) y el EFT (40 %), con la
+rúbrica institucional de indicadores ponderados por % de logro (100/80/60/30/0).
+
 ## Qué es esto
 
 Material docente de la asignatura **Machine Learning (MLY1101)**, Duoc UC, semestre 2026-2. El
@@ -25,8 +48,9 @@ estructural.
    | `contenido_actividad11.py` | `02_alumno_fuentes` + `02_docente_fuentes` | 1.1 · IL1.1 |
    | `contenido_actividad12.py` | `03_alumno_estructuras` + `03_docente_estructuras` | 1.2 · IL1.2 |
    | `contenido_semana01.py` | `01_alumno_exploracion` + `01_docente_solucionario` | 1.3 · IL1.3 |
-   | `contenido_ea2.py` | `05_alumno_supervisado` + `05_docente_supervisado` | EA2 · RA2 |
-   | `contenido_ea3.py` | `06_alumno_no_supervisado` + `06_docente_no_supervisado` | EA3 · RA3 |
+   | `contenido_actividad14.py` | `07_alumno_etica` + `07_docente_etica` | 1.4 · IL1.4 |
+   | `contenido_actividad22.py` | `05_alumno_supervisado` + `05_docente_supervisado` | 2.2 · IL2.2 |
+   | `contenido_actividad23.py` | `06_alumno_no_supervisado` + `06_docente_no_supervisado` | 2.3 · IL2.3 |
    | `contenido_proyecto.py` | `10_proyecto_equipo_plantilla` | transversal |
    | `contenido_kedro.py` | `04_opcional_kedro_databricks` | opcional |
    | `contenido_waymo.py` | `00_opcional_waymo_real` | opcional |
@@ -77,7 +101,7 @@ estructural.
 10. **La rúbrica usa dos numeraciones y ambas son necesarias.** Los PPT definen IL 1.1, 1.2 y 1.3
    (uno por actividad); la corrección usa cinco dimensiones D1–D5, que en el código y en
    `calcular_nota.py` se siguen llamando `IL1`…`IL5`. La tabla de correspondencia está al
-   principio de `docs/rubrica_ea1.md`.
+   principio de `docs/rubrica_ra1.md`.
 
 ## Verificación obligatoria antes de dar algo por terminado
 
@@ -90,7 +114,7 @@ uv run python herramientas/construir_notebooks.py   # regenera los nueve noteboo
 
 # Los cinco notebooks con código resuelto deben ejecutar completos:
 for nb in 02_docente_fuentes 03_docente_estructuras 01_docente_solucionario \
-          05_docente_supervisado 06_docente_no_supervisado \
+          07_docente_etica 05_docente_supervisado 06_docente_no_supervisado \
           10_proyecto_equipo_plantilla 04_opcional_kedro_databricks; do
   uv run python -m jupyter nbconvert --to notebook --execute --stdout \
       --output-dir=/tmp notebooks/$nb.ipynb > /dev/null && echo "$nb OK"
@@ -131,13 +155,17 @@ es sobre `google.cloud.storage`.
 
 | Experiencia | Estado |
 |---|---|
-| EA1 Semana 1 · Act. 1.1 Fuentes y colaboración | ✅ completa y verificada |
-| EA1 Semana 1 · Act. 1.2 Estructuras y almacenamiento | ✅ completa y verificada |
-| EA1 Semana 1 · Act. 1.3 EDA | ✅ completa y verificada |
+| RA1 · Act. 1.1 Fuentes y colaboración | ✅ completa y verificada |
+| RA1 · Act. 1.2 Estructuras y almacenamiento | ✅ completa y verificada |
+| RA1 · Act. 1.3 EDA | ✅ completa y verificada |
+| RA1 · Act. 1.4 Ética, sesgos y privacidad | ✅ completa y verificada |
+| RA2 · Act. 2.1 CRISP-DM | ⏳ pendiente |
+| RA2 · Act. 2.4 Interpretación y métricas | ⏳ pendiente |
+| RA3 completo (3.1, 3.2, 3.3) | ⏳ pendiente |
+| Evaluaciones formativas, parciales y EFT | ⏳ pendientes, sobre los casos oficiales |
 | Plantilla de proyecto de equipo | ✅ ejecuta de extremo a extremo |
 | Pipeline Kedro (`kedro_mly1101/`) | ✅ 24 nodos en 4 pipelines, versionado, 60 tests |
-| EA2 · notebooks, rúbrica y pipeline | ✅ completo y verificado |
-| EA3 · notebooks, rúbrica y pipeline | ✅ completo y verificado |
+| RA2 · Act. 2.2 y 2.3 (notebooks, pautas, pipeline) | ✅ completas y verificadas |
 | Datos reales de Waymo (`waymo_real`) | ✅ 26/26 nodos sobre 530.396 detecciones reales |
 | Notebook opcional de Kedro y Databricks | ✅ usa el pipeline real; Databricks queda conceptual |
 | EA1 semanas siguientes | ⏳ pendiente (la EA1 son 20 h en total) |

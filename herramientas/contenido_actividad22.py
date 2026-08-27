@@ -1,4 +1,10 @@
-"""Fuente única del contenido de la EA2 — Aprendizaje supervisado.
+"""Fuente única del contenido de la Actividad 2.2 — Modelamiento supervisado.
+
+Indicador de logro **IL 2.2**: *construye modelos de aprendizaje supervisado para problemas
+de regresión y clasificación según la naturaleza del caso.*
+
+Alcance declarado: esta actividad cubre **clasificación**. La regresión, que el IL2.2 también
+menciona, se trabaja sobre los casos oficiales (House Prices) en la Evaluación Parcial 2.
 
 De este archivo salen dos notebooks:
 
@@ -21,18 +27,25 @@ from __future__ import annotations
 
 from contenido_semana01 import URL_REPO, code, md, md_docente
 
-CELDAS_EA2: list[dict] = [
+CELDAS_ACT22: list[dict] = [
     # ======================================================================
     # ENCUADRE
     # ======================================================================
     md(
         """
-# MLY1101 · Machine Learning — EA2
-## Aprendizaje supervisado: predecir qué detecciones van a fallar
+# MLY1101 · Machine Learning — Actividad 2.2
+## Modelamiento supervisado: predecir qué detecciones van a fallar
 
-**Resultado de aprendizaje (RA2):** implementa modelos de aprendizaje supervisado para
-resolver problemas de predicción, evaluando su desempeño con métricas pertinentes al
-contexto del negocio.
+**Resultado de aprendizaje (RA2):** aplica modelos estadísticos al conjunto de datos
+procesados para interpretarlos, utilizando metodologías ágiles, con la finalidad de obtener
+conocimientos relevantes que permitan responder a las necesidades del contexto de negocio,
+considerando aspectos éticos.
+
+**Indicador de logro (IL 2.2):** construye modelos de aprendizaje supervisado para problemas
+de regresión y clasificación según la naturaleza del caso.
+
+> **Alcance de esta sesión:** trabajamos **clasificación**. La regresión se aborda sobre los
+> casos oficiales de la asignatura (*House Prices*) en la Evaluación Parcial 2.
 
 ---
 
@@ -91,12 +104,17 @@ Un **informe de modelamiento** (última celda) con:
     ),
     md_docente(
         """
-> ### 🎓 Pauta docente — EA2
+> ### 🎓 Pauta docente — Actividad 2.2
 >
 > **Cómo usar este documento.** Es el solucionario de `05_alumno_supervisado.ipynb`: mismo
 > contenido más el código resuelto, las respuestas esperadas y los criterios de logro.
 >
-> **Distribución sugerida de las 4 horas:**
+> **La actividad son 6 horas pedagógicas** según el programa. La distribución de abajo cubre
+> unas 4 h de trabajo guiado; las 2 h restantes quedan para que apliquen lo mismo al caso
+> oficial que hayan elegido (Telco, Housing o Spotify), que es sobre lo que se evalúa la
+> Parcial 2.
+>
+> **Distribución del bloque guiado:**
 >
 > | Bloque | Min | Foco |
 > |---|---|---|
@@ -985,7 +1003,8 @@ print(f"   Se le escapan {100*difciles_perdidas/difciles_totales:.0f} de cada 10
 > - **"Subiría el recall aunque suba la falsa alarma"**, porque el costo es asimétrico: una
 >   falsa alarma es que el vehículo sea prudente de más; un falso negativo es que confíe en una
 >   detección mala. **Nivel destacado.** Si alguien llega solo a que se puede mover el umbral de
->   decisión con `predict_proba`, mencionar que eso es la EA3/EFT.
+>   decisión con `predict_proba`, mencionar que eso se retoma en el RA3 (ajuste y validación)
+>   y en el EFT.
 >
 > **Respuesta que hay que corregir:** *"el modelo es malo"*. No es malo ni bueno en abstracto:
 > es insuficiente **para este uso**. Para priorizar qué segmentos revisa un humano, un recall de
@@ -1202,7 +1221,10 @@ mecanismo físico que lo justificaría.
 ---
 # Cierre · Informe de modelamiento
 
-Esta es la entrega de la EA2. Máximo una página.
+Esta es la entrega de la Actividad 2.2. Máximo una página.
+
+> Es el mismo esqueleto que pide el informe técnico del EFT, en pequeño: por eso conviene
+> tomárselo en serio ahora.
 
 ---
 
@@ -1264,7 +1286,7 @@ detección mala, y qué pasa si es prudente de más.)*
     ),
     md_docente(
         """
-> ### 🎓 Criterios de logro — EA2 (RA2)
+> ### 🎓 Criterios de logro — Actividad 2.2 (IL 2.2)
 >
 > | Nivel | Descripción |
 > |---|---|
@@ -1291,9 +1313,10 @@ detección mala, y qué pasa si es prudente de más.)*
 > - Llamar "fuga" a cualquier cosa. Fuga es información que **no estará disponible** en el
 >   momento de predecir. Que una variable sea muy predictiva no la hace fuga.
 >
-> **Enlace con el resto:** el `detecciones_limpias.parquet` que produce el pipeline es la
-> entrada tanto de esta EA2 como de la EA3, que hace la pregunta contraria: sin etiquetas, ¿qué
-> estructura hay?
+> **Enlace con el resto:** el `detecciones_limpias.parquet` que produce el pipeline es la entrada
+> tanto de esta actividad como de la **2.3** (no supervisado), que hace la pregunta contraria. Las
+> dos pertenecen al **RA2** y se evalúan juntas en la **Parcial 2**, sobre uno de los casos
+> oficiales. La **2.4** retoma la interpretación de métricas que aquí se introduce.
 """
     ),
 ]

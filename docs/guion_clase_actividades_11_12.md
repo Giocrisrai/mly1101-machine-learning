@@ -4,7 +4,7 @@ Complemento de las pautas que ya están dentro de los solucionarios. Aquí no se
 respuestas: está la **coreografía de la sala**, que es lo que no cabe en un notebook.
 
 - Respuestas y criterios por TODO → `02_docente_fuentes.ipynb` y `03_docente_estructuras.ipynb`
-- Rúbrica y niveles de logro → [`rubrica_ea1.md`](rubrica_ea1.md)
+- Rúbrica y niveles de logro → [`rubrica_ra1.md`](rubrica_ra1.md)
 - Guion de la Actividad 1.3 (EDA) → [`guion_clase_semana01.md`](guion_clase_semana01.md)
 
 ---

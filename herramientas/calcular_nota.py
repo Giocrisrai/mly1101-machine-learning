@@ -27,7 +27,7 @@ import argparse
 import csv
 from pathlib import Path
 
-# Pesos de docs/rubrica_ea1.md. Deben sumar 1.
+# Pesos de docs/rubrica_ra1.md. Deben sumar 1.
 INDICADORES: dict[str, float] = {
     "IL1": 0.20,  # Exploración e identificación de variables
     "IL2": 0.30,  # Identificación y cuantificación de problemas de calidad

@@ -9,8 +9,9 @@ Genera, para la Semana 1 completa:
 | 1.1 · IL1.1 | ``02_alumno_fuentes`` / ``02_docente_*``   | ``contenido_actividad11``  |
 | 1.2 · IL1.2 | ``03_alumno_estructuras`` / ``03_docente_*``| ``contenido_actividad12``  |
 | 1.3 · IL1.3 | ``01_alumno_exploracion`` / ``01_docente_*``| ``contenido_semana01``     |
-| EA2 · RA2   | ``05_alumno_supervisado`` / ``05_docente_*``| ``contenido_ea2``          |
-| EA3 · RA3   | ``06_alumno_no_supervisado`` / ``06_doc_*`` | ``contenido_ea3``          |
+| 1.4 · IL1.4 | ``07_alumno_etica`` / ``07_docente_etica``  | ``contenido_actividad14``  |
+| 2.2 · IL2.2 | ``05_alumno_supervisado`` / ``05_docente_*``| ``contenido_actividad22``  |
+| 2.3 · IL2.3 | ``06_alumno_no_supervisado`` / ``06_doc_*`` | ``contenido_actividad23``  |
 | transversal | ``10_proyecto_equipo_plantilla``           | ``contenido_proyecto``     |
 | opcional    | ``04_opcional_kedro_databricks``           | ``contenido_kedro``        |
 | opcional    | ``00_opcional_waymo_real``                 | ``contenido_waymo``        |
@@ -35,8 +36,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from contenido_actividad11 import CELDAS_ACT11  # noqa: E402
 from contenido_actividad12 import CELDAS_ACT12  # noqa: E402
-from contenido_ea2 import CELDAS_EA2  # noqa: E402
-from contenido_ea3 import CELDAS_EA3  # noqa: E402
+from contenido_actividad14 import CELDAS_ACT14  # noqa: E402
+from contenido_actividad22 import CELDAS_ACT22  # noqa: E402
+from contenido_actividad23 import CELDAS_ACT23  # noqa: E402
 from contenido_kedro import CELDAS_KEDRO  # noqa: E402
 from contenido_proyecto import CELDAS_PROYECTO  # noqa: E402
 from contenido_semana01 import CELDAS, URL_REPO  # noqa: E402
@@ -140,15 +142,18 @@ def main() -> None:
         # Actividad 1.2 — Estructuras de datos y almacenamiento
         construir(CELDAS_ACT12, "03_alumno_estructuras.ipynb", para_docente=False),
         construir(CELDAS_ACT12, "03_docente_estructuras.ipynb", para_docente=True),
+        # Actividad 1.4 — Impacto ético, sesgos y privacidad
+        construir(CELDAS_ACT14, "07_alumno_etica.ipynb", para_docente=False),
+        construir(CELDAS_ACT14, "07_docente_etica.ipynb", para_docente=True),
         # Actividad 1.3 — Análisis exploratorio de datos
         construir(CELDAS, "01_alumno_exploracion.ipynb", para_docente=False),
         construir(CELDAS, "01_docente_solucionario.ipynb", para_docente=True),
-        # EA2 — Aprendizaje supervisado
-        construir(CELDAS_EA2, "05_alumno_supervisado.ipynb", para_docente=False),
-        construir(CELDAS_EA2, "05_docente_supervisado.ipynb", para_docente=True),
-        # EA3 — Aprendizaje no supervisado
-        construir(CELDAS_EA3, "06_alumno_no_supervisado.ipynb", para_docente=False),
-        construir(CELDAS_EA3, "06_docente_no_supervisado.ipynb", para_docente=True),
+        # Actividad 2.2 — Modelamiento supervisado
+        construir(CELDAS_ACT22, "05_alumno_supervisado.ipynb", para_docente=False),
+        construir(CELDAS_ACT22, "05_docente_supervisado.ipynb", para_docente=True),
+        # Actividad 2.3 — Modelamiento no supervisado
+        construir(CELDAS_ACT23, "06_alumno_no_supervisado.ipynb", para_docente=False),
+        construir(CELDAS_ACT23, "06_docente_no_supervisado.ipynb", para_docente=True),
         # Plantilla del proyecto de equipo (una sola versión, sin solucionario)
         construir(CELDAS_PROYECTO, "10_proyecto_equipo_plantilla.ipynb", para_docente=False),
         # Opcional — Kedro ejecutable y Databricks conceptual

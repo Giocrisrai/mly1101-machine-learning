@@ -1,11 +1,16 @@
-"""Fuente única del contenido de la EA3 — Aprendizaje no supervisado.
+"""Fuente única del contenido de la Actividad 2.3 — Modelamiento no supervisado.
+
+Indicador de logro **IL 2.3**: *elabora algoritmos de aprendizaje no supervisado para
+descubrir patrones ocultos en los datos.*
+
+Es la actividad más larga del programa: **12 horas pedagógicas**.
 
 De este archivo salen dos notebooks:
 
 - ``notebooks/06_alumno_no_supervisado.ipynb``   (versión con TODO)
 - ``notebooks/06_docente_no_supervisado.ipynb``  (versión resuelta con pauta)
 
-Igual que la EA2, **reutiliza los nodos del pipeline** en vez de duplicarlos. Cifras
+Igual que la Actividad 2.2, **reutiliza los nodos del pipeline** en vez de duplicarlos. Cifras
 medidas sobre ``detecciones_waymo_like.csv`` con la semilla 42.
 
 Regenerar tras editar:
@@ -17,24 +22,28 @@ from __future__ import annotations
 
 from contenido_semana01 import URL_REPO, code, md, md_docente
 
-CELDAS_EA3: list[dict] = [
+CELDAS_ACT23: list[dict] = [
     md(
         """
-# MLY1101 · Machine Learning — EA3
-## Aprendizaje no supervisado: encontrar estructura sin etiquetas
+# MLY1101 · Machine Learning — Actividad 2.3
+## Modelamiento no supervisado: encontrar estructura sin etiquetas
 
-**Resultado de aprendizaje (RA3):** aplica técnicas de aprendizaje no supervisado para
-descubrir patrones y estructuras en conjuntos de datos, interpretando los resultados en
-función del contexto del negocio.
+**Resultado de aprendizaje (RA2):** aplica modelos estadísticos al conjunto de datos
+procesados para interpretarlos, utilizando metodologías ágiles, con la finalidad de obtener
+conocimientos relevantes que permitan responder a las necesidades del contexto de negocio,
+considerando aspectos éticos.
+
+**Indicador de logro (IL 2.3):** elabora algoritmos de aprendizaje no supervisado para
+descubrir patrones ocultos en los datos.
 
 ---
 
-### La contracara de la EA2
+### La contracara de la Actividad 2.2
 
-En la EA2 había una etiqueta y se medía el acierto. Hoy **no hay etiqueta**, así que no se
+En la 2.2 había una etiqueta y se medía el acierto. Hoy **no hay etiqueta**, así que no se
 puede acertar ni fallar. Y eso cambia todo:
 
-| | EA2 · Supervisado | EA3 · No supervisado |
+| | Act. 2.2 · Supervisado | Act. 2.3 · No supervisado |
 |---|---|---|
 | Entrada | `X` e `y` | Solo `X` |
 | Qué busca | Predecir `y` | Estructura oculta |
@@ -75,9 +84,15 @@ Un **informe de segmentación** con:
     ),
     md_docente(
         """
-> ### 🎓 Pauta docente — EA3
+> ### 🎓 Pauta docente — Actividad 2.3
 >
-> **Distribución sugerida de las 4 horas:**
+> **Es la actividad más larga del programa: 12 horas pedagógicas.** La distribución de abajo
+> cubre unas 4 h de trabajo guiado sobre el dataset de la asignatura. Las 8 h restantes son para
+> aplicar lo mismo al caso oficial elegido (Telco, Housing o Spotify) y para profundizar en las
+> alternativas que se mencionan al cierre: agrupamiento jerárquico, DBSCAN y selección de
+> variables.
+>
+> **Distribución del bloque guiado:**
 >
 > | Bloque | Min | Foco |
 > |---|---|---|
@@ -103,7 +118,7 @@ Un **informe de segmentación** con:
 ---
 ## Preparación del entorno
 
-Como en la EA2, no reescribimos nada: importamos los mismos nodos del pipeline.
+Como en la Actividad 2.2, no reescribimos nada: importamos los mismos nodos del pipeline.
 """
     ),
     code(
@@ -255,7 +270,7 @@ print("   lo mismo en cualquiera de ellas: una desviación típica.")
 >
 > **La sutileza que importa:** la etiqueta viaja en la tabla pero **no está en
 > `CONFIG["variables"]`**, así que no entra en el agrupamiento. Que un dato esté disponible no
-> significa que se use. Conviene señalarlo porque es exactamente el mismo cuidado que en la EA2
+> significa que se use. Conviene señalarlo porque es exactamente el mismo cuidado que en la Actividad 2.2
 > con `num_lidar_points`.
 >
 > **Si alguien pregunta por `MinMaxScaler`:** también sirve, y es preferible cuando los datos
@@ -398,7 +413,7 @@ situación normal.
 ---
 # Bloque 3 · ⭐⭐ Agrupar, y después el trabajo de verdad
 
-Ejecutar K-medias es una línea. Lo que sigue es la EA3.
+Ejecutar K-medias es una línea. Lo que sigue es la actividad.
 """
     ),
     md(
@@ -766,7 +781,7 @@ print("   Dos puntos que se ven pegados pueden estar lejos en el espacio origina
 ---
 # Cierre · Informe de segmentación
 
-Esta es la entrega de la EA3. Máximo una página.
+Esta es la entrega de la Actividad 2.3. Máximo una página.
 
 ---
 
@@ -823,7 +838,7 @@ argumento: qué decisión podría tomar alguien con estos grupos que no pudiera 
     ),
     md_docente(
         """
-> ### 🎓 Criterios de logro — EA3 (RA3)
+> ### 🎓 Criterios de logro — Actividad 2.3 (IL 2.3)
 >
 > | Nivel | Descripción |
 > |---|---|
@@ -847,10 +862,10 @@ argumento: qué decisión podría tomar alguien con estos grupos que no pudiera 
 > - Elegir k por la inercia mínima. Siempre gana el k más grande que se pruebe.
 > - Interpretar el gráfico PCA como si fuera el espacio real, sin su varianza explicada.
 >
-> **Enlace con el resto de la asignatura:** la EA2 y la EA3 parten del **mismo**
-> `detecciones_limpias.parquet` y hacen preguntas opuestas. Vale la pena cerrar el ciclo
-> señalando que el trabajo de la EA1 —el que parecía el menos glamoroso— es el que hizo posibles
-> los dos.
+> **Enlace con el resto de la asignatura:** las actividades 2.2 y 2.3 parten del **mismo**
+> `detecciones_limpias.parquet` y hacen preguntas opuestas. Ambas pertenecen al **RA2** y se
+> evalúan juntas en la **Parcial 2**. Vale la pena cerrar el ciclo señalando que el trabajo del
+> RA1 —el que parecía el menos glamoroso— es el que hizo posibles los dos.
 """
     ),
 ]

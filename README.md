@@ -13,29 +13,39 @@ Docente: Giocrisrai Godoy Bonillo · `gi.godoy@profesor.duoc.cl`
 Problema → Datos → Exploración → Preprocesamiento → Modelamiento → Evaluación → Interpretación
 ```
 
-| Experiencia | Contenido | Estado |
-|---|---|---|
-| **EA1** · Análisis y preprocesamiento de datos | Fuentes, estructuras, exploración y calidad de datos | ✅ Semana 1 completa (Act. 1.1, 1.2 y 1.3) |
-| **EA2** · Aprendizaje supervisado | Clasificación, partición sin fuga, evaluación por clase | ✅ disponible |
-| **EA3** · Aprendizaje no supervisado | Segmentación y reducción de dimensionalidad | ✅ disponible |
-| **EFT** · Evaluación final transversal | Integra los tres RA (40 % de la nota) | ⏳ |
+| RA | Experiencia de aprendizaje | Actividades (horas) | Estado |
+|---|---|---|---|
+| **RA1** | Ingeniería de Datos y Análisis Exploratorio | 1.1 Fuentes (6) · 1.2 Estructuras (6) · 1.3 EDA (6) · 1.4 Ética (5) | ✅ las cuatro |
+| **RA2** | Implementación y Análisis de Modelos de ML | 2.1 CRISP-DM (6) · 2.2 Supervisado (6) · 2.3 No supervisado (12) · 2.4 Interpretación (5) | 🔧 2.2 y 2.3 |
+| **RA3** | Optimización y Ensamble de Modelos Avanzados | 3.1 Hiperparámetros (6) · 3.2 Ensamble (6) · 3.3 Robustez (11) | ⏳ |
+| — | **Evaluación Final Transversal** | 12 h · 40 % de la nota final | ⏳ |
+
+**108 horas · 4 SCT.** Las evaluaciones parciales ponderan 30 / 40 / 30 y suman el **60 %** de la
+nota final; el EFT, el **40 %** restante.
+
+> **Los notebooks usan un dataset de detecciones LiDAR (Waymo) como hilo único de las
+> actividades.** Las **evaluaciones parciales y el EFT** se rinden sobre los casos oficiales de
+> la asignatura: *Telco Customer Churn*, *House Prices* o *Spotify Tracks*. Que el caso de
+> aprendizaje y el de evaluación sean distintos es deliberado: demuestra que el método se
+> traslada.
 
 ---
 
-## Semana 1 · EA1 — Análisis exploratorio y calidad de datos
+## RA1 · Ingeniería de datos y análisis exploratorio
 
 **Contexto:** trabajas en el equipo de percepción de una empresa de conducción autónoma. Antes de
 entrenar cualquier modelo, hay que responder si se puede confiar en las detecciones del sensor
 LiDAR.
 
-La Semana 1 son **tres actividades** que comparten el mismo dataset y se encadenan: de dónde
-vienen los datos → cómo se almacenan y manipulan → qué tan sucios están.
+Son **cuatro actividades** que comparten el mismo dataset y se encadenan: de dónde vienen los
+datos → cómo se almacenan y manipulan → qué tan sucios están → a quién perjudican.
 
-| Act. | Indicador | Notebook del alumno | Solucionario docente |
+| Act. | Indicador · horas | Notebook del alumno | Solucionario docente |
 |---|---|---|---|
-| **1.1** Fuentes de datos y trabajo colaborativo | IL 1.1 | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/02_alumno_fuentes.ipynb) `02_alumno_fuentes.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/02_docente_fuentes.ipynb) |
-| **1.2** Estructuras de datos y almacenamiento | IL 1.2 | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/03_alumno_estructuras.ipynb) `03_alumno_estructuras.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/03_docente_estructuras.ipynb) |
-| **1.3** Análisis exploratorio de datos (EDA) | IL 1.3 | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/01_alumno_exploracion.ipynb) `01_alumno_exploracion.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/01_docente_solucionario.ipynb) |
+| **1.1** Fuentes de datos y trabajo colaborativo | IL 1.1 · 6 h | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/02_alumno_fuentes.ipynb) `02_alumno_fuentes.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/02_docente_fuentes.ipynb) |
+| **1.2** Estructuras de datos y almacenamiento | IL 1.2 · 6 h | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/03_alumno_estructuras.ipynb) `03_alumno_estructuras.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/03_docente_estructuras.ipynb) |
+| **1.3** Análisis exploratorio de datos (EDA) | IL 1.3 · 6 h | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/01_alumno_exploracion.ipynb) `01_alumno_exploracion.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/01_docente_solucionario.ipynb) |
+| **1.4** Impacto ético, sesgos y privacidad | IL 1.4 · 5 h | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/07_alumno_etica.ipynb) `07_alumno_etica.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/07_docente_etica.ipynb) |
 
 | Notebook transversal | Para quién | Abrir |
 |---|---|---|
@@ -68,10 +78,11 @@ vienen los datos → cómo se almacenan y manipulan → qué tan sucios están.
 
 | Documento | Para qué |
 |---|---|
+| [`docs/programa_oficial.md`](docs/programa_oficial.md) | **Resumen operativo del Programa de Asignatura**: los 3 RA con sus 12 indicadores, horas por actividad, ponderaciones y qué exige el EFT. Verificar contra esto antes de escribir material nuevo |
 | [`docs/guion_clase_actividades_11_12.md`](docs/guion_clase_actividades_11_12.md) | Guion de las actividades 1.1 y 1.2: coreografía de sala, qué preguntar antes de mostrar la cifra, qué recortar y en qué orden |
 | [`docs/guion_clase_semana01.md`](docs/guion_clase_semana01.md) | Guion minuto a minuto de la Actividad 1.3 (EDA): preguntas para el curso, momentos críticos, qué recortar si falta tiempo |
-| [`docs/rubrica_ea1.md`](docs/rubrica_ea1.md) | Rúbrica de la EA1, mapeada al RA1, con las cifras exactas para corregir |
-| [`docs/rubrica_ea2.md`](docs/rubrica_ea2.md) · [`docs/rubrica_ea3.md`](docs/rubrica_ea3.md) | Rúbricas de EA2 y EA3, con las cifras de referencia medidas |
+| [`docs/rubrica_ra1.md`](docs/rubrica_ra1.md) | Pauta de las cuatro actividades del RA1, con las cifras exactas para corregir |
+| [`docs/rubrica_act_2_2.md`](docs/rubrica_act_2_2.md) · [`docs/rubrica_act_2_3.md`](docs/rubrica_act_2_3.md) | Pautas de las actividades 2.2 y 2.3, con las cifras de referencia medidas |
 | [`docs/superpowers/specs/2026-08-12-mly1101-semana01-eda-design.md`](docs/superpowers/specs/2026-08-12-mly1101-semana01-eda-design.md) | Especificación completa: decisiones de diseño, catálogo de defectos, protocolo de verificación |
 
 ### Evaluar las entregas
@@ -88,39 +99,39 @@ otra exigencia, `--exigencia 0.5`.
 
 ---
 
-## EA2 y EA3 · Modelamiento
+## RA2 · Modelamiento
 
-Las dos experiencias parten del **mismo dataset limpio** que produce la EA1 y hacen preguntas
-opuestas.
+Las actividades **2.2** y **2.3** parten del **mismo dataset limpio** que produce el RA1 y hacen
+preguntas opuestas. Las dos pertenecen al RA2 y se evalúan juntas en la **Parcial 2**.
 
-| Exp. | Sesión | Notebook del alumno | Solucionario | Rúbrica |
+| Act. | Sesión | Notebook del alumno | Solucionario | Pauta |
 |---|---|---|---|---|
-| **EA2** | Supervisado · 4 h · 17 TODO | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/05_alumno_supervisado.ipynb) `05_alumno_supervisado.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/05_docente_supervisado.ipynb) | [`rubrica_ea2.md`](docs/rubrica_ea2.md) |
-| **EA3** | No supervisado · 4 h · 11 TODO | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/06_alumno_no_supervisado.ipynb) `06_alumno_no_supervisado.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/06_docente_no_supervisado.ipynb) | [`rubrica_ea3.md`](docs/rubrica_ea3.md) |
+| **2.2** | Supervisado · IL2.2 · 6 h · 17 TODO | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/05_alumno_supervisado.ipynb) `05_alumno_supervisado.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/05_docente_supervisado.ipynb) | [`rubrica_act_2_2.md`](docs/rubrica_act_2_2.md) |
+| **2.3** | No supervisado · IL2.3 · 12 h · 11 TODO | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/06_alumno_no_supervisado.ipynb) `06_alumno_no_supervisado.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/06_docente_no_supervisado.ipynb) | [`rubrica_act_2_3.md`](docs/rubrica_act_2_3.md) |
 
 **Los dos notebooks reutilizan los nodos del pipeline**, no una copia. Esos módulos solo importan
 pandas, así que funcionan en Colab **sin instalar Kedro**.
 
 ### Los dos momentos que cargan cada sesión
 
-**EA2 — el baseline.** Los alumnos entrenan un bosque aleatorio que alcanza un **89,65 %** de
+**Act. 2.2 — el baseline.** Los alumnos entrenan un bosque aleatorio que alcanza un **89,65 %** de
 exactitud. Después descubren que un modelo que **responde siempre lo mismo, sin mirar los datos**,
 saca **88,96 %**. Siete décimas de diferencia. Y sin embargo el F1-macro pasa de 0,47 a 0,70.
 
 > Dos métricas sobre el mismo modelo, con conclusiones opuestas. Esa es la sesión.
 
-**EA3 — los buses.** El agrupamiento encuentra cuatro grupos; el más pequeño (1,5 % de las filas,
+**Act. 2.3 — los buses.** El agrupamiento encuentra cuatro grupos; el más pequeño (1,5 % de las filas,
 `box_length` a casi **cinco desviaciones típicas**) son los **buses**: los mismos atípicos
-legítimos que en la EA1 se aprendió a *no* eliminar. Aparecen solos, sin que nadie se lo pidiera.
+legítimos que en la Actividad 1.3 se aprendió a *no* eliminar. Aparecen solos, sin que nadie se lo pidiera.
 
-> Si en la EA1 hubieran hecho caso al criterio IQR y eliminado los atípicos, este grupo no
-> existiría.
+> Si en la Actividad 1.3 hubieran hecho caso al criterio IQR y eliminado los atípicos, este
+> grupo no existiría.
 
 ---
 
 ## El pipeline: `kedro_mly1101/`
 
-El análisis de la EA1 también existe como **pipeline reproducible de [Kedro](https://kedro.org)**,
+El análisis del RA1 también existe como **pipeline reproducible de [Kedro](https://kedro.org)**,
 versionado en [`kedro_mly1101/`](kedro_mly1101/) y cubierto por 16 tests. No es una demostración:
 es la columna de ingeniería sobre la que crecen las experiencias siguientes.
 
@@ -133,9 +144,9 @@ cd kedro_mly1101 && uv run kedro run
 
 | Experiencia | Pipeline | Nodos | Consume | Estado |
 |---|---|---|---|---|
-| **EA1** · Datos | `calidad` · `preprocesamiento` | 4 + 5 | El CSV crudo | ✅ |
-| **EA2** · Supervisado | `supervisado` | 8 | `detecciones_limpias` | ✅ |
-| **EA3** · No supervisado | `no_supervisado` | 7 | `detecciones_limpias` | ✅ |
+| **RA1** · Datos | `calidad` · `preprocesamiento` | 4 + 5 | El CSV crudo | ✅ |
+| **RA2** · Supervisado (Act. 2.2) | `supervisado` | 8 | `detecciones_limpias` | ✅ |
+| **RA2** · No supervisado (Act. 2.3) | `no_supervisado` | 7 | `detecciones_limpias` | ✅ |
 
 El pipeline `supervisado` responde una pregunta con sustancia: **¿se puede anticipar qué
 detecciones van a ser difíciles?** Alcanza un 90 % de exactitud con un F1 de **0,46 en la clase
@@ -316,8 +327,9 @@ herramientas/
   contenido_actividad11.py  fuente única de la Actividad 1.1
   contenido_actividad12.py  fuente única de la Actividad 1.2
   contenido_semana01.py     fuente única de la Actividad 1.3
-  contenido_ea2.py          fuente única de la EA2 (supervisado)
-  contenido_ea3.py          fuente única de la EA3 (no supervisado)
+  contenido_actividad14.py  fuente única de la Actividad 1.4 (ética)
+  contenido_actividad22.py  fuente única de la Actividad 2.2 (supervisado)
+  contenido_actividad23.py  fuente única de la Actividad 2.3 (no supervisado)
   contenido_waymo.py        fuente del notebook de datos reales
   construir_notebooks.py    genera todos los .ipynb
   calcular_nota.py          rúbrica → nota de 1,0 a 7,0
@@ -326,8 +338,8 @@ herramientas/
 
 kedro_mly1101/       el pipeline reproducible (Kedro). Versionado; sus salidas no
   conf/base/            catalog.yml (dónde vive el dato) y parameters.yml (las decisiones)
-  src/.../pipelines/    calidad, preprocesamiento (EA1), supervisado (EA2),
-                        no_supervisado (EA3) e ingesta (Waymo real)
+  src/.../pipelines/    calidad, preprocesamiento (RA1), supervisado (Act. 2.2),
+                        no_supervisado (Act. 2.3) e ingesta (Waymo real)
 
 tests/               pytest de todo lo anterior
 docs/                guiones de clase, rúbrica y documentos de diseño

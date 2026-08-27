@@ -118,7 +118,11 @@ Un **mini-informe en Markdown** (última celda del notebook) con:
 > TODO, las respuestas esperadas de cada pregunta de discusión (bloques `🎓 Pauta docente`) y
 > los criterios de logro por bloque.
 >
-> **Distribución sugerida de las 4 horas:**
+> **La actividad son 6 horas pedagógicas** según el programa. La distribución de abajo cubre
+> el trabajo guiado; las horas restantes quedan para que apliquen lo mismo al caso oficial
+> que hayan elegido (Telco, Housing o Spotify), sobre el que se rinde la Evaluación Parcial.
+>
+> **Distribución del bloque guiado (~4 h):**
 >
 > | Bloque | Min | Foco |
 > |---|---|---|

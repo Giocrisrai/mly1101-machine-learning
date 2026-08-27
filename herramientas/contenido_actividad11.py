@@ -88,7 +88,11 @@ Una **ficha de fuentes de datos** (última celda) con:
 > mismo contenido más el código resuelto de cada TODO, las respuestas esperadas y los criterios
 > de logro por bloque.
 >
-> **Distribución sugerida de las 2 horas:**
+> **La actividad son 6 horas pedagógicas** según el programa. La distribución de abajo cubre
+> el trabajo guiado; las horas restantes quedan para que apliquen lo mismo al caso oficial
+> que hayan elegido (Telco, Housing o Spotify), sobre el que se rinde la Evaluación Parcial.
+>
+> **Distribución del bloque guiado (~2 h):**
 >
 > | Bloque | Min | Foco |
 > |---|---|---|

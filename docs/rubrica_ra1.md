@@ -1,12 +1,15 @@
-# Rúbrica de evaluación — EA1 · Análisis y Preprocesamiento de Datos
+# Pauta del RA1 · Recopilación y calidad de datos
 
-**Asignatura:** MLY1101 Machine Learning · **Experiencia:** EA1 (20 h)
-**Entregable evaluado en la Semana 1:** los tres notebooks de actividad desarrollados + la
-plantilla de proyecto (`10_proyecto_equipo_plantilla.ipynb`) con el mini-informe de calidad.
+**Asignatura:** MLY1101 Machine Learning · **Experiencia de aprendizaje:** *Ingeniería de Datos y Análisis Exploratorio* (RA1)
+**Entregable:** los **cuatro** notebooks de actividad del RA1 desarrollados + la plantilla de
+proyecto (`10_proyecto_equipo_plantilla.ipynb`) con el mini-informe de calidad y la ficha del
+dataset.
 
-> Esta rúbrica cubre lo trabajado en la **Semana 1**. La EA1 completa abarca 20 horas, así que
-> corresponde ampliarla cuando se sumen las semanas siguientes (preprocesamiento aplicado,
-> codificación y escalado).
+**Horas del RA1 según el programa:** 6 + 6 + 6 + 5 = 23 h de actividades, más 1 h de evaluación
+formativa y 6 h de Evaluación Parcial 1.
+
+> Esta pauta cubre las **cuatro actividades del RA1**. El preprocesamiento aplicado que
+> alimenta al RA2 se trabaja en el pipeline `kedro_mly1101/` y en la Actividad 2.2.
 
 ---
 
@@ -23,14 +26,21 @@ rúbrica evalúa con **cinco dimensiones de corrección**, que son más finas po
 distinguir niveles dentro de un mismo indicador. No son listas rivales: las cinco dimensiones son
 la forma de evidenciar los tres indicadores.
 
-| Indicador oficial (PPT) | Actividad | Se evidencia en las dimensiones |
+| Indicador oficial (Programa de Asignatura) | Actividad · horas | Se evidencia en las dimensiones |
 |---|---|---|
-| **IL 1.1** Identifica diversas fuentes de datos y herramientas de trabajo colaborativo | 1.1 · `02_alumno_fuentes` | D1 (estructura), D4 (ética), D5 (documentación) |
-| **IL 1.2** Utiliza estructuras de datos en Python para almacenamiento y manipulación eficiente | 1.2 · `03_alumno_estructuras` | D1 (estructura), D3 (decisiones), D5 |
-| **IL 1.3** Realiza un EDA para detectar anomalías y asegurar la calidad de la información | 1.3 · `01_alumno_exploracion` | D2 (calidad), D3, D4 |
+| **IL 1.1** Identifica diversas fuentes de datos y herramientas de trabajo colaborativo | 1.1 · `02_alumno_fuentes` · 6 h | D1 (estructura), D5 (documentación) |
+| **IL 1.2** Utiliza estructuras de datos en Python para almacenamiento y manipulación eficiente | 1.2 · `03_alumno_estructuras` · 6 h | D1 (estructura), D3 (decisiones), D5 |
+| **IL 1.3** Realiza un EDA para detectar anomalías y asegurar la calidad de la información | 1.3 · `01_alumno_exploracion` · 6 h | D2 (calidad), D3 |
+| **IL 1.4** Evalúa el impacto ético y los sesgos, garantizando estándares de privacidad | 1.4 · `07_alumno_etica` · 5 h | **D4 (ética y privacidad)**, D5 |
 
-**Al reportar la nota a la coordinación se usa la numeración oficial (IL 1.1, 1.2, 1.3); al
+**Al reportar la nota a la coordinación se usa la numeración oficial (IL 1.1 a IL 1.4); al
 corregir se usan las cinco dimensiones**, que es lo que recibe `calcular_nota.py`.
+
+> ⚠️ **Esta es una pauta formativa, no el instrumento sumativo.** La evaluación calificada del
+> RA1 es la **Evaluación Parcial 1** (*Comprensión y preparación de los datos*, **30 %** de la
+> ponderación parcial), que se rinde sobre uno de los casos oficiales —Telco Churn, House Prices
+> o Spotify Tracks— y usa la rúbrica institucional de indicadores ponderados por porcentaje de
+> logro (100 / 80 / 60 / 30 / 0). Esta pauta acompaña y retroalimenta las cuatro actividades.
 
 ### Las cinco dimensiones de corrección
 
@@ -39,8 +49,8 @@ corregir se usan las cinco dimensiones**, que es lo que recibe `calcular_nota.py
 | **D1** · Explora un conjunto de datos, identifica su estructura, sus fuentes y sus tipos de variables | Act. 1.1 completa · Act. 1.2 bloques 1–4 · Act. 1.3 bloques 1–2 | 20 % |
 | **D2** · Identifica problemas de calidad de datos y los cuantifica | Act. 1.3 bloques 3 y 4 (TODO 7–15) | 30 % |
 | **D3** · Fundamenta decisiones de preprocesamiento y de almacenamiento | Act. 1.2 bloque 6 · Act. 1.3 bloque 5 · tabla de decisiones del proyecto | 25 % |
-| **D4** · Reconoce implicancias éticas y sesgos en los datos | Act. 1.1 bloque 6 · Act. 1.3 bloque 6 · ficha de fuentes | 15 % |
-| **D5** · Comunica el análisis con orden y documentación | Los tres notebooks + el mini-informe | 10 % |
+| **D4** · Reconoce implicancias éticas, sesgos y riesgos de privacidad | **Act. 1.4 completa** · Act. 1.1 bloque 6 · Act. 1.3 bloque 6 | 15 % |
+| **D5** · Comunica el análisis con orden y documentación | Los cuatro notebooks + el mini-informe + la ficha del dataset | 10 % |
 
 > En el resto de este documento, y en `calcular_nota.py`, las dimensiones se siguen llamando
 > `IL1` … `IL5` por compatibilidad con la herramienta y con las entregas ya corregidas. Son las
@@ -203,7 +213,14 @@ assert set(limpio["object_type"].unique()) == {"vehicle", "pedestrian", "cyclist
 | **2** | Menciona la ética de forma genérica, sin anclarla en los datos analizados |
 | **1** | No aborda el punto o lo reduce a "hay que cuidar los datos personales" |
 
-**De la Actividad 1.1 se suman dos evidencias:** la lista de chequeo de privacidad de la ficha de
+**De la Actividad 1.4 se suma la evidencia principal de esta dimensión:** la ficha del dataset,
+con el grupo subrepresentado cuantificado, la cadena sesgo → decisión → consecuencia, la
+combinación de columnas que permite reidentificar y la sección *"usos para los que este dataset
+no sirve"*. Cifras de referencia: `dropna(speed_mps)` borra el **1,93 %** del dataset pero el
+**4,08 %** de las detecciones nocturnas contra el **0,91 %** del amanecer; y `segment_id` +
+`timestamp_micros` + `object_type` deja el **75,5 %** de las combinaciones con una sola fila.
+
+**De la Actividad 1.1 se suman dos evidencias más:** la lista de chequeo de privacidad de la ficha de
 fuentes (licencia verificada, no supuesta; riesgo de reidentificación revisado) y el TODO 10, que
 exige encadenar sesgo → decisión técnica → consecuencia sobre un grupo concreto. La cifra de
 referencia es que de noche falta el 4,08 % de las velocidades contra el 0,91 % al amanecer: un
