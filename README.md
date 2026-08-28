@@ -17,7 +17,7 @@ Problema → Datos → Exploración → Preprocesamiento → Modelamiento → Ev
 |---|---|---|---|
 | **RA1** | Ingeniería de Datos y Análisis Exploratorio | 1.1 Fuentes (6) · 1.2 Estructuras (6) · 1.3 EDA (6) · 1.4 Ética (5) | ✅ las cuatro |
 | **RA2** | Implementación y Análisis de Modelos de ML | 2.1 CRISP-DM (6) · 2.2 Supervisado (6) · 2.3 No supervisado (12) · 2.4 Interpretación (5) | 🔧 2.2 y 2.3 |
-| **RA3** | Optimización y Ensamble de Modelos Avanzados | 3.1 Hiperparámetros (6) · 3.2 Ensamble (6) · 3.3 Robustez (11) | ⏳ |
+| **RA3** | Optimización y Ensamble de Modelos Avanzados | 3.1 Hiperparámetros (6) · 3.2 Ensamble (6) · 3.3 Robustez (11) | ✅ las tres |
 | — | **Evaluación Final Transversal** | 12 h · 40 % de la nota final | ⏳ |
 
 **108 horas · 4 SCT.** Las evaluaciones parciales ponderan 30 / 40 / 30 y suman el **60 %** de la
@@ -82,7 +82,7 @@ datos → cómo se almacenan y manipulan → qué tan sucios están → a quién
 | [`docs/guion_clase_actividades_11_12.md`](docs/guion_clase_actividades_11_12.md) | Guion de las actividades 1.1 y 1.2: coreografía de sala, qué preguntar antes de mostrar la cifra, qué recortar y en qué orden |
 | [`docs/guion_clase_semana01.md`](docs/guion_clase_semana01.md) | Guion minuto a minuto de la Actividad 1.3 (EDA): preguntas para el curso, momentos críticos, qué recortar si falta tiempo |
 | [`docs/rubrica_ra1.md`](docs/rubrica_ra1.md) | Pauta de las cuatro actividades del RA1, con las cifras exactas para corregir |
-| [`docs/rubrica_act_2_2.md`](docs/rubrica_act_2_2.md) · [`docs/rubrica_act_2_3.md`](docs/rubrica_act_2_3.md) | Pautas de las actividades 2.2 y 2.3, con las cifras de referencia medidas |
+| [`docs/rubrica_act_2_2.md`](docs/rubrica_act_2_2.md) · [`docs/rubrica_act_2_3.md`](docs/rubrica_act_2_3.md) · [`docs/rubrica_ra3.md`](docs/rubrica_ra3.md) | Pautas de las actividades del RA2 y del RA3, con las cifras de referencia medidas |
 | [`docs/superpowers/specs/2026-08-12-mly1101-semana01-eda-design.md`](docs/superpowers/specs/2026-08-12-mly1101-semana01-eda-design.md) | Especificación completa: decisiones de diseño, catálogo de defectos, protocolo de verificación |
 
 ### Evaluar las entregas
@@ -129,6 +129,34 @@ legítimos que en la Actividad 1.3 se aprendió a *no* eliminar. Aparecen solos,
 
 ---
 
+## RA3 · Optimización y selección
+
+Tres actividades que producen el **mismo resultado incómodo**, y esa repetición es deliberada.
+
+| Act. | Sesión | Notebook del alumno | Solucionario |
+|---|---|---|---|
+| **3.1** | Hiperparámetros · IL3.1 · 6 h | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/08_alumno_hiperparametros.ipynb) `08_alumno_hiperparametros.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/08_docente_hiperparametros.ipynb) |
+| **3.2** | Ensamble · IL3.2 · 6 h | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/09_alumno_ensamble.ipynb) `09_alumno_ensamble.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/09_docente_ensamble.ipynb) |
+| **3.3** | Robustez y selección · IL3.3/3.4 · 11 h | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/11_alumno_seleccion.ipynb) `11_alumno_seleccion.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/11_docente_seleccion.ipynb) |
+
+Pauta común: [`docs/rubrica_ra3.md`](docs/rubrica_ra3.md).
+
+| Actividad | Lo que se intenta | Lo que se mide | Conclusión |
+|---|---|---|---|
+| 3.1 | Ajustar 12 configuraciones | **−0,0006** de F1-macro | El ajuste no mejora nada |
+| 3.2 | Combinar tres modelos | **−0,0040**, y más lento | El ensamble tampoco |
+| 3.3 | Distinguir cuál es mejor | Diferencias **< ruido (0,0079)** | No se puede distinguir |
+
+**La conclusión no es que estas técnicas no sirvan.** Es que atacan la **varianza**, y aquí el
+cuello de botella es el **sesgo**: la información necesaria no está en las variables. Saberlo con
+evidencia vale más que sospecharlo — y es lo que permite dejar de gastar tiempo por la vía
+equivocada.
+
+> Un alumno que reporte *"mejoré el modelo ajustando hiperparámetros"* no ha entendido la
+> experiencia, por bien ejecutado que esté el código.
+
+---
+
 ## El pipeline: `kedro_mly1101/`
 
 El análisis del RA1 también existe como **pipeline reproducible de [Kedro](https://kedro.org)**,
@@ -140,7 +168,7 @@ uv sync --extra kedro
 cd kedro_mly1101 && uv run kedro run
 ```
 
-**24 nodos** en cuatro pipelines, del CSV crudo al modelo evaluado y a los grupos descubiertos:
+**30 nodos** en cinco pipelines, del CSV crudo a la selección sustentada del modelo:
 
 | Experiencia | Pipeline | Nodos | Consume | Estado |
 |---|---|---|---|---|
@@ -330,6 +358,9 @@ herramientas/
   contenido_actividad14.py  fuente única de la Actividad 1.4 (ética)
   contenido_actividad22.py  fuente única de la Actividad 2.2 (supervisado)
   contenido_actividad23.py  fuente única de la Actividad 2.3 (no supervisado)
+  contenido_actividad31.py  fuente única de la Actividad 3.1 (hiperparámetros)
+  contenido_actividad32.py  fuente única de la Actividad 3.2 (ensamble)
+  contenido_actividad33.py  fuente única de la Actividad 3.3 (selección)
   contenido_waymo.py        fuente del notebook de datos reales
   construir_notebooks.py    genera todos los .ipynb
   calcular_nota.py          rúbrica → nota de 1,0 a 7,0
@@ -339,7 +370,7 @@ herramientas/
 kedro_mly1101/       el pipeline reproducible (Kedro). Versionado; sus salidas no
   conf/base/            catalog.yml (dónde vive el dato) y parameters.yml (las decisiones)
   src/.../pipelines/    calidad, preprocesamiento (RA1), supervisado (Act. 2.2),
-                        no_supervisado (Act. 2.3) e ingesta (Waymo real)
+                        no_supervisado (Act. 2.3), optimizacion (RA3) e ingesta
 
 tests/               pytest de todo lo anterior
 docs/                guiones de clase, rúbrica y documentos de diseño
@@ -380,6 +411,7 @@ uv run pytest        # o simplemente `pytest` si ya activaste el entorno
 | `tests/test_pipeline_supervisado.py` | 16 | La partición sin fuga, el entrenamiento y las dos mediciones de fuga |
 | `tests/test_pipeline_no_supervisado.py` | 14 | El escalado antes de agrupar, la elección de k y la interpretación |
 | `tests/test_ingesta_waymo.py` | 13 | Las tres traducciones del esquema real de Waymo (3 se saltan sin datos) |
+| `tests/test_pipeline_optimizacion.py` | 14 | Que la búsqueda nunca toque la prueba, y la selección sustentada |
 | `tests/test_formatos.py` | 17 | El benchmark de formatos de la Act. 1.2: peso, tiempos y pérdida de tipos |
 | `tests/test_fuentes.py` | 15 | La lectura desde SQL, JSON anidado y texto libre de la Act. 1.1 |
 | `tests/test_eda.py` | 14 | Las utilidades de diagnóstico de `src/eda.py` |

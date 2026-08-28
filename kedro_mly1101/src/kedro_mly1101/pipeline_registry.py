@@ -20,6 +20,7 @@ from kedro_mly1101.pipelines.ingesta.pipeline import create_pipeline as ingesta
 from kedro_mly1101.pipelines.no_supervisado.pipeline import (
     create_pipeline as no_supervisado,
 )
+from kedro_mly1101.pipelines.optimizacion.pipeline import create_pipeline as optimizacion
 from kedro_mly1101.pipelines.preprocesamiento.pipeline import (
     create_pipeline as preprocesamiento,
 )
@@ -40,6 +41,12 @@ SALIDAS_REALES = {
     "grupos_vs_etiqueta": "grupos_vs_etiqueta_real",
     "busqueda_de_k": "busqueda_de_k_real",
     "varianza_pca": "varianza_pca_real",
+    "comparacion_modelos": "comparacion_modelos_real",
+    "seleccion_de_modelo": "seleccion_de_modelo_real",
+    "ganancia_del_ajuste": "ganancia_del_ajuste_real",
+    "fuga_por_ajuste": "fuga_por_ajuste_real",
+    "busqueda_hiperparametros": "busqueda_hiperparametros_real",
+    "robustez_modelos": "robustez_modelos_real",
 }
 
 # Los parámetros se comparten entre el recorrido sintético y el real: son las
@@ -56,6 +63,7 @@ PARAMETROS_COMPARTIDOS = {
         "modelo",
         "fuga",
         "agrupamiento",
+        "ajuste",
     ]
 }
 
@@ -66,9 +74,12 @@ def register_pipelines() -> dict[str, Pipeline]:
     p_supervisado = supervisado()
     p_no_supervisado = no_supervisado()
     p_ingesta = ingesta()
+    p_optimizacion = optimizacion()
 
     # El recorrido completo sobre el dataset sintético de la asignatura.
-    analisis = p_calidad + p_preprocesamiento + p_supervisado + p_no_supervisado
+    analisis = (
+        p_calidad + p_preprocesamiento + p_supervisado + p_no_supervisado + p_optimizacion
+    )
 
     # El mismo recorrido, sobre datos reales. Cambia la entrada, no los nodos.
     analisis_real = pipeline(
@@ -84,6 +95,7 @@ def register_pipelines() -> dict[str, Pipeline]:
         "preprocesamiento": p_preprocesamiento,
         "supervisado": p_supervisado,
         "no_supervisado": p_no_supervisado,
+        "optimizacion": p_optimizacion,
         "ingesta": p_ingesta,
         "waymo_real": p_ingesta + analisis_real,
         "__default__": analisis,

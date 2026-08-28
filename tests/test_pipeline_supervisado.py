@@ -178,7 +178,7 @@ def test_comparar_particiones_reporta_los_segmentos_compartidos(limpias: pd.Data
     assert comparacion.loc[0, "clase_minoritaria"] == "LEVEL_2"
 
 
-def test_el_grafo_completo_encadena_las_cuatro_pipelines() -> None:
+def test_el_grafo_completo_encadena_las_cinco_pipelines() -> None:
     """supervisado consume lo que produce preprocesamiento, sin decírselo a nadie."""
     from kedro_mly1101.pipeline_registry import register_pipelines
 
@@ -188,6 +188,7 @@ def test_el_grafo_completo_encadena_las_cuatro_pipelines() -> None:
         "preprocesamiento",
         "supervisado",
         "no_supervisado",
+        "optimizacion",
         "ingesta",
         "waymo_real",
         "__default__",
@@ -199,7 +200,7 @@ def test_el_grafo_completo_encadena_las_cuatro_pipelines() -> None:
     completo = pipelines["__default__"]
     externas = {e for e in completo.inputs() if not e.startswith("params:")}
     assert externas == {"detecciones_crudas"}       # solo el CSV crudo entra de fuera
-    assert len(completo.nodes) == 24
+    assert len(completo.nodes) == 30
 
 
 def test_el_recorrido_real_reutiliza_los_mismos_nodos() -> None:

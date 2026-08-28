@@ -231,3 +231,66 @@ varianza_pca_real:
   type: pandas.CSVDataset
   filepath: data/waymo/07_model_output/varianza_pca.csv
   save_args: {index: false}
+
+# --------------------------------------------------------------------------
+# RA3 · Optimización y ensamble
+# --------------------------------------------------------------------------
+busqueda_hiperparametros:
+  type: pandas.CSVDataset
+  filepath: data/07_model_output/busqueda_hiperparametros.csv
+  save_args: {index: false}
+
+ganancia_del_ajuste:
+  type: pandas.CSVDataset
+  filepath: data/07_model_output/ganancia_del_ajuste.csv
+  save_args: {index: false}
+
+fuga_por_ajuste:
+  type: pandas.CSVDataset
+  filepath: data/07_model_output/fuga_por_ajuste.csv
+  save_args: {index: false}
+
+comparacion_modelos:
+  type: pandas.CSVDataset
+  filepath: data/07_model_output/comparacion_modelos.csv
+  save_args: {index: false}
+
+robustez_modelos:
+  type: pandas.CSVDataset
+  filepath: data/07_model_output/robustez_modelos.csv
+  save_args: {index: false}
+
+seleccion_de_modelo:
+  type: pandas.CSVDataset
+  filepath: data/07_model_output/seleccion_de_modelo.csv
+  save_args: {index: false}
+
+busqueda_hiperparametros_real:
+  type: pandas.CSVDataset
+  filepath: data/waymo/07_model_output/busqueda_hiperparametros.csv
+  save_args: {index: false}
+
+ganancia_del_ajuste_real:
+  type: pandas.CSVDataset
+  filepath: data/waymo/07_model_output/ganancia_del_ajuste.csv
+  save_args: {index: false}
+
+fuga_por_ajuste_real:
+  type: pandas.CSVDataset
+  filepath: data/waymo/07_model_output/fuga_por_ajuste.csv
+  save_args: {index: false}
+
+comparacion_modelos_real:
+  type: pandas.CSVDataset
+  filepath: data/waymo/07_model_output/comparacion_modelos.csv
+  save_args: {index: false}
+
+robustez_modelos_real:
+  type: pandas.CSVDataset
+  filepath: data/waymo/07_model_output/robustez_modelos.csv
+  save_args: {index: false}
+
+seleccion_de_modelo_real:
+  type: pandas.CSVDataset
+  filepath: data/waymo/07_model_output/seleccion_de_modelo.csv
+  save_args: {index: false}

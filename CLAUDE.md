@@ -51,6 +51,9 @@ estructural.
    | `contenido_actividad14.py` | `07_alumno_etica` + `07_docente_etica` | 1.4 · IL1.4 |
    | `contenido_actividad22.py` | `05_alumno_supervisado` + `05_docente_supervisado` | 2.2 · IL2.2 |
    | `contenido_actividad23.py` | `06_alumno_no_supervisado` + `06_docente_no_supervisado` | 2.3 · IL2.3 |
+   | `contenido_actividad31.py` | `08_alumno_hiperparametros` + `08_docente_*` | 3.1 · IL3.1 |
+   | `contenido_actividad32.py` | `09_alumno_ensamble` + `09_docente_ensamble` | 3.2 · IL3.2 |
+   | `contenido_actividad33.py` | `11_alumno_seleccion` + `11_docente_seleccion` | 3.3 · IL3.3/3.4 |
    | `contenido_proyecto.py` | `10_proyecto_equipo_plantilla` | transversal |
    | `contenido_kedro.py` | `04_opcional_kedro_databricks` | opcional |
    | `contenido_waymo.py` | `00_opcional_waymo_real` | opcional |
@@ -107,14 +110,15 @@ estructural.
 
 ```bash
 uv sync                                        # entorno reproducible (pyproject.toml + uv.lock)
-uv run pytest                                  # 173 tests; algunos se saltan sin datos/extras
-cd kedro_mly1101 && uv run kedro run && cd ..  # sintético: 24/24 nodos
-# Con datos reales descargados:  uv run kedro run --pipeline waymo_real   # 26/26 nodos
+uv run pytest                                  # 187 tests; algunos se saltan sin datos/extras
+cd kedro_mly1101 && uv run kedro run && cd ..  # sintético: 30/30 nodos
+# Con datos reales descargados:  uv run kedro run --pipeline waymo_real   # 32/32 nodos
 uv run python herramientas/construir_notebooks.py   # regenera los nueve notebooks
 
 # Los cinco notebooks con código resuelto deben ejecutar completos:
 for nb in 02_docente_fuentes 03_docente_estructuras 01_docente_solucionario \
           07_docente_etica 05_docente_supervisado 06_docente_no_supervisado \
+          08_docente_hiperparametros 09_docente_ensamble 11_docente_seleccion \
           10_proyecto_equipo_plantilla 04_opcional_kedro_databricks; do
   uv run python -m jupyter nbconvert --to notebook --execute --stdout \
       --output-dir=/tmp notebooks/$nb.ipynb > /dev/null && echo "$nb OK"
@@ -161,10 +165,10 @@ es sobre `google.cloud.storage`.
 | RA1 · Act. 1.4 Ética, sesgos y privacidad | ✅ completa y verificada |
 | RA2 · Act. 2.1 CRISP-DM | ⏳ pendiente |
 | RA2 · Act. 2.4 Interpretación y métricas | ⏳ pendiente |
-| RA3 completo (3.1, 3.2, 3.3) | ⏳ pendiente |
+| RA3 · Act. 3.1, 3.2 y 3.3 | ✅ completas y verificadas |
 | Evaluaciones formativas, parciales y EFT | ⏳ pendientes, sobre los casos oficiales |
 | Plantilla de proyecto de equipo | ✅ ejecuta de extremo a extremo |
-| Pipeline Kedro (`kedro_mly1101/`) | ✅ 24 nodos en 4 pipelines, versionado, 60 tests |
+| Pipeline Kedro (`kedro_mly1101/`) | ✅ 30 nodos en 5 pipelines, versionado, 74 tests |
 | RA2 · Act. 2.2 y 2.3 (notebooks, pautas, pipeline) | ✅ completas y verificadas |
 | Datos reales de Waymo (`waymo_real`) | ✅ 26/26 nodos sobre 530.396 detecciones reales |
 | Notebook opcional de Kedro y Databricks | ✅ usa el pipeline real; Databricks queda conceptual |

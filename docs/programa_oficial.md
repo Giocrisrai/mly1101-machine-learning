@@ -168,7 +168,7 @@ Preguntas cruzadas: cada estudiante responde por cualquier parte del trabajo, no
 | Act 1.1 · 1.2 · 1.3 · 1.4 | ✅ notebooks alumno + docente, verificados |
 | Act 2.2 · 2.3 | ✅ notebooks alumno + docente, verificados |
 | Act 2.1 (CRISP-DM) · Act 2.4 (interpretación) | ⏳ |
-| Act 3.1 · 3.2 · 3.3 (todo el RA3) | ⏳ |
+| Act 3.1 · 3.2 · 3.3 (todo el RA3) | ✅ notebooks alumno + docente, verificados |
 | Evaluaciones formativas 1, 2 y 3 | ⏳ |
 | Parciales 1, 2 y 3 · EFT | ⏳ — deben construirse sobre los casos oficiales |
-| Pipeline reproducible (`kedro_mly1101/`) | ✅ RA1 y RA2; falta el de RA3 |
+| Pipeline reproducible (`kedro_mly1101/`) | ✅ RA1, RA2 y RA3 |

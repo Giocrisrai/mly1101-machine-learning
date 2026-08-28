@@ -12,6 +12,9 @@ Genera, para la Semana 1 completa:
 | 1.4 · IL1.4 | ``07_alumno_etica`` / ``07_docente_etica``  | ``contenido_actividad14``  |
 | 2.2 · IL2.2 | ``05_alumno_supervisado`` / ``05_docente_*``| ``contenido_actividad22``  |
 | 2.3 · IL2.3 | ``06_alumno_no_supervisado`` / ``06_doc_*`` | ``contenido_actividad23``  |
+| 3.1 · IL3.1 | ``08_alumno_hiperparametros`` / ``08_doc_*``| ``contenido_actividad31``  |
+| 3.2 · IL3.2 | ``09_alumno_ensamble`` / ``09_docente_*``   | ``contenido_actividad32``  |
+| 3.3 · IL3.3/3.4 | ``11_alumno_seleccion`` / ``11_doc_*``  | ``contenido_actividad33``  |
 | transversal | ``10_proyecto_equipo_plantilla``           | ``contenido_proyecto``     |
 | opcional    | ``04_opcional_kedro_databricks``           | ``contenido_kedro``        |
 | opcional    | ``00_opcional_waymo_real``                 | ``contenido_waymo``        |
@@ -39,6 +42,9 @@ from contenido_actividad12 import CELDAS_ACT12  # noqa: E402
 from contenido_actividad14 import CELDAS_ACT14  # noqa: E402
 from contenido_actividad22 import CELDAS_ACT22  # noqa: E402
 from contenido_actividad23 import CELDAS_ACT23  # noqa: E402
+from contenido_actividad31 import CELDAS_ACT31  # noqa: E402
+from contenido_actividad32 import CELDAS_ACT32  # noqa: E402
+from contenido_actividad33 import CELDAS_ACT33  # noqa: E402
 from contenido_kedro import CELDAS_KEDRO  # noqa: E402
 from contenido_proyecto import CELDAS_PROYECTO  # noqa: E402
 from contenido_semana01 import CELDAS, URL_REPO  # noqa: E402
@@ -154,6 +160,13 @@ def main() -> None:
         # Actividad 2.3 — Modelamiento no supervisado
         construir(CELDAS_ACT23, "06_alumno_no_supervisado.ipynb", para_docente=False),
         construir(CELDAS_ACT23, "06_docente_no_supervisado.ipynb", para_docente=True),
+        # RA3 — Optimización, ensamble y selección
+        construir(CELDAS_ACT31, "08_alumno_hiperparametros.ipynb", para_docente=False),
+        construir(CELDAS_ACT31, "08_docente_hiperparametros.ipynb", para_docente=True),
+        construir(CELDAS_ACT32, "09_alumno_ensamble.ipynb", para_docente=False),
+        construir(CELDAS_ACT32, "09_docente_ensamble.ipynb", para_docente=True),
+        construir(CELDAS_ACT33, "11_alumno_seleccion.ipynb", para_docente=False),
+        construir(CELDAS_ACT33, "11_docente_seleccion.ipynb", para_docente=True),
         # Plantilla del proyecto de equipo (una sola versión, sin solucionario)
         construir(CELDAS_PROYECTO, "10_proyecto_equipo_plantilla.ipynb", para_docente=False),
         # Opcional — Kedro ejecutable y Databricks conceptual
