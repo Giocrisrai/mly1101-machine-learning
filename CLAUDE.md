@@ -49,6 +49,7 @@ estructural.
    | `contenido_actividad12.py` | `03_alumno_estructuras` + `03_docente_estructuras` | 1.2 · IL1.2 |
    | `contenido_semana01.py` | `01_alumno_exploracion` + `01_docente_solucionario` | 1.3 · IL1.3 |
    | `contenido_actividad14.py` | `07_alumno_etica` + `07_docente_etica` | 1.4 · IL1.4 |
+   | `contenido_actividad21.py` | `12_alumno_crispdm` + `12_docente_crispdm` | 2.1 · IL2.1 |
    | `contenido_actividad22.py` | `05_alumno_supervisado` + `05_docente_supervisado` | 2.2 · IL2.2 |
    | `contenido_actividad23.py` | `06_alumno_no_supervisado` + `06_docente_no_supervisado` | 2.3 · IL2.3 |
    | `contenido_actividad31.py` | `08_alumno_hiperparametros` + `08_docente_*` | 3.1 · IL3.1 |
@@ -110,14 +111,14 @@ estructural.
 
 ```bash
 uv sync                                        # entorno reproducible (pyproject.toml + uv.lock)
-uv run pytest                                  # 187 tests; algunos se saltan sin datos/extras
+uv run pytest                                  # 198 tests; algunos se saltan sin datos/extras
 cd kedro_mly1101 && uv run kedro run && cd ..  # sintético: 30/30 nodos
 # Con datos reales descargados:  uv run kedro run --pipeline waymo_real   # 32/32 nodos
 uv run python herramientas/construir_notebooks.py   # regenera todos los notebooks
 
 # Los cinco notebooks con código resuelto deben ejecutar completos:
 for nb in 02_docente_fuentes 03_docente_estructuras 01_docente_solucionario \
-          07_docente_etica 05_docente_supervisado 06_docente_no_supervisado \
+          07_docente_etica 12_docente_crispdm 05_docente_supervisado 06_docente_no_supervisado \
           08_docente_hiperparametros 09_docente_ensamble 11_docente_seleccion \
           10_proyecto_equipo_plantilla 04_opcional_kedro_databricks; do
   uv run python -m jupyter nbconvert --to notebook --execute --stdout \
@@ -163,7 +164,7 @@ es sobre `google.cloud.storage`.
 | RA1 · Act. 1.2 Estructuras y almacenamiento | ✅ completa y verificada |
 | RA1 · Act. 1.3 EDA | ✅ completa y verificada |
 | RA1 · Act. 1.4 Ética, sesgos y privacidad | ✅ completa y verificada |
-| RA2 · Act. 2.1 CRISP-DM | ⏳ pendiente |
+| RA2 · Act. 2.1 CRISP-DM | ✅ completa (notebooks, pauta, `src/crispdm.py`) |
 | RA2 · Act. 2.4 Interpretación y métricas | ⏳ pendiente |
 | RA3 · Act. 3.1, 3.2 y 3.3 | ✅ completas y verificadas |
 | Evaluaciones formativas, parciales y EFT | ⏳ pendientes, sobre los casos oficiales |

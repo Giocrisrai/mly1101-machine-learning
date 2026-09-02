@@ -10,6 +10,7 @@ Genera, para la Semana 1 completa:
 | 1.2 · IL1.2 | ``03_alumno_estructuras`` / ``03_docente_*``| ``contenido_actividad12``  |
 | 1.3 · IL1.3 | ``01_alumno_exploracion`` / ``01_docente_*``| ``contenido_semana01``     |
 | 1.4 · IL1.4 | ``07_alumno_etica`` / ``07_docente_etica``  | ``contenido_actividad14``  |
+| 2.1 · IL2.1 | ``12_alumno_crispdm`` / ``12_docente_crispdm`` | ``contenido_actividad21``  |
 | 2.2 · IL2.2 | ``05_alumno_supervisado`` / ``05_docente_*``| ``contenido_actividad22``  |
 | 2.3 · IL2.3 | ``06_alumno_no_supervisado`` / ``06_doc_*`` | ``contenido_actividad23``  |
 | 3.1 · IL3.1 | ``08_alumno_hiperparametros`` / ``08_doc_*``| ``contenido_actividad31``  |
@@ -40,6 +41,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from contenido_actividad11 import CELDAS_ACT11  # noqa: E402
 from contenido_actividad12 import CELDAS_ACT12  # noqa: E402
 from contenido_actividad14 import CELDAS_ACT14  # noqa: E402
+from contenido_actividad21 import CELDAS_ACT21  # noqa: E402
 from contenido_actividad22 import CELDAS_ACT22  # noqa: E402
 from contenido_actividad23 import CELDAS_ACT23  # noqa: E402
 from contenido_actividad31 import CELDAS_ACT31  # noqa: E402
@@ -151,6 +153,9 @@ def main() -> None:
         # Actividad 1.4 — Impacto ético, sesgos y privacidad
         construir(CELDAS_ACT14, "07_alumno_etica.ipynb", para_docente=False),
         construir(CELDAS_ACT14, "07_docente_etica.ipynb", para_docente=True),
+        # Actividad 2.1 — Gestión de proyectos con CRISP-DM
+        construir(CELDAS_ACT21, "12_alumno_crispdm.ipynb", para_docente=False),
+        construir(CELDAS_ACT21, "12_docente_crispdm.ipynb", para_docente=True),
         # Actividad 1.3 — Análisis exploratorio de datos
         construir(CELDAS, "01_alumno_exploracion.ipynb", para_docente=False),
         construir(CELDAS, "01_docente_solucionario.ipynb", para_docente=True),
