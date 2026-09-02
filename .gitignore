@@ -29,5 +29,10 @@ notebooks/salidas_proyecto/
 # `kedro run` en un par de segundos. Incluye data/waymo/, las del recorrido real.
 kedro_mly1101/data/
 
+# Artefactos que Kedro escribe al correr (no son el pipeline).
+kedro_mly1101/.viz/
+kedro_mly1101/uv.lock
+kedro_mly1101/.telemetry
+
 # macOS
 .DS_Store
