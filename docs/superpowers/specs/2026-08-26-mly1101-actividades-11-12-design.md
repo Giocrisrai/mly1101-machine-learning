@@ -238,6 +238,6 @@ Los tres corregidos, y los tres vale la pena tener escritos porque volverán a a
 | Cuándo | Qué |
 |---|---|
 | Hecho (2026-08) | Material docente de Act. 2.2, 2.3 y RA3; rúbrica del RA1 extendida a 1.1–1.4 |
-| Act. 2.1 y 2.4 | Aún pendientes |
+| Hecho (2026-09) | Act. 2.1 y 2.4 |
 | Evaluaciones | Formativas, parciales y EFT sobre los casos oficiales |
 | Cuando Colab migre a pandas 3 | Migrar el material: `dtype == object` deja de valer y hay que reescribir esas celdas y sus tests |

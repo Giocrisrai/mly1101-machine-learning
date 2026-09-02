@@ -421,7 +421,6 @@ clase, donde reemplazan una discusión hipotética por uno medido.
 
 | Cuándo | Qué |
 |---|---|
-| Hecho | RA1 completo (1.1–1.4), Act. 2.2 y 2.3, todo el RA3 |
-| Act. 2.1 y 2.4 | CRISP-DM e interpretación de métricas |
+| Hecho | RA1 completo (1.1–1.4), RA2 completo (2.1–2.4), todo el RA3 |
 | Evaluaciones | Formativas, parciales y EFT sobre los casos oficiales |
 | Cuando Colab migre a pandas 3 | Migrar el material: `dtype == object` deja de valer |

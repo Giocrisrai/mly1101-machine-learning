@@ -16,7 +16,7 @@ Problema → Datos → Exploración → Preprocesamiento → Modelamiento → Ev
 | RA | Experiencia de aprendizaje | Actividades (horas) | Estado |
 |---|---|---|---|
 | **RA1** | Ingeniería de Datos y Análisis Exploratorio | 1.1 Fuentes (6) · 1.2 Estructuras (6) · 1.3 EDA (6) · 1.4 Ética (5) | ✅ las cuatro |
-| **RA2** | Implementación y Análisis de Modelos de ML | 2.1 CRISP-DM (6) · 2.2 Supervisado (6) · 2.3 No supervisado (12) · 2.4 Interpretación (5) | 🔧 2.1, 2.2 y 2.3 · falta 2.4 |
+| **RA2** | Implementación y Análisis de Modelos de ML | 2.1 CRISP-DM (6) · 2.2 Supervisado (6) · 2.3 No supervisado (12) · 2.4 Interpretación (5) | ✅ las cuatro |
 | **RA3** | Optimización y Ensamble de Modelos Avanzados | 3.1 Hiperparámetros (6) · 3.2 Ensamble (6) · 3.3 Robustez (11) | ✅ las tres |
 | — | **Evaluación Final Transversal** | 12 h · 40 % de la nota final | ⏳ |
 
@@ -82,8 +82,9 @@ datos → cómo se almacenan y manipulan → qué tan sucios están → a quién
 | [`docs/guion_clase_actividades_11_12.md`](docs/guion_clase_actividades_11_12.md) | Guion de las actividades 1.1 y 1.2: coreografía de sala, qué preguntar antes de mostrar la cifra, qué recortar y en qué orden |
 | [`docs/guion_clase_semana01.md`](docs/guion_clase_semana01.md) | Guion minuto a minuto de la Actividad 1.3 (EDA): preguntas para el curso, momentos críticos, qué recortar si falta tiempo |
 | [`docs/guion_clase_actividad_21.md`](docs/guion_clase_actividad_21.md) | Guion de la Actividad 2.1 (CRISP-DM): coreografía, qué preguntar antes de mostrar, qué recortar |
+| [`docs/guion_clase_actividad_24.md`](docs/guion_clase_actividad_24.md) | Guion de la Actividad 2.4 (interpretación): de la matriz a la frase de negocio |
 | [`docs/rubrica_ra1.md`](docs/rubrica_ra1.md) | Pauta de las cuatro actividades del RA1, con las cifras exactas para corregir |
-| [`docs/rubrica_act_2_1.md`](docs/rubrica_act_2_1.md) · [`docs/rubrica_act_2_2.md`](docs/rubrica_act_2_2.md) · [`docs/rubrica_act_2_3.md`](docs/rubrica_act_2_3.md) · [`docs/rubrica_ra3.md`](docs/rubrica_ra3.md) | Pautas de las actividades del RA2 y del RA3, con las cifras de referencia medidas |
+| [`docs/rubrica_act_2_1.md`](docs/rubrica_act_2_1.md) · [`docs/rubrica_act_2_2.md`](docs/rubrica_act_2_2.md) · [`docs/rubrica_act_2_3.md`](docs/rubrica_act_2_3.md) · [`docs/rubrica_act_2_4.md`](docs/rubrica_act_2_4.md) · [`docs/rubrica_ra3.md`](docs/rubrica_ra3.md) | Pautas de las actividades del RA2 y del RA3 |
 | [`docs/superpowers/specs/2026-08-12-mly1101-semana01-eda-design.md`](docs/superpowers/specs/2026-08-12-mly1101-semana01-eda-design.md) | Especificación completa: decisiones de diseño, catálogo de defectos, protocolo de verificación |
 
 ### Evaluar las entregas
@@ -104,15 +105,17 @@ otra exigencia, `--exigencia 0.5`.
 
 La Actividad **2.1** nombra el mapa (CRISP-DM) y cierra la comprensión del negocio que el RA1
 se saltó. Las actividades **2.2** y **2.3** parten del **mismo dataset limpio** y hacen
-preguntas opuestas. Las tres pertenecen al RA2; 2.2 y 2.3 se evalúan juntas en la **Parcial 2**.
+preguntas opuestas. La **2.4** traduce esas métricas a una frase que la organización puede
+usar. Las cuatro pertenecen al RA2; 2.2, 2.3 y 2.4 se evalúan juntas en la **Parcial 2**.
 
 | Act. | Sesión | Notebook del alumno | Solucionario | Pauta |
 |---|---|---|---|---|
 | **2.1** | CRISP-DM · IL2.1 · 6 h | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/12_alumno_crispdm.ipynb) `12_alumno_crispdm.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/12_docente_crispdm.ipynb) | [`rubrica_act_2_1.md`](docs/rubrica_act_2_1.md) |
 | **2.2** | Supervisado · IL2.2 · 6 h · 17 TODO | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/05_alumno_supervisado.ipynb) `05_alumno_supervisado.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/05_docente_supervisado.ipynb) | [`rubrica_act_2_2.md`](docs/rubrica_act_2_2.md) |
 | **2.3** | No supervisado · IL2.3 · 12 h · 11 TODO | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/06_alumno_no_supervisado.ipynb) `06_alumno_no_supervisado.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/06_docente_no_supervisado.ipynb) | [`rubrica_act_2_3.md`](docs/rubrica_act_2_3.md) |
+| **2.4** | Interpretación · IL2.4 · 5 h | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/13_alumno_interpretacion.ipynb) `13_alumno_interpretacion.ipynb` | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/13_docente_interpretacion.ipynb) | [`rubrica_act_2_4.md`](docs/rubrica_act_2_4.md) |
 
-**Los dos notebooks reutilizan los nodos del pipeline**, no una copia. Esos módulos solo importan
+**Los notebooks de 2.2–2.4 reutilizan los nodos del pipeline**, no una copia. Esos módulos solo importan
 pandas, así que funcionan en Colab **sin instalar Kedro**.
 
 ### Los dos momentos que cargan cada sesión
@@ -129,6 +132,9 @@ legítimos que en la Actividad 1.3 se aprendió a *no* eliminar. Aparecen solos,
 
 > Si en la Actividad 1.3 hubieran hecho caso al criterio IQR y eliminado los atípicos, este
 > grupo no existiría.
+
+**Act. 2.4 — de cada 100.** El F1 de 0,46 no entra a una reunión. Traducido: **de cada 100
+detecciones difíciles, el modelo pierde 60.** Esa es la frase que la organización puede usar.
 
 ---
 
@@ -406,7 +412,7 @@ Editar los `.ipynb` directamente funciona hasta el siguiente build, que los sobr
 uv run pytest        # o simplemente `pytest` si ya activaste el entorno
 ```
 
-**198 tests en total**, repartidos así:
+**207 tests en total**, repartidos así:
 
 | Archivo | Tests | Qué verifica |
 |---|---|---|
@@ -422,6 +428,7 @@ uv run pytest        # o simplemente `pytest` si ya activaste el entorno
 | `tests/test_calcular_nota.py` | 14 | La conversión de rúbrica a nota (escala 1,0–7,0, exigencia 60 %) |
 | `tests/test_analisis_sesgo.py` | 11 | La lógica del análisis de sesgo, incluida la unidad de análisis |
 | `tests/test_crispdm.py` | 11 | Las seis fases, el mapa RA2/RA3 y que la carta del proyecto sea usable |
+| `tests/test_interpretacion.py` | 9 | Traducir la matriz a frecuencia, costo y error en unidades |
 | `tests/test_waymo_descarga.py` | 11 | La descarga de Waymo y la traducción de sus errores (1 se salta sin el extra `waymo`) |
 | `tests/test_mapeo_waymo.py` | 10 | El mapeo al esquema real de Waymo (se saltan sin datos descargados) |
 
@@ -435,7 +442,7 @@ fáciles de aceptar sin comprobar:
 Si un test del generador falla, el solucionario dejó de coincidir con lo que reciben los
 alumnos.
 
-En esta máquina, con datos de Waymo descargados, el resultado es `198 passed`.
+En esta máquina, con datos de Waymo descargados, el resultado es `207 passed`.
 Sin esos datos se saltan `tests/test_mapeo_waymo.py` y los tests de
 `test_ingesta_waymo.py` que piden la muestra de 40 segmentos. Los 10 de mapeo
 pasaron 10/10 contra el segmento

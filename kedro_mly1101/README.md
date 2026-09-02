@@ -275,9 +275,8 @@ nodos, no reescribe el análisis anterior**. Que `supervisado` corra después de
 `preprocesamiento` no está escrito en ninguna parte: se deduce de que consume
 `detecciones_limpias`, que el otro produce.
 
-El material docente de las Act. 2.1, 2.2, 2.3 y 3.1–3.3 (notebooks de alumno, solucionario y rúbrica)
-ya existe. Lo que sigue pendiente es la Act. 2.4 (interpretación) y las
-evaluaciones sobre los casos oficiales.
+El material docente de las Act. 2.1–2.4 y 3.1–3.3 (notebooks de alumno, solucionario y rúbrica)
+ya existe. Lo que sigue pendiente son las evaluaciones sobre los casos oficiales.
 
 Sobre llevar esto a Databricks (cambiar `pandas.CSVDataset` por `spark.SparkDataset` y qué implica
 de verdad), ver el bloque 7 del notebook 04.

@@ -168,7 +168,7 @@ Preguntas cruzadas: cada estudiante responde por cualquier parte del trabajo, no
 | Act 1.1 · 1.2 · 1.3 · 1.4 | ✅ notebooks alumno + docente, verificados |
 | Act 2.1 · CRISP-DM | ✅ notebooks alumno + docente, pauta formativa |
 | Act 2.2 · 2.3 | ✅ notebooks alumno + docente, verificados |
-| Act 2.4 (interpretación) | ⏳ |
+| Act 2.4 (interpretación) | ✅ notebooks alumno + docente, pauta formativa |
 | Act 3.1 · 3.2 · 3.3 (todo el RA3) | ✅ notebooks alumno + docente, verificados |
 | Evaluaciones formativas 1, 2 y 3 | ⏳ |
 | Parciales 1, 2 y 3 · EFT | ⏳ — deben construirse sobre los casos oficiales |

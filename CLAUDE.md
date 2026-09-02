@@ -52,6 +52,7 @@ estructural.
    | `contenido_actividad21.py` | `12_alumno_crispdm` + `12_docente_crispdm` | 2.1 · IL2.1 |
    | `contenido_actividad22.py` | `05_alumno_supervisado` + `05_docente_supervisado` | 2.2 · IL2.2 |
    | `contenido_actividad23.py` | `06_alumno_no_supervisado` + `06_docente_no_supervisado` | 2.3 · IL2.3 |
+   | `contenido_actividad24.py` | `13_alumno_interpretacion` + `13_docente_interpretacion` | 2.4 · IL2.4 |
    | `contenido_actividad31.py` | `08_alumno_hiperparametros` + `08_docente_*` | 3.1 · IL3.1 |
    | `contenido_actividad32.py` | `09_alumno_ensamble` + `09_docente_ensamble` | 3.2 · IL3.2 |
    | `contenido_actividad33.py` | `11_alumno_seleccion` + `11_docente_seleccion` | 3.3 · IL3.3/3.4 |
@@ -111,14 +112,15 @@ estructural.
 
 ```bash
 uv sync                                        # entorno reproducible (pyproject.toml + uv.lock)
-uv run pytest                                  # 198 tests; algunos se saltan sin datos/extras
+uv run pytest                                  # 207 tests; algunos se saltan sin datos/extras
 cd kedro_mly1101 && uv run kedro run && cd ..  # sintético: 30/30 nodos
 # Con datos reales descargados:  uv run kedro run --pipeline waymo_real   # 32/32 nodos
 uv run python herramientas/construir_notebooks.py   # regenera todos los notebooks
 
-# Los cinco notebooks con código resuelto deben ejecutar completos:
+# Los notebooks con código resuelto deben ejecutar completos:
 for nb in 02_docente_fuentes 03_docente_estructuras 01_docente_solucionario \
           07_docente_etica 12_docente_crispdm 05_docente_supervisado 06_docente_no_supervisado \
+          13_docente_interpretacion \
           08_docente_hiperparametros 09_docente_ensamble 11_docente_seleccion \
           10_proyecto_equipo_plantilla 04_opcional_kedro_databricks; do
   uv run python -m jupyter nbconvert --to notebook --execute --stdout \
@@ -165,7 +167,7 @@ es sobre `google.cloud.storage`.
 | RA1 · Act. 1.3 EDA | ✅ completa y verificada |
 | RA1 · Act. 1.4 Ética, sesgos y privacidad | ✅ completa y verificada |
 | RA2 · Act. 2.1 CRISP-DM | ✅ completa (notebooks, pauta, `src/crispdm.py`) |
-| RA2 · Act. 2.4 Interpretación y métricas | ⏳ pendiente |
+| RA2 · Act. 2.4 Interpretación y métricas | ✅ completa (notebooks, pauta, `src/interpretacion.py`) |
 | RA3 · Act. 3.1, 3.2 y 3.3 | ✅ completas y verificadas |
 | Evaluaciones formativas, parciales y EFT | ⏳ pendientes, sobre los casos oficiales |
 | Plantilla de proyecto de equipo | ✅ ejecuta de extremo a extremo |

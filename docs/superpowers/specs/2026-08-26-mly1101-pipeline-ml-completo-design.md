@@ -146,7 +146,7 @@ uv run kedro run --pipeline waymo_real    # 32/32 nodos, 530.396 detecciones rea
 
 | Limitación | Estado |
 |---|---|
-| **Act. 2.1 y 2.4 aún no tienen notebook** | 2.2, 2.3 y todo el RA3 ya tienen notebooks, solucionario y rúbrica |
+| **Ninguna** | El material docente de 2.1–2.4 y del RA3 ya existe |
 | El recorrido real tarda varios minutos | 530.396 filas con RandomForest y K-medias. Aceptable fuera de clase, no para ejecutar en vivo |
 | Los 40 segmentos son todos `sunny` | No es un defecto del código: es el sesgo del propio dataset (793 de 798 soleados) |
 | Ningún notebook nuevo se ha ejecutado en Colab | El runtime no arranca por automatización; verificado con `nbconvert` en local |
@@ -157,6 +157,5 @@ uv run kedro run --pipeline waymo_real    # 32/32 nodos, 530.396 detecciones rea
 
 | Cuándo | Qué |
 |---|---|
-| Act. 2.1 | Gestión de proyectos con CRISP-DM (6 h) |
-| Act. 2.4 | Interpretación y métricas de desempeño (5 h) |
+| Hecho | Act. 2.1 (CRISP-DM) y Act. 2.4 (interpretación) |
 | Evaluaciones | Formativas, parciales y EFT sobre los casos oficiales (Telco, House Prices, Spotify) |

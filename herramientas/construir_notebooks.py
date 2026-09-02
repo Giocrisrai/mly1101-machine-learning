@@ -13,6 +13,7 @@ Genera, para la Semana 1 completa:
 | 2.1 · IL2.1 | ``12_alumno_crispdm`` / ``12_docente_crispdm`` | ``contenido_actividad21``  |
 | 2.2 · IL2.2 | ``05_alumno_supervisado`` / ``05_docente_*``| ``contenido_actividad22``  |
 | 2.3 · IL2.3 | ``06_alumno_no_supervisado`` / ``06_doc_*`` | ``contenido_actividad23``  |
+| 2.4 · IL2.4 | ``13_alumno_interpretacion`` / ``13_docente_*`` | ``contenido_actividad24`` |
 | 3.1 · IL3.1 | ``08_alumno_hiperparametros`` / ``08_doc_*``| ``contenido_actividad31``  |
 | 3.2 · IL3.2 | ``09_alumno_ensamble`` / ``09_docente_*``   | ``contenido_actividad32``  |
 | 3.3 · IL3.3/3.4 | ``11_alumno_seleccion`` / ``11_doc_*``  | ``contenido_actividad33``  |
@@ -44,6 +45,7 @@ from contenido_actividad14 import CELDAS_ACT14  # noqa: E402
 from contenido_actividad21 import CELDAS_ACT21  # noqa: E402
 from contenido_actividad22 import CELDAS_ACT22  # noqa: E402
 from contenido_actividad23 import CELDAS_ACT23  # noqa: E402
+from contenido_actividad24 import CELDAS_ACT24  # noqa: E402
 from contenido_actividad31 import CELDAS_ACT31  # noqa: E402
 from contenido_actividad32 import CELDAS_ACT32  # noqa: E402
 from contenido_actividad33 import CELDAS_ACT33  # noqa: E402
@@ -165,6 +167,9 @@ def main() -> None:
         # Actividad 2.3 — Modelamiento no supervisado
         construir(CELDAS_ACT23, "06_alumno_no_supervisado.ipynb", para_docente=False),
         construir(CELDAS_ACT23, "06_docente_no_supervisado.ipynb", para_docente=True),
+        # Actividad 2.4 — Interpretación y métricas
+        construir(CELDAS_ACT24, "13_alumno_interpretacion.ipynb", para_docente=False),
+        construir(CELDAS_ACT24, "13_docente_interpretacion.ipynb", para_docente=True),
         # RA3 — Optimización, ensamble y selección
         construir(CELDAS_ACT31, "08_alumno_hiperparametros.ipynb", para_docente=False),
         construir(CELDAS_ACT31, "08_docente_hiperparametros.ipynb", para_docente=True),
