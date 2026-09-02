@@ -45,7 +45,7 @@ ejecutable en Google Colab (recomendación del PIA) y con respaldo local en Jupy
 | Alcance | ~4 h, alumnos que ya manejan pandas | 2 h nivel básico | Permite llegar a outliers y a las decisiones de preprocesamiento |
 | Estructura | Un repo por asignatura, carpetas por experiencia | Un repo por semana | La EFT exige lógica de proyecto progresiva |
 
-**Fuera de alcance en esta iteración:** algoritmos predictivos, material de EA2/EA3, evaluación
+**Fuera de alcance en esta iteración (2026-08-12):** algoritmos predictivos, material de las Act. 2.2 y 2.3, evaluación
 automática de las entregas de los alumnos.
 
 ---
@@ -180,7 +180,7 @@ Con `--filas 40000 --semilla 42` ⇒ 40.680 filas × 16 columnas (4,6 MB).
 | 6 | Outliers imposibles | 157 > 60 m/s · 122 con alto 0 · 80 con largo < 0 | Reglas de dominio |
 | 7 | Outliers legítimos (buses) | 608 con largo > 12 m | No todo atípico es error |
 | 8 | Nulos MNAR en `speed_mps` | 787; 33,8 % en LEVEL_2 nocturno vs. 0,4 % en LEVEL_1 | El patrón importa más que el conteo |
-| 9 | Desbalance | `CYCLIST` 1,9 % | Anticipa las métricas de EA2 |
+| 9 | Desbalance | `CYCLIST` 1,9 % | Anticipa las métricas de la Act. 2.2 |
 | 10 | `sensor_version` constante · `id_interno` 98,3 % único | — | Qué no es una feature |
 
 Cada uno tiene su test en `tests/test_generar_dataset.py`.
@@ -397,7 +397,7 @@ Consecuencias sobre el diseño:
    de análisis. La herramienta no debe cometer el error que enseña a evitar.
 2. Se añadió `calidad_por_segmento()`, con tests que usan un caso construido a propósito (dos
    segmentos limpios y uno atípico enorme) para fijar el contraste entre ambas agregaciones.
-3. El material conecta esto con EA2: **el split de entrenamiento/prueba debe ser por
+3. El material conecta esto con la Act. 2.2: **el split de entrenamiento/prueba debe ser por
    `segment_id`**, no por fila. Es el mismo error con otra cara.
 
 Las cifras se incorporaron al Paso 7 de `00_opcional_waymo_real.ipynb` y al bloque 6 del guion de
@@ -421,8 +421,7 @@ clase, donde reemplazan una discusión hipotética por uno medido.
 
 | Cuándo | Qué |
 |---|---|
-| Semana 2 | Preprocesamiento aplicado: imputación por grupo, codificación, escalado, y `Pipeline` de scikit-learn para evitar la fuga de información |
-| EA2 | Aprendizaje supervisado. El desbalance de `CYCLIST` (1,9 %) y las métricas por clase quedaron sembrados en esta sesión |
-| EA3 | Aprendizaje no supervisado sobre el mismo dominio: segmentación de detecciones, reducción de dimensionalidad |
-| EFT | El mismo dataset o su versión real de Waymo, integrando los tres RA |
-| Cuando se amplíe la EA1 | Extender `docs/rubrica_ra1.md`: hoy cubre solo la Semana 1 de las 20 h de la experiencia |
+| Hecho | RA1 completo (1.1–1.4), Act. 2.2 y 2.3, todo el RA3 |
+| Act. 2.1 y 2.4 | CRISP-DM e interpretación de métricas |
+| Evaluaciones | Formativas, parciales y EFT sobre los casos oficiales |
+| Cuando Colab migre a pandas 3 | Migrar el material: `dtype == object` deja de valer |

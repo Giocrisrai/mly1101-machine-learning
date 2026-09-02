@@ -9,7 +9,7 @@ del repositorio**, ``kedro_mly1101/``, que está versionado y cubierto por
 
 El motivo es que ese proyecto no es una demostración: es la columna de ingeniería sobre la
 que crecen las experiencias siguientes. Un proyecto que se crea y se borra dentro de una
-celda no sirve como base para la EA2 ni para la EA3.
+celda no sirve como base para las Act. 2.2 ni 2.3.
 
 Alcance de Databricks: **conceptual por diseño**. Exige cuenta y clúster que no se pueden
 pedir en clase. Lo que sí se muestra es el cambio exacto en ``catalog.yml``, que es el
@@ -30,7 +30,7 @@ CELDAS_KEDRO: list[dict] = [
 # MLY1101 · Notebook opcional
 ## De notebooks a pipeline: Kedro, y qué cambiaría en Databricks
 
-**Este notebook es opcional y no entra en la evaluación de la EA1.** Está para responder una
+**Este notebook es opcional y no entra en la evaluación del RA1.** Está para responder una
 pregunta que aparece en cuanto un análisis deja de ser un ejercicio:
 
 > El notebook funciona. ¿Por qué no basta con eso?
@@ -64,11 +64,11 @@ distinto: qué hacer cuando los datos ya no caben en un computador.
 ### Este no es un ejemplo de juguete
 
 El proyecto que vamos a ejecutar **está en el repositorio**, en `kedro_mly1101/`. No se crea
-aquí ni se borra al cerrar el notebook: está versionado en Git y tiene 16 tests propios en
+aquí ni se borra al cerrar el notebook: está versionado en Git y tiene 19 tests propios en
 `tests/test_pipeline_kedro.py`.
 
-Es la columna de ingeniería de la asignatura. Las pipelines de aprendizaje supervisado (EA2) y
-no supervisado (EA3) se enchufarán en este mismo proyecto, sobre el mismo dataset.
+Es la columna de ingeniería de la asignatura. Los pipelines de aprendizaje supervisado (Act. 2.2) y
+no supervisado (Act. 2.3) viven en este mismo proyecto, sobre el mismo dataset.
 """
     ),
     md(
@@ -184,7 +184,7 @@ pena aunque no uses Kedro:
 |---|---|---|
 | **01_raw** | Lo que llegó | **No se toca nunca.** Es la evidencia de origen |
 | **02_intermediate** | Diagnósticos y tablas de trabajo | Se puede borrar y regenerar |
-| **03_primary** | El dataset limpio, listo para modelar | Es el que consume la EA2 |
+| **03_primary** | El dataset limpio, listo para modelar | Es el que consume la Act. 2.2 |
 
 Fíjate en que `detecciones_limpias` se guarda en **Parquet y no en CSV**. No es capricho: es lo
 que se midió en la Actividad 1.2. El CSV pierde el tipo de 11 de las 16 columnas, así que
@@ -213,7 +213,7 @@ print((PROYECTO / "conf" / "base" / "parameters.yml").read_text(encoding="utf-8"
     ),
     md(
         """
-**Cada bloque de ese archivo es una fila de la tabla de decisiones de la EA1.** Lo que el alumno
+**Cada bloque de ese archivo es una fila de la tabla de decisiones del RA1.** Lo que el alumno
 escribe en Markdown en su informe, aquí está en un formato que además se ejecuta.
 
 Esa es la diferencia de fondo: una tabla de decisiones en un informe se interpreta distinto cada
@@ -439,7 +439,7 @@ crudo = pd.read_csv(RAIZ / "datos" / "crudos" / "detecciones_waymo_like.csv")
 print(f"Crudo  : {len(crudo):,} filas × {crudo.shape[1]} columnas")
 print(f"Limpio : {len(limpio):,} filas × {limpio.shape[1]} columnas")
 print()
-print("Este Parquet es lo que consumirá la EA2 para entrenar el primer modelo.")
+print("Este Parquet es lo que consume la Act. 2.2 para entrenar el primer modelo.")
 limpio.head(3)
 """
     ),
@@ -713,7 +713,7 @@ decir es sesgo de confirmación, el mismo del que se habla en la Actividad 1.1.
     md(
         """
 ---
-# Bloque 10 · Aprendizaje no supervisado (EA3)
+# Bloque 10 · Aprendizaje no supervisado (Act. 2.3)
 
 El mismo `kedro run` siguió más allá del modelo. El pipeline `no_supervisado` toma
 `detecciones_limpias` y hace la pregunta contraria a la del bloque 8:
@@ -721,7 +721,7 @@ El mismo `kedro run` siguió más allá del modelo. El pipeline `no_supervisado`
 > Sin decirle a nadie qué es cada objeto, ¿aparecen **grupos naturales**? ¿Y coinciden con los
 > tipos que el sensor etiquetó?
 
-Es la contracara de la EA2. Allí había una etiqueta y se medía el acierto; aquí no hay etiqueta y
+Es la contracara de la Act. 2.2. Allí había una etiqueta y se medía el acierto; aquí no hay etiqueta y
 hay que **justificar** que la estructura encontrada significa algo.
 
 **`object_type` viaja en la tabla pero no entra en el agrupamiento.** Se guarda para contrastar
@@ -842,7 +842,7 @@ descargar.**
 RUTA_REAL = PROYECTO / "data" / "waymo" / "07_model_output" / "metricas_por_clase.csv"
 
 if RUTA_REAL.exists():
-    print("=== EA2 sobre datos REALES de Waymo ===")
+    print("=== Act. 2.2 sobre datos REALES de Waymo ===")
     print(pd.read_csv(RUTA_REAL).to_string(index=False))
 else:
     print("No hay resultados del recorrido real en esta máquina.")
@@ -864,9 +864,9 @@ Cifras medidas el 2026-08-26 sobre 40 segmentos (530.396 detecciones):
 | Mediana `speed_mps` | 5,35 | **0,01** — casi todo está detenido |
 | Clima | 3 categorías sucias | **100 % `sunny`** |
 | Defectos de calidad encontrados | 10 | **0** |
-| EA2 · exactitud | 0,897 | 0,781 |
-| EA2 · **F1 de la clase minoritaria** | **0,462** | **0,089** |
-| EA3 · silueta | máximo en k = 3 | **sin codo**: sube hasta k = 8 |
+| Act. 2.2 · exactitud | 0,897 | 0,781 |
+| Act. 2.2 · **F1 de la clase minoritaria** | **0,462** | **0,089** |
+| Act. 2.3 · silueta | máximo en k = 3 | **sin codo**: sube hasta k = 8 |
 
 **Las tres últimas filas son la clase entera.**
 
@@ -900,10 +900,11 @@ completo de Machine Learning**, declarado como dependencias y ejecutado con un c
 
 | Experiencia | Pipeline | Nodos | Consume | Estado |
 |---|---|---|---|---|
-| **EA1** · Datos | `calidad` · `preprocesamiento` | 4 + 5 | El CSV crudo | ✅ |
-| **EA2** · Supervisado | `supervisado` | 8 | `detecciones_limpias` | ✅ |
-| **EA3** · No supervisado | `no_supervisado` | 7 | `detecciones_limpias` | ✅ |
-| — · Datos reales | `ingesta` + `waymo_real` | 26 | Los Parquet de Waymo | ✅ |
+| **RA1** · Datos | `calidad` · `preprocesamiento` | 4 + 5 | El CSV crudo | ✅ |
+| **RA2** · Supervisado (Act. 2.2) | `supervisado` | 8 | `detecciones_limpias` | ✅ |
+| **RA2** · No supervisado (Act. 2.3) | `no_supervisado` | 7 | `detecciones_limpias` | ✅ |
+| **RA3** · Optimización | `optimizacion` | 6 | Salidas de `supervisado` | ✅ |
+| — · Datos reales | `ingesta` + `waymo_real` | 32 | Los Parquet de Waymo | ✅ |
 | **EFT** | Integra las tres | — | Todo el grafo | ⏳ |
 
 Cada experiencia **añadió nodos, no reescribió el análisis previo**. Y el recorrido sobre datos

@@ -40,7 +40,7 @@ propio caso de negocio y su propio dataset**, y el repositorio solo sabía opera
 | Numerar los archivos `02` y `03` aunque sean las actividades 1.1 y 1.2 | Renumerar todo a `11`, `12`, `13` | Rompería los enlaces de Colab ya publicados. El número de actividad va en la primera celda |
 | La plantilla de proyecto **cae al dataset de la asignatura** si el equipo no configuró el suyo | Dejar las celdas rotas hasta que alguien complete `RUTA_MI_DATASET` | Una plantilla con celdas rotas impide distinguir "error mío" de "error de la plantilla", y no se puede verificar con `nbconvert` |
 | Kedro ejecutable, Databricks conceptual | Ambos ejecutables | Databricks exige cuenta y clúster; no se puede pedir en clase. Lo que sí aporta es el código equivalente lado a lado |
-| **El proyecto Kedro vive en el repositorio** (`kedro_mly1101/`), versionado y testeado | Crearlo dentro de una celda con `%%writefile` y descartarlo | *(Corregido el mismo día, tras revisión.)* Un proyecto que se crea y se borra en una celda no es base para EA2 ni EA3. El notebook ahora **lee y ejecuta el proyecto real** en vez de fabricar uno de juguete |
+| **El proyecto Kedro vive en el repositorio** (`kedro_mly1101/`), versionado y testeado | Crearlo dentro de una celda con `%%writefile` y descartarlo | *(Corregido el mismo día, tras revisión.)* Un proyecto que se crea y se borra en una celda no es base para las Act. 2.2 y 2.3. El notebook ahora **lee y ejecuta el proyecto real** en vez de fabricar uno de juguete |
 | Las decisiones de limpieza en `conf/base/parameters.yml` | Escritas dentro de los nodos | Cambiar un umbral o una variante de escritura no debería exigir tocar Python ni saber programar. Cada bloque del YAML es una fila de la tabla de decisiones de la EA1 |
 | `marcar antes que eliminar` en todos los nodos de limpieza | `dropna()` sobre las filas con valores imposibles | El resto de la fila era válido. Solo se eliminan los duplicados exactos |
 | Cada regla de dominio declara su `columna` además de su `condicion` | Deducir la columna del texto con `expresion.split()[0]` | **Defecto encontrado en revisión.** Una regla que menciona dos columnas (`num_lidar_points < 0 or speed_mps > 100`) limpiaba solo la primera, y en silencio |
@@ -74,11 +74,11 @@ Proyecto Kedro versionado, con **tres pipelines y 17 nodos**, del CSV crudo a la
 |---|---|---|
 | `calidad` | 4, **independientes entre sí** | Diagnóstico: radiografía por columna, desbalance, reglas de dominio, patrón de faltantes |
 | `preprocesamiento` | 5, **encadenados** | Normaliza categorías → descubre nulos ocultos → marca imposibles → quita duplicados y constantes → resume |
-| `supervisado` (EA2) | 8 | Prepara variables → parte por segmento → entrena → evalúa por clase → mide dos tipos de fuga |
+| `supervisado` (RA2 · Act. 2.2) | 8 | Prepara variables → parte por segmento → entrena → evalúa por clase → mide dos tipos de fuga |
 
 El orden entre pipelines no está escrito en ninguna parte: `supervisado` consume
-`detecciones_limpias`, que `preprocesamiento` produce, y Kedro deduce el resto. La de EA3 se
-registrará igual, sin tocar lo existente.
+`detecciones_limpias`, que `preprocesamiento` produce, y Kedro deduce el resto. El de la Act. 2.3 se
+registró igual, sin tocar lo existente.
 
 #### Dos decisiones del pipeline supervisado que se tomaron midiendo
 
@@ -237,9 +237,7 @@ Los tres corregidos, y los tres vale la pena tener escritos porque volverán a a
 
 | Cuándo | Qué |
 |---|---|
-| Antes de la clase | Ejecutar los notebooks 02, 03 y 10 en Colab, como se hizo con el 01 |
-| Semana 2 | Preprocesamiento aplicado: imputación por grupo, codificación, escalado y `Pipeline` |
-| EA2 | **Material docente** del pipeline `supervisado`, que ya existe y está medido: notebooks de alumno y solucionario, y ampliar la rúbrica al RA2 |
-| EA3 | Pipeline `no_supervisado`: segmentación y reducción de dimensionalidad sobre el mismo Parquet |
+| Hecho (2026-08) | Material docente de Act. 2.2, 2.3 y RA3; rúbrica del RA1 extendida a 1.1–1.4 |
+| Act. 2.1 y 2.4 | Aún pendientes |
+| Evaluaciones | Formativas, parciales y EFT sobre los casos oficiales |
 | Cuando Colab migre a pandas 3 | Migrar el material: `dtype == object` deja de valer y hay que reescribir esas celdas y sus tests |
-| Cuando se amplíe la EA1 | Extender la rúbrica más allá de la Semana 1 |

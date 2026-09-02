@@ -1,4 +1,4 @@
-"""Tests del pipeline de aprendizaje no supervisado (EA3)."""
+"""Tests del pipeline de aprendizaje no supervisado (RA2 · Act. 2.3)."""
 
 from __future__ import annotations
 

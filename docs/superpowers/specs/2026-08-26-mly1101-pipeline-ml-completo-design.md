@@ -1,8 +1,12 @@
 # Especificación — El proceso completo de ML sobre datos reales de Waymo
 
 **Fecha:** 2026-08-26
-**Estado:** implementado y verificado
+**Estado:** implementado y verificado. Actualizado 2026-09-02: el material docente de las
+Act. 2.2, 2.3 y 3.1–3.3 ya existe; el grafo sintético es 30 nodos y `waymo_real` 32.
 **Extiende:** [`2026-08-26-mly1101-actividades-11-12-design.md`](2026-08-26-mly1101-actividades-11-12-design.md)
+
+> **Nomenclatura:** no usar EA2 = supervisado ni EA3 = no supervisado. Ambos están en el **RA2**;
+> el **RA3** es optimización. Esta spec se escribió antes de esa corrección.
 
 ---
 
@@ -11,7 +15,7 @@
 El pipeline llegaba hasta el modelo supervisado, y **solo sobre el dataset sintético**. Faltaban
 dos cosas para que la asignatura pudiera recorrer el proceso completo:
 
-1. El tramo **no supervisado** (EA3).
+1. El tramo **no supervisado** (RA2 · Act. 2.3).
 2. Poder aplicar todo eso a los **datos reales** del Waymo Open Dataset, que es lo que el docente
    pidió explícitamente: *"no solo esto mock sino con los datos reales para que los chicos sepan
    cómo usarlos"*.
@@ -45,17 +49,18 @@ waymo_muestra ──► ingesta ──► detecciones_reales ──────�
                                           detecciones_limpias.parquet
                                                    ┌──┴──┐
                                           supervisado   no_supervisado
-                                             (EA2)          (EA3)
+                                          (RA2 · 2.2)     (RA2 · 2.3)
 ```
 
 | Pipeline | Nodos | Qué hace |
 |---|---|---|
 | `calidad` | 4 | Diagnóstico de calidad |
 | `preprocesamiento` | 5 | Limpieza según la tabla de decisiones |
-| `supervisado` (EA2) | 8 | Partición sin fuga, entrenamiento, evaluación por clase, dos mediciones de fuga |
-| `no_supervisado` (EA3) | 7 | Escalado, búsqueda de *k*, K-medias, perfilado, contraste con la etiqueta, PCA |
+| `supervisado` (RA2 · Act. 2.2) | 8 | Partición sin fuga, entrenamiento, evaluación por clase, dos mediciones de fuga |
+| `no_supervisado` (RA2 · Act. 2.3) | 7 | Escalado, búsqueda de *k*, K-medias, perfilado, contraste con la etiqueta, PCA |
+| `optimizacion` (RA3) | 6 | Ajuste, ensamble y selección sustentada |
 | `ingesta` | 2 | Traduce Waymo real y lo compara con el sintético |
-| `waymo_real` | 26 | `ingesta` + los 24 anteriores **remapeados**, sin duplicar nodos |
+| `waymo_real` | 32 | `ingesta` + los 30 anteriores **remapeados**, sin duplicar nodos |
 
 ---
 
@@ -95,10 +100,10 @@ Sobre 40 segmentos reales, 530.396 detecciones, frente al CSV sintético de 40.6
 | Mediana `speed_mps` | 5,35 | **0,01** |
 | Clima | 3 categorías sucias | **100 % `sunny`** |
 | Defectos de calidad encontrados | 10 | **0** |
-| EA2 · exactitud | 0,897 | 0,781 |
-| EA2 · **F1 de la clase minoritaria** | **0,462** | **0,089** |
-| EA3 · silueta | máximo en k = 3 (0,473) | **sin codo**: sube a 0,610 en k = 8 |
-| EA3 · ¿los grupos recuperan el tipo? | Parcialmente | **No** |
+| Act. 2.2 · exactitud | 0,897 | 0,781 |
+| Act. 2.2 · **F1 de la clase minoritaria** | **0,462** | **0,089** |
+| Act. 2.3 · silueta | máximo en k = 3 (0,473) | **sin codo**: sube a 0,610 en k = 8 |
+| Act. 2.3 · ¿los grupos recuperan el tipo? | Parcialmente | **No** |
 
 ### Tres conclusiones que el material declara en vez de esconder
 
@@ -117,22 +122,22 @@ Sobre 40 segmentos reales, 530.396 detecciones, frente al CSV sintético de 40.6
 
 ```bash
 uv sync --extra kedro
-uv run pytest        # 171 tests; los de datos reales se saltan si no están descargados
+uv run pytest        # 187 tests; los de datos reales se saltan si no están descargados
 uv run ruff check .
 
 cd kedro_mly1101
-uv run kedro run                          # 24/24 nodos, dataset sintético
-uv run kedro run --pipeline waymo_real    # 26/26 nodos, 530.396 detecciones reales
+uv run kedro run                          # 30/30 nodos, dataset sintético
+uv run kedro run --pipeline waymo_real    # 32/32 nodos, 530.396 detecciones reales
 ```
 
-### Resultado
+### Resultado (cifras actuales a 2026-09-02)
 
 | Qué | Estado |
 |---|---|
-| Tests | ✅ 171 (29 nuevos: 14 de `no_supervisado`, 13 de ingesta, 2 de guardarraíles) |
+| Tests | ✅ 187 recolectados |
 | `ruff check` | ✅ limpio |
-| `kedro run` sobre el sintético | ✅ 24/24 |
-| `kedro run --pipeline waymo_real` | ✅ 26/26 sobre datos reales |
+| `kedro run` sobre el sintético | ✅ 30/30 |
+| `kedro run --pipeline waymo_real` | ✅ 32/32 sobre datos reales |
 | `pytest` sin datos de Waymo | ✅ los tests que los necesitan se saltan |
 
 ---
@@ -141,7 +146,7 @@ uv run kedro run --pipeline waymo_real    # 26/26 nodos, 530.396 detecciones rea
 
 | Limitación | Estado |
 |---|---|
-| **Falta el material docente de EA2 y EA3** | Los pipelines corren y están medidos; no hay notebooks de alumno, solucionario ni rúbrica del RA2/RA3 |
+| **Act. 2.1 y 2.4 aún no tienen notebook** | 2.2, 2.3 y todo el RA3 ya tienen notebooks, solucionario y rúbrica |
 | El recorrido real tarda varios minutos | 530.396 filas con RandomForest y K-medias. Aceptable fuera de clase, no para ejecutar en vivo |
 | Los 40 segmentos son todos `sunny` | No es un defecto del código: es el sesgo del propio dataset (793 de 798 soleados) |
 | Ningún notebook nuevo se ha ejecutado en Colab | El runtime no arranca por automatización; verificado con `nbconvert` en local |
@@ -152,6 +157,6 @@ uv run kedro run --pipeline waymo_real    # 26/26 nodos, 530.396 detecciones rea
 
 | Cuándo | Qué |
 |---|---|
-| Antes de la EA2 | Notebooks de alumno y solucionario del pipeline `supervisado`, y rúbrica del RA2 |
-| Antes de la EA3 | Lo mismo para `no_supervisado`, con la discusión de que el agrupamiento **no** recupera las etiquetas |
-| EFT | Pipeline que integre las tres, sobre el mismo Parquet |
+| Act. 2.1 | Gestión de proyectos con CRISP-DM (6 h) |
+| Act. 2.4 | Interpretación y métricas de desempeño (5 h) |
+| Evaluaciones | Formativas, parciales y EFT sobre los casos oficiales (Telco, House Prices, Spotify) |

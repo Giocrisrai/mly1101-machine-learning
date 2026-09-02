@@ -201,7 +201,7 @@ def resumen_desbalance(serie: pd.Series) -> pd.DataFrame:
     """Frecuencia absoluta y relativa de una variable categórica.
 
     Incluye la razón de desbalance respecto de la clase mayoritaria
-    (``ratio_vs_mayoritaria``), útil para anticipar problemas en EA2.
+    (``ratio_vs_mayoritaria``), útil para anticipar problemas en la Actividad 2.2.
     """
     conteo = serie.value_counts(dropna=False)
     return pd.DataFrame(

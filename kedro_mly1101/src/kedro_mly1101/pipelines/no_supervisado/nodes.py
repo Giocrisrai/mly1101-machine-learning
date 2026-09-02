@@ -1,9 +1,9 @@
-"""Nodos de aprendizaje no supervisado (EA3).
+"""Nodos de aprendizaje no supervisado (RA2 · Act. 2.3).
 
 **La pregunta:** sin decirle a nadie qué es cada objeto, ¿aparecen grupos naturales
 en las detecciones? ¿Y coinciden con los tipos que el sensor etiquetó?
 
-Es la contracara de la EA2. Allí había una etiqueta y se medía el acierto; aquí no
+Es la contracara de la Act. 2.2. Allí había una etiqueta y se medía el acierto; aquí no
 hay etiqueta y hay que **justificar** que la estructura encontrada significa algo.
 
 Dos decisiones gobiernan estos nodos:
@@ -14,7 +14,7 @@ Dos decisiones gobiernan estos nodos:
    puntos disfrazado de agrupamiento por objeto.
 2. **El escalador se ajusta solo con lo que el modelo puede ver.** Aquí no hay
    partición, así que se ajusta con todo; en un flujo con prueba, ajustarlo sobre
-   el total sería fuga de información, igual que en la EA2.
+   el total sería fuga de información, igual que en la Act. 2.2.
 """
 
 from __future__ import annotations

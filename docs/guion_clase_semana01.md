@@ -1,4 +1,4 @@
-# Guion de clase — Semana 01 · EA1
+# Guion de clase — Actividad 1.3 · EDA (RA1)
 
 **Asignatura:** MLY1101 Machine Learning · **Duración:** 4 h (taller) · **Modalidad:** laboratorio
 
@@ -79,7 +79,7 @@ claro, el bloque de duplicados no va a funcionar.
   repartida entre categorías gemelas, y una variante nueva en producción que no corresponde a
   ninguna columna aprendida.
 - Cierre del bloque con el desbalance: `CYCLIST` ≈ 2 %. *"Un modelo que siempre dice VEHICLE
-  acierta 62 % y es inútil."* Semilla para EA2.
+  acierta 62 % y es inútil."* Semilla para la Actividad 2.2.
 
 ---
 
@@ -139,7 +139,7 @@ Regla práctica que deben anotar:
 - Aceptar cualquier decisión **justificada**. Lo que no se acepta es `df.dropna()` sin argumento.
 - **Cerrar con la fuga de información:** hacer notar que no imputamos ni escalamos, y que no fue
   un olvido. Orden correcto: limpieza estructural → split → ajustar imputación/escalado solo con
-  train → aplicar a test. Anunciar `Pipeline` para EA2 sin entrar en detalle.
+  train → aplicar a test. Anunciar `Pipeline` para la Actividad 2.2 sin entrar en detalle.
 
 ---
 
@@ -208,7 +208,7 @@ cuesta más.
   se detecta peor que de noche (13,19 % vs. 7,04 % de detecciones difíciles). Calculado por
   segmento, la diferencia se evapora (4,81 % vs. 4,25 %): un solo segmento diurno atípico, con
   53,81 % de difíciles y muchísimas filas, arrastraba el promedio.
-  Es la antesala perfecta de EA2: si el split de entrenamiento/prueba se hace por fila, las
+  Es la antesala perfecta de la Actividad 2.2: si el split de entrenamiento/prueba se hace por fila, las
   detecciones de un mismo segmento caen a ambos lados, el modelo reconoce la escena en vez de
   aprender el objeto, y la evaluación miente. **El split va por `segment_id`.**
   Está desarrollado en `notebooks/00_opcional_waymo_real.ipynb`, Paso 7.

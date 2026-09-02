@@ -1,4 +1,4 @@
-"""Nodos de limpieza (EA1 · tabla de decisiones de la Actividad 1.3).
+"""Nodos de limpieza (RA1 · tabla de decisiones de la Actividad 1.3).
 
 Cada paso corresponde a una fila de la tabla de decisiones que los alumnos
 justifican en su informe. Escrita como código, la decisión se ejecuta igual

@@ -92,12 +92,12 @@ estructural.
 8. **Los nodos de limpieza deben dejar las columnas numéricas como `float`, no `object`.**
    Usa `np.nan`, nunca `pd.NA`: en una columna numérica, `pd.NA` la degrada a `object` y
    scikit-learn revienta mucho más tarde con un `TypeError` sobre `NAType`. El pipeline lo
-   ocultaba porque escribe a Parquet y al releer vuelve a `float`; los notebooks de EA2 y EA3
-   llaman los nodos **en proceso** y ahí sí falla. Hay dos tests que lo fijan.
+   ocultaba porque escribe a Parquet y al releer vuelve a `float`; los notebooks de las
+   Act. 2.2 y 2.3 llaman los nodos **en proceso** y ahí sí falla. Hay dos tests que lo fijan.
 
 9. **El pipeline de `kedro_mly1101/` SÍ se versiona; sus salidas (`data/`) no.** Es la columna
-   de ingeniería del curso: `calidad`, `preprocesamiento`, `supervisado` (EA2),
-   `no_supervisado` (EA3) e `ingesta`. El pipeline `waymo_real` corre **el mismo grafo sobre
+   de ingeniería del curso: `calidad`, `preprocesamiento`, `supervisado` (RA2 · Act. 2.2),
+   `no_supervisado` (RA2 · Act. 2.3), `optimizacion` (RA3) e `ingesta`. El pipeline `waymo_real` corre **el mismo grafo sobre
    datos reales remapeando su entrada**: nunca dupliques nodos para datos reales. Sus nodos **reutilizan `src/eda.py`**, nunca reimplementan el análisis, y las decisiones
    de limpieza viven en `conf/base/parameters.yml`, no en el código.
 
@@ -113,7 +113,7 @@ uv sync                                        # entorno reproducible (pyproject
 uv run pytest                                  # 187 tests; algunos se saltan sin datos/extras
 cd kedro_mly1101 && uv run kedro run && cd ..  # sintético: 30/30 nodos
 # Con datos reales descargados:  uv run kedro run --pipeline waymo_real   # 32/32 nodos
-uv run python herramientas/construir_notebooks.py   # regenera los nueve notebooks
+uv run python herramientas/construir_notebooks.py   # regenera todos los notebooks
 
 # Los cinco notebooks con código resuelto deben ejecutar completos:
 for nb in 02_docente_fuentes 03_docente_estructuras 01_docente_solucionario \
@@ -125,7 +125,7 @@ for nb in 02_docente_fuentes 03_docente_estructuras 01_docente_solucionario \
 done
 
 # Ningún notebook de alumno puede filtrar la pauta (todos deben dar 0):
-grep -c "Pauta docente" notebooks/0[123]_alumno*.ipynb notebooks/10_proyecto*.ipynb
+grep -c "Pauta docente" notebooks/*alumno*.ipynb notebooks/10_proyecto*.ipynb
 
 # Limpiar los artefactos que dejan los notebooks al ejecutarse:
 rm -rf notebooks/kedro_mly1101 notebooks/salidas_act12 notebooks/salidas_proyecto
@@ -168,11 +168,10 @@ es sobre `google.cloud.storage`.
 | RA3 · Act. 3.1, 3.2 y 3.3 | ✅ completas y verificadas |
 | Evaluaciones formativas, parciales y EFT | ⏳ pendientes, sobre los casos oficiales |
 | Plantilla de proyecto de equipo | ✅ ejecuta de extremo a extremo |
-| Pipeline Kedro (`kedro_mly1101/`) | ✅ 30 nodos en 5 pipelines, versionado, 74 tests |
+| Pipeline Kedro (`kedro_mly1101/`) | ✅ 30 nodos sintéticos + `waymo_real` (32), versionado |
 | RA2 · Act. 2.2 y 2.3 (notebooks, pautas, pipeline) | ✅ completas y verificadas |
-| Datos reales de Waymo (`waymo_real`) | ✅ 26/26 nodos sobre 530.396 detecciones reales |
+| Datos reales de Waymo (`waymo_real`) | ✅ 32/32 nodos sobre 530.396 detecciones reales |
 | Notebook opcional de Kedro y Databricks | ✅ usa el pipeline real; Databricks queda conceptual |
-| EA1 semanas siguientes | ⏳ pendiente (la EA1 son 20 h en total) |
 | EFT | ⏳ pendiente |
 
 Todo está verificado, incluido `notebooks/00_opcional_waymo_real.ipynb`: se ejecutó de extremo a

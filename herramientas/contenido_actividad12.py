@@ -981,7 +981,7 @@ cruce
 > `detection_difficulty` como variable para predecir la calidad de la detección? No sin pensarlo:
 > es casi una función de `num_lidar_points`. Meter las dos en un modelo lineal es introducir
 > multicolinealidad; y si la etiqueta se derivara del objetivo, sería fuga de información. Deja
-> sembrado el término: se retoma en la Actividad 1.3 y en la EA2.
+> sembrado el término: se retoma en la Actividad 1.3 y en la 2.2.
 >
 > **Criterio de logro:** usa las tres operaciones correctamente, **verifica el largo tras el
 > merge** e interpreta el cruce en términos del dominio, no solo de números.

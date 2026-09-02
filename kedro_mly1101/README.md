@@ -1,11 +1,11 @@
 # `kedro_mly1101` — el pipeline de datos de la asignatura
 
-Proyecto [Kedro](https://kedro.org) que convierte el análisis de la EA1 en un proceso
+Proyecto [Kedro](https://kedro.org) que convierte el análisis del RA1 en un proceso
 reproducible: un comando, sin intervención humana, con las decisiones en configuración y cada
 paso cubierto por tests.
 
-**No es una demostración.** Es la columna de ingeniería sobre la que crecen las experiencias
-siguientes: las pipelines de EA2 y EA3 se enchufan aquí, sobre el mismo dataset de detecciones.
+**No es una demostración.** Es la columna de ingeniería de la asignatura: los pipelines de las
+Act. 2.2, 2.3 y 3.1–3.3 se enchufan aquí, sobre el mismo dataset de detecciones.
 
 El notebook [`notebooks/04_opcional_kedro_databricks.ipynb`](../notebooks/04_opcional_kedro_databricks.ipynb)
 lo explica pieza por pieza y lo ejecuta.
@@ -45,10 +45,11 @@ src/kedro_mly1101/
   __init__.py             pone src/ del repositorio en el sys.path (ver abajo)
   pipeline_registry.py    qué pipelines existen
   pipelines/
-    calidad/              diagnóstico: 4 nodos independientes  (EA1 · Act. 1.3)
-    preprocesamiento/     limpieza: 5 nodos encadenados        (EA1 · tabla de decisiones)
-    supervisado/          modelamiento: 8 nodos                (EA2)
-    no_supervisado/       agrupamiento y PCA: 7 nodos          (EA3)
+    calidad/              diagnóstico: 4 nodos independientes  (RA1 · Act. 1.3)
+    preprocesamiento/     limpieza: 5 nodos encadenados        (RA1 · tabla de decisiones)
+    supervisado/          modelamiento: 8 nodos                (RA2 · Act. 2.2)
+    no_supervisado/       agrupamiento y PCA: 7 nodos          (RA2 · Act. 2.3)
+    optimizacion/         ajuste, ensamble y selección: 6 nodos (RA3)
     ingesta/              traduccion de Waymo real: 2 nodos
 data/                     salidas del recorrido sintetico. No se versiona
 data/waymo/               salidas del recorrido real.        No se versiona
@@ -61,7 +62,7 @@ data/waymo/               salidas del recorrido real.        No se versiona
 | `01_raw` | Lo que llegó (el CSV, fuera de este proyecto) | **No se toca nunca.** Es la evidencia de origen |
 | `02_intermediate` | Diagnósticos y tablas de trabajo | Se puede borrar y regenerar |
 | `03_primary` | `detecciones_limpias.parquet`, listo para modelar | Lo consume el pipeline `supervisado` |
-| `04_feature` … `07_model_output` | Tabla de modelamiento, partición, modelo y métricas | Salidas de la EA2 |
+| `04_feature` … `07_model_output` | Tabla de modelamiento, partición, modelo y métricas | Salidas de las Act. 2.2, 2.3 y 3.1–3.3 |
 
 `detecciones_limpias` se guarda en **Parquet y no en CSV** por lo medido en la Actividad 1.2: el
 CSV pierde el tipo de 11 de las 16 columnas, así que guardar ahí desharía el preprocesamiento en
@@ -78,7 +79,7 @@ el del pipeline se separaran, habría dos verdades sobre los mismos datos. Para 
 `sys.path`. Se hace ahí porque es lo primero que Kedro importa.
 
 **2. Las decisiones viven en `parameters.yml`, no en el código.**
-Cada bloque de ese archivo es una fila de la tabla de decisiones de la EA1. Agregar una variante
+Cada bloque de ese archivo es una fila de la tabla de decisiones del RA1. Agregar una variante
 de escritura no debería exigir tocar Python, ni volver a probar nada, ni que quien la agrega sepa
 programar.
 
@@ -94,7 +95,7 @@ aportan nada.
 
 ---
 
-## El pipeline `supervisado` (EA2)
+## El pipeline `supervisado` (RA2 · Act. 2.2)
 
 **La pregunta:** ¿se puede anticipar qué detecciones van a ser difíciles
 (`detection_difficulty`) a partir de la geometría del objeto y de dónde está?
@@ -134,12 +135,12 @@ aquí se justifica por cómo se generaron los datos, no por la diferencia que se
 
 ---
 
-## El pipeline `no_supervisado` (EA3)
+## El pipeline `no_supervisado` (RA2 · Act. 2.3)
 
 **La pregunta:** sin decirle a nadie qué es cada objeto, ¿aparecen grupos naturales? ¿Y coinciden
 con los tipos que el sensor etiquetó?
 
-Es la contracara de la EA2: allí había etiqueta y se medía el acierto; aquí no la hay y hay que
+Es la contracara de la Act. 2.2: allí había etiqueta y se medía el acierto; aquí no la hay y hay que
 **justificar** que la estructura encontrada significa algo. `object_type` viaja en la tabla pero
 **no entra en el agrupamiento**: se usa solo para contrastar después.
 
@@ -167,7 +168,7 @@ cosas son el material de clase:
 ## Los datos REALES de Waymo: `kedro run --pipeline waymo_real`
 
 **El mismo análisis, sobre datos reales, sin duplicar un solo nodo.** El pipeline `waymo_real`
-reutiliza `calidad`, `preprocesamiento`, `supervisado` y `no_supervisado` remapeando su entrada:
+reutiliza `calidad`, `preprocesamiento`, `supervisado`, `no_supervisado` y `optimizacion` remapeando su entrada:
 donde leían el CSV sintético, leen la salida de la ingesta de Waymo. Esa es, en una línea, la
 razón de haber separado el catálogo del análisis.
 
@@ -220,7 +221,7 @@ Están en `src/waymo.py::traducir_esquema`, con tests:
 | Mediana `speed_mps` | 5,35 | **0,01** (casi todo está detenido) |
 | Clima | 3 categorías sucias | **100 % `sunny`** |
 | Defectos de calidad encontrados | 10 | **0** |
-| F1 de la clase minoritaria (EA2) | 0,46 | **0,089** |
+| F1 de la clase minoritaria (Act. 2.2) | 0,46 | **0,089** |
 
 **Las dos últimas filas son las que hay que discutir en clase.**
 
@@ -245,26 +246,28 @@ visible en los datos con los que se entrena.
 
 ```bash
 uv run pytest tests/test_pipeline_kedro.py tests/test_pipeline_supervisado.py \
-              tests/test_pipeline_no_supervisado.py tests/test_ingesta_waymo.py -v
+              tests/test_pipeline_no_supervisado.py tests/test_pipeline_optimizacion.py \
+              tests/test_ingesta_waymo.py -v
 ```
 
-60 tests, desde la raíz del repositorio. Los que necesitan datos reales de Waymo **se saltan** si
+76 tests de pipeline, desde la raíz del repositorio. Los que necesitan datos reales de Waymo **se saltan** si
 no están descargados, así que `pytest` pasa en limpio sin credenciales. Los nodos son funciones normales de Python, así que se
 prueban sin levantar catálogo, ni runner, ni sesión — que es justamente una de las ventajas del
 pipeline sobre el notebook.
 
-Son el contrato entre el pipeline y la tabla de decisiones de la EA1: si alguien cambia una
+Son el contrato entre el pipeline y la tabla de decisiones del RA1: si alguien cambia una
 decisión de limpieza, los tests dicen qué pauta quedó desalineada.
 
 ---
 
-## Qué se suma en las experiencias siguientes
+## Qué cubre cada experiencia
 
 | Experiencia | Pipeline | Consume | Estado |
 |---|---|---|---|
-| **EA1** · Datos | `calidad` · `preprocesamiento` | El CSV crudo | ✅ |
-| **EA2** · Supervisado | `supervisado` — partición sin fuga, entrenamiento, evaluación por clase | `detecciones_limpias` | ✅ |
-| **EA3** · No supervisado | `no_supervisado` — agrupamiento y reducción de dimensionalidad | `detecciones_limpias` | ✅ |
+| **RA1** · Datos | `calidad` · `preprocesamiento` | El CSV crudo | ✅ |
+| **RA2** · Supervisado (Act. 2.2) | `supervisado` — partición sin fuga, entrenamiento, evaluación por clase | `detecciones_limpias` | ✅ |
+| **RA2** · No supervisado (Act. 2.3) | `no_supervisado` — agrupamiento y reducción de dimensionalidad | `detecciones_limpias` | ✅ |
+| **RA3** · Optimización (Act. 3.1–3.3) | `optimizacion` — ajuste, ensamble y selección sustentada | Salidas de `supervisado` | ✅ |
 | — | `ingesta` + `waymo_real` — el mismo análisis sobre datos reales | Parquet de Waymo | ✅ |
 
 Se registran en `pipeline_registry.py` sin tocar lo que ya existe. Cada experiencia **añade
@@ -272,8 +275,9 @@ nodos, no reescribe el análisis anterior**. Que `supervisado` corra después de
 `preprocesamiento` no está escrito en ninguna parte: se deduce de que consume
 `detecciones_limpias`, que el otro produce.
 
-Lo que falta es el **material docente** de EA2 y EA3 —notebooks de alumno y solucionario, y
-ampliar la rúbrica—, no el código: los pipelines ya corren y están medidos.
+El material docente de las Act. 2.2, 2.3 y 3.1–3.3 (notebooks de alumno, solucionario y rúbrica)
+ya existe. Lo que sigue pendiente es la Act. 2.1 (CRISP-DM), la Act. 2.4 (interpretación) y las
+evaluaciones sobre los casos oficiales.
 
 Sobre llevar esto a Databricks (cambiar `pandas.CSVDataset` por `spark.SparkDataset` y qué implica
 de verdad), ver el bloque 7 del notebook 04.

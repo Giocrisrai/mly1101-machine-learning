@@ -4,7 +4,7 @@ Los nodos de Kedro son funciones normales de Python, así que se prueban sin
 levantar nada: ni catálogo, ni runner, ni sesión. Esa es justamente una de las
 ventajas del pipeline sobre el notebook que se explica en el notebook 04.
 
-Estos tests son el contrato entre el pipeline y la tabla de decisiones de la EA1:
+Estos tests son el contrato entre el pipeline y la tabla de decisiones del RA1:
 si alguien cambia una decisión de limpieza, aquí se entera de qué pauta quedó
 desalineada.
 """
@@ -180,9 +180,9 @@ def test_el_pipeline_completo_es_coherente(sucio: pd.DataFrame) -> None:
 
 
 def test_las_pipelines_de_la_ea1_se_registran_y_su_grafo_es_valido() -> None:
-    """Que las dos pipelines de la EA1 construyan sin ciclos ni cabos sueltos.
+    """Que las dos pipelines del RA1 construyan sin ciclos ni cabos sueltos.
 
-    El grafo COMPLETO (con la de EA2 encadenada) se comprueba en
+    El grafo COMPLETO (con la de la Act. 2.2 encadenada) se comprueba en
     ``tests/test_pipeline_supervisado.py``; aqui solo la parte de datos.
     """
     from kedro_mly1101.pipeline_registry import register_pipelines
@@ -228,7 +228,7 @@ def test_la_limpieza_conserva_los_dtypes_numericos(sucio: pd.DataFrame) -> None:
 
     En una columna numerica, ``pd.NA`` la degrada a ``object``. El pipeline no se
     enteraba porque escribe a Parquet y al releer vuelve a float; pero llamando los
-    nodos EN PROCESO --que es lo que hacen los notebooks de la EA2 y la EA3-- el
+    nodos EN PROCESO --que es lo que hacen los notebooks de las Act. 2.2 y 2.3-- el
     fallo aparecia mucho despues, al entrenar, con un TypeError sobre NAType que no
     decia nada de donde venia.
     """

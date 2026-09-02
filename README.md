@@ -16,7 +16,7 @@ Problema → Datos → Exploración → Preprocesamiento → Modelamiento → Ev
 | RA | Experiencia de aprendizaje | Actividades (horas) | Estado |
 |---|---|---|---|
 | **RA1** | Ingeniería de Datos y Análisis Exploratorio | 1.1 Fuentes (6) · 1.2 Estructuras (6) · 1.3 EDA (6) · 1.4 Ética (5) | ✅ las cuatro |
-| **RA2** | Implementación y Análisis de Modelos de ML | 2.1 CRISP-DM (6) · 2.2 Supervisado (6) · 2.3 No supervisado (12) · 2.4 Interpretación (5) | 🔧 2.2 y 2.3 |
+| **RA2** | Implementación y Análisis de Modelos de ML | 2.1 CRISP-DM (6) · 2.2 Supervisado (6) · 2.3 No supervisado (12) · 2.4 Interpretación (5) | 🔧 2.2 y 2.3 · faltan 2.1 y 2.4 |
 | **RA3** | Optimización y Ensamble de Modelos Avanzados | 3.1 Hiperparámetros (6) · 3.2 Ensamble (6) · 3.3 Robustez (11) | ✅ las tres |
 | — | **Evaluación Final Transversal** | 12 h · 40 % de la nota final | ⏳ |
 
@@ -160,7 +160,7 @@ equivocada.
 ## El pipeline: `kedro_mly1101/`
 
 El análisis del RA1 también existe como **pipeline reproducible de [Kedro](https://kedro.org)**,
-versionado en [`kedro_mly1101/`](kedro_mly1101/) y cubierto por 16 tests. No es una demostración:
+versionado en [`kedro_mly1101/`](kedro_mly1101/) y cubierto por los tests de `tests/test_pipeline_*.py`. No es una demostración:
 es la columna de ingeniería sobre la que crecen las experiencias siguientes.
 
 ```bash
@@ -175,6 +175,7 @@ cd kedro_mly1101 && uv run kedro run
 | **RA1** · Datos | `calidad` · `preprocesamiento` | 4 + 5 | El CSV crudo | ✅ |
 | **RA2** · Supervisado (Act. 2.2) | `supervisado` | 8 | `detecciones_limpias` | ✅ |
 | **RA2** · No supervisado (Act. 2.3) | `no_supervisado` | 7 | `detecciones_limpias` | ✅ |
+| **RA3** · Optimización (Act. 3.1–3.3) | `optimizacion` | 6 | Salidas de `supervisado` | ✅ |
 
 El pipeline `supervisado` responde una pregunta con sustancia: **¿se puede anticipar qué
 detecciones van a ser difíciles?** Alcanza un 90 % de exactitud con un F1 de **0,46 en la clase
@@ -402,12 +403,12 @@ Editar los `.ipynb` directamente funciona hasta el siguiente build, que los sobr
 uv run pytest        # o simplemente `pytest` si ya activaste el entorno
 ```
 
-**173 tests en total**, repartidos así:
+**187 tests en total**, repartidos así:
 
 | Archivo | Tests | Qué verifica |
 |---|---|---|
 | `tests/test_generar_dataset.py` | 19 | Reproducibilidad byte a byte y presencia de **cada uno de los 10 defectos** |
-| `tests/test_pipeline_kedro.py` | 18 | Los nodos de calidad y limpieza, y que el grafo se construya sin ciclos |
+| `tests/test_pipeline_kedro.py` | 19 | Los nodos de calidad y limpieza, y que el grafo se construya sin ciclos |
 | `tests/test_pipeline_supervisado.py` | 16 | La partición sin fuga, el entrenamiento y las dos mediciones de fuga |
 | `tests/test_pipeline_no_supervisado.py` | 14 | El escalado antes de agrupar, la elección de k y la interpretación |
 | `tests/test_ingesta_waymo.py` | 13 | Las tres traducciones del esquema real de Waymo (3 se saltan sin datos) |
@@ -430,8 +431,10 @@ fáciles de aceptar sin comprobar:
 Si un test del generador falla, el solucionario dejó de coincidir con lo que reciben los
 alumnos.
 
-Sin datos de Waymo descargados el resultado es `58 passed, 10 skipped`. Los 10 de Waymo pasaron
-10/10 contra el segmento
+En esta máquina, con datos de Waymo descargados, el resultado es `187 passed`.
+Sin esos datos se saltan `tests/test_mapeo_waymo.py` y los tests de
+`test_ingesta_waymo.py` que piden la muestra de 40 segmentos. Los 10 de mapeo
+pasaron 10/10 contra el segmento
 `10023947602400723454_1120_000_1140_000` el 2026-08-13. Para reproducirlos:
 
 ```bash

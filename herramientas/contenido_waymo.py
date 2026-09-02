@@ -482,7 +482,7 @@ independientes, cuando en realidad vienen de **40 grabaciones**. Un único segme
 >
 > Es el mismo error que arruina un modelo cuando se separa entrenamiento y prueba **por fila**:
 > detecciones del mismo segmento terminan a ambos lados del split, el modelo reconoce la escena
-> en vez de aprender el objeto, y la evaluación miente. En EA2 el split tendrá que ser
+> en vez de aprender el objeto, y la evaluación miente. En la Actividad 2.2 el split tendrá que ser
 > **por `segment_id`**, y esta tabla es la razón.
 
 ### Para discutir

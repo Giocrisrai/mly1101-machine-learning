@@ -1,4 +1,4 @@
-"""Tests del pipeline de aprendizaje supervisado (EA2).
+"""Tests del pipeline de aprendizaje supervisado (RA2 · Act. 2.2).
 
 El test que importa es ``test_ningun_segmento_queda_en_las_dos_particiones``: es
 la garantía que el pipeline entero existe para dar, y el tipo de error que no

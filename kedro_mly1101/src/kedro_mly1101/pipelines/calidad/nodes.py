@@ -1,4 +1,4 @@
-"""Nodos del diagnóstico de calidad de datos (EA1 · Actividad 1.3).
+"""Nodos del diagnóstico de calidad de datos (RA1 · Actividad 1.3).
 
 Cada función es pura: recibe DataFrames y parámetros, devuelve DataFrames. No
 imprime, no grafica y no lee ni escribe archivos — de eso se encarga el catálogo.

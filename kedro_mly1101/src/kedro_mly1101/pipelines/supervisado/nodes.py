@@ -1,4 +1,4 @@
-"""Nodos de aprendizaje supervisado (EA2).
+"""Nodos de aprendizaje supervisado (RA2 · Act. 2.2).
 
 **La pregunta:** ¿se puede anticipar qué detecciones van a ser difíciles
 (``detection_difficulty``) a partir de la geometría del objeto y de dónde está?

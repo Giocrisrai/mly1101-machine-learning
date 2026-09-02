@@ -1,4 +1,4 @@
-"""Pipeline de aprendizaje no supervisado (EA3).
+"""Pipeline de aprendizaje no supervisado (RA2 · Act. 2.3).
 
 Consume ``detecciones_limpias``, igual que el supervisado. Los dos parten del
 mismo Parquet: es la misma materia prima con dos preguntas distintas.

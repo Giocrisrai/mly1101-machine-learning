@@ -612,13 +612,13 @@ plt.show()
 >
 > **Preguntas para el curso:**
 > - *"Si mi modelo predice siempre VEHICLE, ¿qué exactitud obtiene?"* → ~62 %. Y es inútil.
->   Aquí queda sembrada la discusión de EA2 sobre por qué el *accuracy* engaña.
+>   Aquí queda sembrada la discusión de la Actividad 2.2 sobre por qué el *accuracy* engaña.
 > - *"¿Cuál es la clase donde equivocarse cuesta vidas?"* → ciclista y peatón. Justamente las
 >   más difíciles de detectar y, en el caso del ciclista, la más escasa. El desbalance no es un
 >   problema estadístico abstracto: es un problema de seguridad.
 >
 > **No corresponde todavía** hablar de SMOTE ni de `class_weight`. Basta con dejar registrado el
-> hallazgo. Se retoma en EA2.
+> hallazgo. Se retoma en la Actividad 2.2.
 """
     ),
     # ======================================================================
@@ -1152,7 +1152,7 @@ Completa esta tabla con tus decisiones. Es el corazón de tu entrega.
 > | `timestamp_micros` | `"N/D"` | 60 | `to_numeric(errors="coerce")` | No se pierde la fila completa por un campo |
 > | `num_lidar_points` | `-1` centinela | ~1.200 (3 %) | `-1` → `NaN` + columna indicadora | El `-1` contaminaría cualquier promedio |
 > | `weather` | 11 variantes + 5 % nulos | ~2.000 nulos | Normalizar; nulo como categoría `"desconocido"` | El nulo de clima puede ser informativo |
-> | `object_type` | 7 variantes para 4 clases | ~2.300 filas | Normalizar a 4 categorías | Es la variable objetivo de EA2 |
+> | `object_type` | 7 variantes para 4 clases | ~2.300 filas | Normalizar a 4 categorías | En 2.2 el objetivo será `detection_difficulty`, no el tipo |
 > | duplicados | 480 exactos + 200 lógicos | 1,7 % | Eliminar exactos; para lógicos, regla explícita (p. ej. conservar el de más puntos láser) | Un duplicado sesga el entrenamiento y contamina el split |
 > | `box_length` | negativos vs. buses | 80 vs. 600 | Negativos → `NaN`; buses **se conservan** | Solo lo imposible es error |
 > | `speed_mps` | nulos MNAR + imposibles | 787 + 160 | Imposibles → `NaN`; **no** eliminar filas; imputar por grupo + indicador | Eliminar sesga contra la noche |
@@ -1284,7 +1284,7 @@ El orden correcto es:
 limpieza estructural (lo de hoy)  →  separar train/test  →  ajustar imputación y escalado SOLO con train  →  aplicar a test
 ```
 
-En EA2 haremos esto con `Pipeline` y `ColumnTransformer` de scikit-learn, que existen justamente
+En la Actividad 2.2 haremos esto con `Pipeline` y `ColumnTransformer` de scikit-learn, que existen justamente
 para que este error sea difícil de cometer.
 """
     ),
@@ -1379,7 +1379,7 @@ y que se cruzan con **ciclistas**.
 > **La idea que debe quedar:** un promedio global oculta a las minorías. Un modelo con 97 % de
 > exactitud puede tener 60 % en ciclistas nocturnos, y ese 3 % de error no está repartido al
 > azar: recae sobre quienes ya son más vulnerables. Esto conecta directamente con el RA1
-> ("tratamiento responsable de la información") y se retoma en EA2 con las métricas por clase.
+> ("tratamiento responsable de la información") y se retoma en la Actividad 2.2 con las métricas por clase.
 >
 > **Conexión con la realidad, si hay tiempo:** vale la pena mencionar que los sistemas de
 > conducción autónoma reales se validan por condición operacional (ODD, *operational design
@@ -1449,11 +1449,11 @@ Completa la celda siguiente. Es lo que entregas al final de la sesión.
 
 ### Lo que viene
 
-- **Semana 2:** técnicas de preprocesamiento aplicadas (imputación, codificación, escalado) y
-  cómo evitar la fuga de información con `Pipeline`.
-- **EA2:** aprendizaje supervisado — regresión y clasificación. Ahí veremos por qué ese 2 % de
-  ciclistas es un problema serio.
-- **EA3:** aprendizaje no supervisado — segmentación y reducción de dimensionalidad.
+- **Actividad 1.4:** impacto ético, sesgos y privacidad sobre estos mismos datos.
+- **Actividad 2.2 (RA2):** aprendizaje supervisado. Ahí veremos por qué ese 2 % de
+  ciclistas es un problema serio, y por qué la exactitud engaña.
+- **Actividad 2.3 (RA2):** aprendizaje no supervisado — segmentación y reducción de dimensionalidad.
+- **RA3:** hiperparámetros, ensamble y validación cruzada. No es "la unidad de no supervisado".
 
 ### ¿Quieres hacerlo con datos reales?
 

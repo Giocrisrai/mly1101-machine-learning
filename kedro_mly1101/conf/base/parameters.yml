@@ -4,7 +4,7 @@
 # más cuesta ver al empezar con Kedro: cambiar un umbral o agregar una variante
 # de escritura no debería exigir tocar Python ni volver a probar nada.
 #
-# Cada bloque corresponde a una fila de la tabla de decisiones de la EA1.
+# Cada bloque corresponde a una fila de la tabla de decisiones del RA1.
 
 # Variantes de escritura que hay que unificar (defectos 3 y 4 del dataset).
 mapas_categorias:
@@ -62,7 +62,7 @@ sesgo:
     - detection_difficulty
 
 # ---------------------------------------------------------------------------
-# EA2 · Aprendizaje supervisado
+# RA2 · Act. 2.2 · Aprendizaje supervisado
 # ---------------------------------------------------------------------------
 # La pregunta: ¿se puede anticipar qué detecciones van a ser DIFÍCILES a partir
 # de la geometría del objeto y de dónde está?
@@ -100,7 +100,7 @@ fuga:
   variable: num_lidar_points
 
 # ---------------------------------------------------------------------------
-# EA3 · Aprendizaje no supervisado
+# RA2 · Act. 2.3 · Aprendizaje no supervisado
 # ---------------------------------------------------------------------------
 # La pregunta: sin decirle a nadie qué es cada objeto, ¿aparecen grupos
 # naturales? ¿Y coinciden con los tipos que el sensor etiquetó?

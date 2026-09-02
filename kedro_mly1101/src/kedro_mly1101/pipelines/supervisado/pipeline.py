@@ -1,4 +1,4 @@
-"""Pipeline de aprendizaje supervisado (EA2).
+"""Pipeline de aprendizaje supervisado (RA2 · Act. 2.2).
 
 Consume ``detecciones_limpias``, la salida del pipeline de preprocesamiento. Esa
 dependencia es lo que hace que Kedro ejecute primero la limpieza y después el
