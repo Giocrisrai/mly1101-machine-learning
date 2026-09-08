@@ -44,7 +44,9 @@ En Academy o Databricks: clona este repo y corre el mismo notebook. El parquet d
 
 En AWS usa **CloudShell** (no EC2). SageMaker `medium`/`large` solo si el RA3 sobre 530 k
 filas pide más RAM. Bucket S3 **privado** solo para no perder el parquet. Contenedores: no.
-Databricks Free Edition: Spark sobre el **mismo** parquet, Kedro no se mueve ahí. Detalle en
+Databricks Free Edition: Spark sobre el **mismo** parquet, Kedro no se mueve ahí. En
+2026-09-08 el Git Folder del repo público y el Volume managed
+`/Volumes/workspace/default/mly1101` se crearon en vivo. Detalle en
 [`docs/aws_academy_laboratorio.md`](docs/aws_academy_laboratorio.md) y
 [`docs/databricks_free.md`](docs/databricks_free.md).
 

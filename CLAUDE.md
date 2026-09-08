@@ -177,8 +177,8 @@ es sobre `google.cloud.storage`.
 | Plantilla de proyecto de equipo | ✅ ejecuta de extremo a extremo |
 | Pipeline Kedro (`kedro_mly1101/`) | ✅ sintético 30/30 · `ingesta` 5/5 (2026-09-08 10:55) · `waymo_real` = 5+30 remapeados |
 | RA2 · Act. 2.2 y 2.3 (notebooks, pautas, pipeline) | ✅ completas y verificadas |
-| Datos reales de Waymo (`waymo_real`) | medido 2026-09-08: 530.396 detecciones v2 · 407.267 `camera_box` · 479 secuencias E2E. El RF **solo** ve v2. `kedro run --pipeline waymo_real` **35/35** en 1568,4 s (11:21). F1 `LEVEL_2` = 0,0893 (mismos números que 09:09) |
-| Notebook opcional de Kedro y Databricks | ✅ usa el pipeline real; Databricks queda conceptual |
+| Datos reales de Waymo (`waymo_real`) | medido 2026-09-08: 530.396 detecciones v2 · 407.267 `camera_box` · 479 secuencias E2E. El RF **solo** ve v2. `kedro run --pipeline waymo_real` **35/35** en 1568,4 s (11:21) y **35/35** en 1107,6 s (13:48). F1 `LEVEL_2` = 0,0893 (mismos números que 09:09) |
+| Notebook opcional de Kedro y Databricks | ✅ `04_opcional_kedro_databricks` ejecutó local (nbconvert, 191,9 s). Free Edition en vivo 2026-09-08: Git Folder del repo público (rama `main`, sin PAT) + Volume managed `workspace.default.mly1101` (`/Volumes/workspace/default/mly1101`, vacío; no subir parquet al repo). `kedro run` **no** se muda al workspace |
 | Notebook opcional de buckets Waymo (Motion / E2E / v1) | ✅ `14_opcional_waymo_buckets`: lote liviano, partir por grupo, inventario (sin imágenes) |
 | EFT | ⏳ pendiente |
 

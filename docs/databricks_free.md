@@ -53,6 +53,10 @@ El cupo de horas es limitado. **Apaga** el compute al salir.
 
 Quedas con notebooks, `src/`, `kedro_mly1101/` y el CSV de la pauta. Igual que un `git clone`.
 
+**Probado 2026-09-08 en Free Edition:** el repo público clona sin PAT; queda la carpeta
+`mly1101-machine-learning` en `main` (`datos/`, `docs/`, `kedro_mly1101/`, `notebooks/`,
+`src/`). El parquet Waymo **no** viene en ese clone.
+
 Si Git Folder falla (permisos Free Edition): **Import** del `.ipynb` suelto y sube el CSV a
 mano. El análisis es el mismo.
 
@@ -64,14 +68,14 @@ Waymo real **no** está en Git. Enlázalo como en Academy: el parquet que armast
 (notebook **14**) o el CSV del clone.
 
 1. **Catalog** (Unity Catalog) → el esquema `default` del workspace → **Create volume**
-   `mly1101` (privado).
+   `mly1101` (privado, tipo **Managed**; no External).
 2. Upload:
    - `detecciones_waymo_like.csv` (4,6 MB, pauta), y/o
    - `detecciones_reales.parquet` (tu lote; ~20 MB con 40 segmentos, ~8 MB el lote de 8).
-3. Ruta típica:
+3. Ruta en Free Edition (medida 2026-09-08; Volume vacío hasta que subas archivos):
 
 ```text
-/Volumes/<catalogo>/<esquema>/mly1101/detecciones_reales.parquet
+/Volumes/workspace/default/mly1101
 ```
 
 En un notebook:
@@ -81,7 +85,7 @@ from pathlib import Path
 import pandas as pd
 
 # 1) Volume (Databricks)
-VOL = Path("/Volumes/workspace/default/mly1101")  # ajusta catalogo/esquema
+VOL = Path("/Volumes/workspace/default/mly1101")  # Free Edition; no lo hagas público
 # 2) Git Folder (mismo layout que el clone)
 REPO = Path.cwd()  # o Path("/Workspace/Repos/.../mly1101-machine-learning")
 
