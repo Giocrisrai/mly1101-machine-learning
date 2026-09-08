@@ -15,8 +15,7 @@ De este archivo salen dos notebooks:
 Esos módulos solo importan pandas y ``src/eda.py``, así que funcionan en Colab sin
 instalar Kedro. Es la misma regla de siempre: una sola verdad sobre los datos.
 
-Todas las cifras de la pauta están medidas sobre ``detecciones_waymo_like.csv`` con la
-semilla 42. Si cambia la semilla o ``--filas``, hay que volver a medirlas.
+Todas las cifras de la pauta están medidas sobre Perception v2 real.
 
 Regenerar tras editar:
 
@@ -168,7 +167,8 @@ else:
 sys.path.insert(0, str(RAIZ / "src"))
 sys.path.insert(0, str(RAIZ / "kedro_mly1101" / "src"))
 
-RUTA_DATOS = RAIZ / "datos" / "crudos" / "detecciones_waymo_like.csv"
+import waymo
+RUTA_DATOS = waymo.exigir_detecciones_reales(RAIZ)
 RUTA_PARAMETROS = RAIZ / "kedro_mly1101" / "conf" / "base" / "parameters.yml"
 
 print("Colab:", EN_COLAB)
@@ -220,7 +220,7 @@ La veremos en el bloque 2.
     ),
     code(
         """
-crudo = pd.read_csv(RUTA_DATOS)
+crudo = pd.read_parquet(RUTA_DATOS)
 
 # La limpieza de la EA1, aplicada paso a paso con los mismos nodos del pipeline.
 paso = limpieza.normalizar_categorias(crudo, PARAMETROS["mapas_categorias"])

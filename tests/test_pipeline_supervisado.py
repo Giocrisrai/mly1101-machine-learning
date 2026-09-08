@@ -199,19 +199,15 @@ def test_el_grafo_completo_encadena_las_pipelines() -> None:
 
     completo = pipelines["__default__"]
     externas = {e for e in completo.inputs() if not e.startswith("params:")}
-    assert externas == {"detecciones_crudas"}       # solo el CSV crudo entra de fuera
-    assert len(completo.nodes) == 30
-    assert len(pipelines["ingesta"].nodes) == 5
-    assert len(pipelines["waymo_real"].nodes) == 35
+    assert externas == {"waymo_muestra"}
+    assert len(pipelines["ingesta"].nodes) == 4
+    assert len(completo.nodes) == 34
+    assert len(pipelines["waymo_real"].nodes) == 34
+    assert {n.name for n in completo.nodes} == {n.name for n in pipelines["waymo_real"].nodes}
 
 
-def test_el_recorrido_real_reutiliza_los_mismos_nodos() -> None:
-    """waymo_real no duplica nodos: remapea la entrada del grafo de siempre.
-
-    Si alguien copiara y pegara los nodos para los datos reales, este test seguiria
-    pasando en numero pero las dos versiones se desincronizarian. Lo que se fija
-    aqui es que la entrada del analisis viene de la ingesta, no del CSV.
-    """
+def test_el_recorrido_real_es_el_grafo_completo() -> None:
+    """No hay un segundo grafo para 'datos de pauta': default y waymo_real son el mismo."""
     from kedro_mly1101.pipeline_registry import register_pipelines
 
     pipelines = register_pipelines()
@@ -223,14 +219,19 @@ def test_el_recorrido_real_reutiliza_los_mismos_nodos() -> None:
         "traducir_esquema_de_waymo",
         "ensamblar_cajas_camara",
         "leer_metadatos_e2e",
-        "comparar_real_contra_sintetico",
     }
-    assert len(real.nodes) == len(pipelines["__default__"].nodes) + len(ingesta.nodes)
+    analisis = (
+        pipelines["calidad"]
+        + pipelines["preprocesamiento"]
+        + pipelines["supervisado"]
+        + pipelines["no_supervisado"]
+        + pipelines["optimizacion"]
+    )
+    assert len(real.nodes) == len(analisis.nodes) + len(ingesta.nodes)
 
     externas = {e for e in real.inputs() if not e.startswith("params:")}
-    assert "waymo_muestra" in externas          # los Parquet reales
-    assert "detecciones_reales" not in externas  # la produce la ingesta, no entra de fuera
-    assert "detecciones_crudas" in externas     # CSV de pauta, solo para comparar
+    assert externas == {"waymo_muestra"}
+    assert "detecciones_reales" not in externas
 
 
 def test_el_modelo_no_consume_camera_box_ni_e2e() -> None:
@@ -238,12 +239,18 @@ def test_el_modelo_no_consume_camera_box_ni_e2e() -> None:
     from kedro_mly1101.pipeline_registry import register_pipelines
 
     pipelines = register_pipelines()
-    analisis = pipelines["__default__"]
+    analisis = (
+        pipelines["calidad"]
+        + pipelines["preprocesamiento"]
+        + pipelines["supervisado"]
+        + pipelines["no_supervisado"]
+        + pipelines["optimizacion"]
+    )
     real = pipelines["waymo_real"]
     ingesta = pipelines["ingesta"]
 
     entradas_analisis = {e for e in analisis.inputs() if not e.startswith("params:")}
-    assert entradas_analisis == {"detecciones_crudas"}
+    assert entradas_analisis == {"detecciones_reales"}
 
     producidas_ingesta = {s for n in ingesta.nodes for s in n.outputs}
     assert {"cajas_camara_2d", "metadatos_e2e", "inventario_fuentes_waymo"} <= producidas_ingesta

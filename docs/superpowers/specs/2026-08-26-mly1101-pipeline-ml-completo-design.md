@@ -1,11 +1,9 @@
 # Especificación — El proceso completo de ML sobre datos reales de Waymo
 
 **Fecha:** 2026-08-26
-**Estado:** implementado y verificado. Actualizado 2026-09-02: el material docente de las
-Act. 2.2, 2.3 y 3.1–3.3 ya existe; el grafo sintético es 30 nodos.
-**Actualizado 2026-09-08:** `ingesta` pasó de 2 a **5** nodos (inventario, v2, `camera_box`,
-E2E, comparar). `waymo_real` = **35** (5 + 30 remapeados). El RF sigue usando **solo**
-Perception v2; camera_box y E2E se ven, no se modelan.
+**Estado:** implementado. **Actualizado 2026-09-08:** se retiró el CSV sintético.
+`ingesta` = **4** nodos (inventario, v2, `camera_box`, E2E). `__default__` =
+`waymo_real` = **34** (esas 4 + 30 de análisis). El RF usa **solo** Perception v2.
 **Extiende:** [`2026-08-26-mly1101-actividades-11-12-design.md`](2026-08-26-mly1101-actividades-11-12-design.md)
 
 > **Nomenclatura:** no usar EA2 = supervisado ni EA3 = no supervisado. Ambos están en el **RA2**;

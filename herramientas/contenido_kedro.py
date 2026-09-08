@@ -160,13 +160,13 @@ Esta es la pieza que más cambia la forma de trabajar. En un notebook, la ruta e
 medio del análisis:
 
 ```python
-df = pd.read_csv("../datos/crudos/detecciones_waymo_like.csv")   # ¿y en producción?
+df = pd.read_parquet("../datos/waymo_real/detecciones_reales.parquet")   # ¿y en producción?
 ```
 
 En Kedro el dato tiene un **nombre**, y el nodo solo conoce ese nombre:
 
 ```python
-def diagnosticar(detecciones_crudas):    # de dónde sale, no es asunto suyo
+def diagnosticar(detecciones_reales):    # de dónde sale, no es asunto suyo
     ...
 ```
 
@@ -381,7 +381,7 @@ print("Pipeline completo:", "Pipeline execution completed" in salida)
 
 assert resultado.returncode == 0, f"el pipeline falló:\\n{salida[-2000:]}"
 assert ejecutados == len(completo.nodes), "no se ejecutaron todos los nodos"
-print(f"\\n✅ Los {len(completo.nodes)} nodos corrieron: del CSV crudo a las métricas del modelo.")
+print(f"\\n✅ Los {len(completo.nodes)} nodos corrieron: de Perception v2 a las métricas del modelo.")
 print("   Las salidas quedaron en kedro_mly1101/data/")
 """
     ),
@@ -441,7 +441,7 @@ print("y como el conjunto de prueba tiene el mismo sesgo, la métrica no lo most
         """
 # El dataset limpio, en Parquet: conserva los tipos.
 limpio = pd.read_parquet(PROYECTO / "data" / "03_primary" / "detecciones_limpias.parquet")
-crudo = pd.read_csv(RAIZ / "datos" / "crudos" / "detecciones_waymo_like.csv")
+crudo = pd.read_parquet(RAIZ / "datos" / "waymo_real" / "detecciones_reales.parquet")
 
 print(f"Crudo  : {len(crudo):,} filas × {crudo.shape[1]} columnas")
 print(f"Limpio : {len(limpio):,} filas × {limpio.shape[1]} columnas")
@@ -551,10 +551,10 @@ Aquí es donde se cobra todo lo del bloque 2. Para llevar **este mismo proyecto*
 se toca ningún nodo: se cambia el tipo de dataset en `catalog.yml`.
 
 ```yaml
-# Lo que tenemos hoy — pandas, CSV en disco local
-detecciones_crudas:
-  type: pandas.CSVDataset
-  filepath: ../datos/crudos/detecciones_waymo_like.csv
+# Lo que tenemos hoy — pandas, Parquet real en disco local
+detecciones_reales:
+  type: pandas.ParquetDataset
+  filepath: ../datos/waymo_real/detecciones_reales.parquet
 
 detecciones_limpias:
   type: pandas.ParquetDataset
@@ -563,9 +563,9 @@ detecciones_limpias:
 
 ```yaml
 # Lo mismo en Databricks — Spark y Delta Lake
-detecciones_crudas:
+detecciones_reales:
   type: spark.SparkDataset
-  filepath: dbfs:/mnt/waymo/01_raw/detecciones
+  filepath: /Volumes/workspace/default/mly1101/detecciones_reales
   file_format: delta
 
 detecciones_limpias:
@@ -604,13 +604,12 @@ resuelve el *dónde*; el *cómo* sigue siendo tuyo.
 
 1. Crea la cuenta. Entra al workspace. Compute **serverless / el más chico**.
 2. **Git Folder** con `{URL_REPO}.git` (rama `main`). Si no deja: *Import* del `.ipynb`.
-3. **Create volume** privado `mly1101` y sube el CSV del repo o **tu** parquet (licencia Waymo:
+3. **Create volume** privado `mly1101` y sube **tu** parquet (licencia Waymo:
    no lo hagas público).
-4. El notebook corre **con pandas en el driver**: 40.680 filas (~20 MB RAM) y hasta 530 k
-   (~257 MB) caben. No necesitas Spark para eso.
+4. El notebook corre **con pandas en el driver**: 530 k filas (~257 MB) caben. No necesitas Spark para eso.
 5. Para ver la diferencia: `spark.read.parquet("/Volumes/…/detecciones_reales.parquet").count()`.
    Ahí sí recorre el archivo. En Colab/CloudShell esa celda se salta (no hay `spark`).
-6. `kedro run` **no** es el entregable de Free Edition. El grafo (30 / 35 nodos) se corre en
+6. `kedro run` **no** es el entregable de Free Edition. El grafo (34 nodos) se corre en
    Colab, local o CloudShell. Aquí solo cambia *en papel* el `catalog.yml` (bloque de arriba).
 
 > Colab cubre el lote de clase. Si la RAM no alcanza: [AWS Academy]({URL_AWS_ACADEMY})
@@ -837,22 +836,17 @@ print("de las originales estaban diciendo casi lo mismo.")
     md(
         """
 ---
-# Bloque 11 · Y ahora, con datos reales
+# Bloque 11 · Qué acaba de correr (Perception v2)
 
-Todo lo anterior corrió sobre el dataset **sintético** (EDA + ML, 30 nodos). El pipeline
-`waymo_real` hace exactamente lo mismo sobre Perception v2 real. `camera_box` y el JSON E2E
-quedan en `ingesta` (se ven, no se modelan):
+`kedro run` **es** el recorrido real: ingesta de la muestra + EDA + ML (34 nodos).
+`camera_box` y el JSON E2E quedan en `ingesta` (se ven, no se modelan).
 
 ```bash
 python herramientas/descargar_waymo.py --muestra 40      # ~40 MB
-cd kedro_mly1101 && kedro run --pipeline ingesta         # 5 nodos: ve las fuentes
-cd kedro_mly1101 && kedro run --pipeline waymo_real      # 35 nodos: EDA + ML sobre v2
+cd kedro_mly1101 && kedro run                            # 34 nodos
 ```
 
-**No duplica ni un solo nodo.** Reutiliza `calidad`, `preprocesamiento`, `supervisado`,
-`no_supervisado` y `optimizacion` remapeando su entrada: donde leían el CSV, leen la salida
-de la ingesta de Waymo. Es la demostración de por qué separar el catálogo del análisis valía
-la pena.
+`waymo_real` es el mismo grafo. No hay un segundo dataset de pauta.
 
 ### Por qué 40 segmentos y no uno
 
@@ -868,58 +862,42 @@ descargar.**
 2. **El tipo de objeto es un entero**, no una cadena. Y existe el `0` (*unknown*).
 3. **El `NaN` de la dificultad NO es un dato faltante.** Waymo solo rellena
    `difficulty_level.detection` cuando la detección es difícil; vacío significa `LEVEL_1`. Son
-   **15.356 `NaN` de 18.633**: tratarlos como faltantes borraría el 82 % de los datos.
-
-   Es el **reverso exacto** del defecto de la Actividad 1.3, donde un `-1` disfraza un faltante.
-   Aquí un faltante disfraza un valor.
+   **15.356 `NaN` de 18.633** en el segmento de ejemplo: tratarlos como faltantes borraría el
+   82 % de los datos.
 """
     ),
     code(
         """
-RUTA_REAL = PROYECTO / "data" / "waymo" / "07_model_output" / "metricas_por_clase.csv"
+RUTA_MET = PROYECTO / "data" / "07_model_output" / "metricas_por_clase.csv"
 
-if RUTA_REAL.exists():
-    print("=== Act. 2.2 sobre datos REALES de Waymo ===")
-    print(pd.read_csv(RUTA_REAL).to_string(index=False))
+if RUTA_MET.exists():
+    print("=== Act. 2.2 sobre Perception v2 ===")
+    print(pd.read_csv(RUTA_MET).to_string(index=False))
 else:
-    print("No hay resultados del recorrido real en esta máquina.")
-    print("Para generarlos:")
-    print("   python herramientas/descargar_waymo.py --muestra 40")
-    print("   cd kedro_mly1101 && kedro run --pipeline waymo_real")
+    print("No hay métricas todavía. Corre: cd kedro_mly1101 && kedro run")
 """
     ),
     md(
         """
-### Lo que cambia al pasar del CSV de pauta a Waymo v2
+### Cifras medidas el 2026-09-08 (40 segmentos, 530.396 filas)
 
-Cifras leídas el 2026-09-08 de `data/waymo/07_model_output/` y de
-`data/02_intermediate/comparacion_real_vs_sintetico.csv` (530.396 detecciones, 40 segmentos):
+| | Waymo v2 |
+|---|---|
+| Filas · segmentos | **530.396 · 40** |
+| vehicle / sign / peatón / ciclista (%) | **48,43 / 26,46 / 24,67 / 0,45** |
+| Mediana `speed_mps` | **0,0133** |
+| Clima | **530.396 `sunny`** |
+| Nulos / valores imposibles | **0 / 0** |
+| Act. 2.2 · exactitud | **0,7805** |
+| Act. 2.2 · F1 LEVEL_2 | **0,0893** (recall 0,0588) |
+| Act. 2.3 · silueta | **0,5228 → 0,6103 (k=2…8), sin codo** |
+| Act. 3.1 · ganancia del ajuste | **+0,0789** (0,5104 → 0,5893) |
 
-| | CSV del repo | Waymo v2 |
-|---|---|---|
-| Filas · segmentos | 40.680 · 153 | **530.396 · 40** |
-| vehicle / sign / peatón / ciclista (%) | 61,73 / 8,12 / 26,22 / 1,94 | **48,43 / 26,46 / 24,67 / 0,45** |
-| Mediana `speed_mps` | 5,35 | **0,0133** |
-| Mediana `num_lidar_points` | 96 | 36 |
-| Clima | 3 categorías sucias | **530.396 `sunny`** |
-| Valores imposibles | 10 defectos inyectados | **0** |
-| Act. 2.2 · exactitud | 0,897 | **0,7805** |
-| Act. 2.2 · F1 LEVEL_2 | 0,462 | **0,0893** (recall 0,0588) |
-| Act. 2.3 · silueta | máximo en k = 3 | **0,5228 → 0,6103 (k=2…8), sin codo** |
-| Act. 3.1 · ganancia del ajuste | ~0 (pauta) | **+0,0789** (0,5104 → 0,5893) |
+En el mismo disco, **no** mezclados con el modelo: `camera_box` 407.267×11; JSON E2E 479
+secuencias; v1 / Motion / JPEG = 0 archivos.
 
-En el mismo disco, **no** mezclados con el modelo: `camera_box` 407.267×11 (40 segmentos);
-JSON E2E 479 secuencias (`Interections` 116, grafía de Waymo); v1 / Motion / JPEG = 0 archivos.
-
-**La limpieza no encuentra defectos en v2.** El Open Dataset está curado; los 10 defectos viven
-solo en el CSV de la pauta.
-
-**El F1 de LEVEL_2 cae a 0,0893.** De 26.713 difíciles en prueba, acierta 1.572 (recall 5,88 %).
-
-> Un número bueno sobre el CSV de práctica no predice el Open Dataset.
-
-**La silueta no tiene máximo** en este lote. Y el **100 % `sunny`** es el sesgo del censo
-(793 de 798 soleados) metido en el entrenamiento.
+**El F1 de LEVEL_2 es 0,0893.** De 26.713 difíciles en prueba, acierta 1.572 (recall 5,88 %).
+El Open Dataset llega curado; el problema es el desbalance y el 100 % `sunny`, no la suciedad.
 """
     ),
     md(
@@ -927,17 +905,18 @@ solo en el CSV de la pauta.
 ---
 # Cierre · Hacia dónde sigue esto
 
-El grafo que acabas de ejecutar va del CSV crudo a las métricas por clase. **Ese es el proceso
+El grafo que acabas de ejecutar va de Perception v2 a las métricas por clase. **Ese es el proceso
 completo de Machine Learning**, declarado como dependencias y ejecutado con un comando.
 
 | Experiencia | Pipeline | Nodos | Consume | Estado |
 |---|---|---|---|---|
-| **RA1** · Datos | `calidad` · `preprocesamiento` | 4 + 5 | El CSV crudo | ✅ |
+| **RA1** · Datos | `calidad` · `preprocesamiento` | 4 + 5 | `detecciones_reales` | ✅ |
 | **RA2** · Supervisado (Act. 2.2) | `supervisado` | 8 | `detecciones_limpias` | ✅ |
 | **RA2** · No supervisado (Act. 2.3) | `no_supervisado` | 7 | `detecciones_limpias` | ✅ |
 | **RA3** · Optimización | `optimizacion` | 6 | Salidas de `supervisado` | ✅ |
-| — · Datos reales | `ingesta` + `waymo_real` | 35 | v2 al modelo (EDA+ML); camera_box y E2E a la vista | ✅ |
-| **EFT** | Integra las tres | — | Todo el grafo | ⏳ |
+| — · Ingesta | `ingesta` | 4 | `muestra/` | ✅ |
+| — · Todo | `__default__` = `waymo_real` | 34 | v2 al modelo; camera_box y E2E a la vista | ✅ |
+| **EFT** | Integra las tres | — | Casos oficiales, no este hilo | ⏳ |
 
 Cada experiencia **añadió nodos, no reescribió el análisis previo**. Y el recorrido sobre datos
 reales no duplicó ninguno: remapeó la entrada del grafo que ya existía.

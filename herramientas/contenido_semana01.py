@@ -97,14 +97,14 @@ Ese alguien eres tú, hoy.
 
 ### Sobre los datos
 
-Esta actividad usa `detecciones_waymo_like.csv` (CSV del repo) **a propósito**: tiene 10
-defectos inyectados para que haya algo que descubrir, y las cifras coinciden con la pauta.
+Esta actividad usa **Perception v2 real** (`datos/waymo_real/detecciones_reales.parquet`).
+No hay un CSV de práctica en el repositorio: la licencia de Waymo prohíbe redistribuir los
+datos, así que cada máquina los baja con `herramientas/descargar_waymo.py --muestra 40`.
 
-El flujo con **datos reales** no es este archivo. Es el notebook
-`14_opcional_waymo_buckets.ipynb`: segmentos livianos (`lidar_box` + `stats`), una tabla parquet,
-partir train/test por `segment_id`. No bajes imágenes ni el bucket de Google (terabytes). El EDA
-profundo sobre un segmento real está en `00_opcional_waymo_real.ipynb`. El esquema es el mismo:
-lo que aprendes aquí se traslada.
+El Open Dataset llega **curado** (0 % nulos, 0 valores imposibles). El trabajo de hoy no es
+cazar suciedad plantada: es caracterizar lo que sí está — desbalance extremo de `cyclist`,
+clima 100 % `sunny`, `LEVEL_2` raro, partir por `segment_id` — y decidir qué implica para
+modelar.
 
 ---
 
@@ -143,9 +143,10 @@ Un **mini-informe en Markdown** (última celda del notebook) con:
 > | 6 · Datos responsables | 20 | Sesgo de muestreo, datos personales |
 > | Cierre | 15 | Mini-informe |
 >
-> **El dataset tiene exactamente 10 defectos inyectados**, listados en
-> `src/generar_dataset.py::CATALOGO_DEFECTOS` y verificados por `pytest`. Si un grupo dice
-> "los datos están limpios", tiene 10 cosas por encontrar.
+> **El dataset es Perception v2 real** (medido 2026-09-08: 530.396 filas, 40 segmentos).
+> Si un grupo dice "los datos están sucios", que muestre la cifra: v2 llega con 0 % nulos.
+> Lo que sí hay que encontrar: `cyclist` 0,45 %, `weather` 100 % `sunny`, `LEVEL_2` 12,33 %,
+> mediana `speed_mps` 0,0133.
 >
 > **Regla de oro de la clase:** ninguna afirmación sin una cifra que la respalde.
 """
@@ -178,7 +179,8 @@ else:
     RAIZ = Path("..").resolve()
 
 sys.path.insert(0, str(RAIZ / "src"))
-RUTA_DATOS = RAIZ / "datos" / "crudos" / "detecciones_waymo_like.csv"
+import waymo
+RUTA_DATOS = waymo.exigir_detecciones_reales(RAIZ)
 
 print("Colab:", EN_COLAB)
 print("Raíz del repositorio:", RAIZ)
@@ -218,7 +220,7 @@ print("pandas", pd.__version__, "| numpy", np.__version__)
     ),
     code(
         """
-df = pd.read_csv(RUTA_DATOS)
+df = pd.read_parquet(RUTA_DATOS)
 print(f"Filas: {df.shape[0]:,}   Columnas: {df.shape[1]}")
 df.head()
 """
@@ -276,16 +278,15 @@ print(f"\\nMemoria real: {memoria_mb:.1f} MB")
 
 Mira la salida anterior con atención. Hay una columna cuyo tipo **no es el que debería ser**.
 
-1. Identifica qué columna es y por qué debería ser numérica.
-2. Averigua qué valor la está ensuciando y cuántas filas lo tienen.
-
-*Pista: `df["columna"].unique()` en una columna con miles de valores no sirve de mucho. Piensa
-en qué le pasa a una columna numérica cuando aparece un texto.*
+1. Identifica el dtype de `timestamp_micros` en el parquet.
+2. Convierte con `pd.to_numeric(..., errors="coerce")` y cuenta cuántos valores **no** son
+   numéricos. En v2 el resultado es la lección: Parquet conservó el tipo; un CSV habría
+   podido ensuciar toda la columna con un solo `"N/D"`.
 """
     ),
     code(
         """
-# timestamp_micros quedó como object: pandas no pudo inferir un tipo numérico.
+# timestamp_micros en parquet real ya es entero. ¿Cuántos valores no son numéricos?
 convertidos = pd.to_numeric(df["timestamp_micros"], errors="coerce")
 no_convertibles = df.loc[convertidos.isna(), "timestamp_micros"]
 
@@ -305,10 +306,13 @@ print(no_convertibles.value_counts())
     ),
     code(
         """
-# Autochequeo
-assert df["timestamp_micros"].dtype == object, "revisa: ¿estás mirando la columna correcta?"
-assert len(no_convertibles) > 0, "deberías haber encontrado valores no convertibles"
-print(f"✅ Hallazgo 1: {len(no_convertibles)} filas con un valor de texto en una columna numérica.")
+# Autochequeo — Perception v2 conserva tipos: el timestamp ya es int64.
+assert pd.api.types.is_integer_dtype(df["timestamp_micros"]), (
+    "revisa: en el parquet real el timestamp debe ser entero, no texto"
+)
+assert len(no_convertibles) == 0, "v2 no trae 'N/D': si aparecen, no es el parquet del curso"
+print(f"✅ Hallazgo 1: timestamp_micros es {df['timestamp_micros'].dtype}, 0 valores no numéricos.")
+print("   (Si esto fuera un CSV, un solo texto ensuciaría toda la columna. Parquet no lo permite.)")
 """
     ),
     md_docente(
@@ -558,9 +562,9 @@ print(df["weather_limpio"].value_counts(dropna=False))
 # Autochequeo
 assert set(df["object_type_limpio"].dropna().unique()) == {"vehicle", "pedestrian", "cyclist", "sign"}, \\
     "deben quedar exactamente 4 tipos de objeto"
-assert set(df["weather_limpio"].dropna().unique()) == {"sunny", "rain", "fog"}, \\
-    "deben quedar exactamente 3 condiciones climáticas"
-print("✅ 7 variantes de objeto → 4 categorías | 11 variantes de clima → 3 categorías")
+assert set(df["weather_limpio"].dropna().unique()) == {"sunny"}, \\
+    "en este lote v2 el clima es 100 % sunny; si ves rain/fog, no es el parquet del curso"
+print("✅ object_type ya viene unificado (4 tipos). weather: solo sunny — sesgo de muestreo, no suciedad.")
 """
     ),
     md_docente(
@@ -727,11 +731,11 @@ print("\\nTipos:", df["num_lidar_points_limpio"].dtype, "|", df["timestamp_limpi
     ),
     code(
         """
-# Autochequeo
-assert df["num_lidar_points_limpio"].isna().sum() > 0, "los -1 deben quedar como NaN"
-assert (df["num_lidar_points_limpio"].dropna() > 0).all(), "no pueden quedar conteos negativos"
+# Autochequeo — v2 no disfraza faltantes con -1 ni con "N/D".
+assert df["num_lidar_points_limpio"].isna().sum() == 0, "v2 no trae centinela -1"
+assert (df["num_lidar_points_limpio"] >= 0).all(), "no pueden quedar conteos negativos"
 assert pd.api.types.is_numeric_dtype(df["timestamp_limpio"]), "el timestamp debe ser numérico"
-print("✅ Nulos ocultos convertidos en nulos explícitos.")
+print("✅ 0 nulos ocultos. El Open Dataset llega curado; el trabajo está en el desbalance, no en el sucio.")
 """
     ),
     md(
@@ -864,11 +868,11 @@ for _, grupo in repetidas.groupby(LLAVE):
     ),
     code(
         """
-# Autochequeo
+# Autochequeo — v2 no trae duplicados plantados.
 reporte = eda.reporte_duplicados(df, LLAVE).iloc[0]
-assert reporte["dup_exactos"] > 0, "hay duplicados exactos en el dataset"
-assert reporte["dup_logicos"] > 0, "y también duplicados lógicos: drop_duplicates() no basta"
-print(f"✅ {reporte['dup_exactos']} duplicados exactos + {reporte['dup_logicos']} duplicados lógicos.")
+assert reporte["dup_exactos"] == 0, "v2 no debería traer duplicados exactos"
+assert reporte["dup_logicos"] == 0, "ni duplicados lógicos"
+print("✅ 0 duplicados exactos y 0 lógicos. drop_duplicates() aquí no cambia nada.")
 """
     ),
     md_docente(
@@ -1215,7 +1219,7 @@ def limpiar(datos: pd.DataFrame) -> pd.DataFrame:
     return d
 
 
-df_limpio = limpiar(pd.read_csv(RUTA_DATOS))
+df_limpio = limpiar(pd.read_parquet(RUTA_DATOS))
 print(f"Crudo:  {len(df):,} filas")
 print(f"Limpio: {len(df_limpio):,} filas  ({len(df) - len(df_limpio):,} eliminadas)")
 df_limpio.head(3)
@@ -1255,7 +1259,7 @@ def limpiar(datos: pd.DataFrame) -> pd.DataFrame:
     return d
 
 
-df_limpio = limpiar(pd.read_csv(RUTA_DATOS))
+df_limpio = limpiar(pd.read_parquet(RUTA_DATOS))
 print(f"Crudo:  {len(df):,} filas")
 print(f"Limpio: {len(df_limpio):,} filas  ({len(df) - len(df_limpio):,} eliminadas)")
 df_limpio.head(3)
@@ -1479,26 +1483,25 @@ dataset entero; no tienen modelo en este curso.
 >
 > | Nivel | Descripción |
 > |---|---|
-> | **Logrado** | Encuentra al menos 7 de los 10 defectos, los cuantifica, distingue outlier imposible de legítimo, identifica el patrón MNAR y justifica cada decisión de preprocesamiento. |
-> | **En desarrollo** | Encuentra los defectos evidentes (nulos declarados, duplicados exactos) pero no los ocultos; aplica criterios estadísticos sin cuestionarlos. |
-> | **Inicial** | Ejecuta el notebook sin interpretar; usa `dropna()` y `drop_duplicates()` sin justificar; el informe no tiene cifras. |
+> | **Logrado** | Cuantifica el desbalance, el clima constante y la rareza de `LEVEL_2`; distingue outlier estadístico de valor de dominio; justifica cada decisión de preprocesamiento aunque el Open Dataset llegue curado. |
+> | **En desarrollo** | Describe el esquema y unas pocas cifras, pero no conecta desbalance / sesgo de muestreo con el modelado. |
+> | **Inicial** | Ejecuta el notebook sin interpretar; el informe no tiene cifras. |
 >
-> **Los 10 defectos inyectados** (`src/generar_dataset.py::CATALOGO_DEFECTOS`):
+> **Hallazgos medidos en el lote de 40 segmentos (2026-09-08):**
 >
-> 1. `timestamp_micros` con `"N/D"` → dtype `object`
-> 2. `num_lidar_points` con `-1` como nulo oculto (~3 %)
-> 3. `weather` con 11 variantes para 3 categorías + 5 % nulos
-> 4. `object_type` con 7 variantes para 4 categorías
-> 5. Duplicados exactos (~1,2 %) y lógicos (~0,5 %)
-> 6. Outliers imposibles: velocidad hasta 338 m/s, alto 0, largo negativo
-> 7. Outliers legítimos: buses de 12 a 18 m (no eliminar)
-> 8. Nulos MNAR en `speed_mps` (34 % en LEVEL_2 nocturno)
-> 9. Desbalance: `CYCLIST` ~2 %
-> 10. `sensor_version` constante e `id_interno` casi único
+> 1. 530.396 filas × 16 columnas, 40 `segment_id`, 0 % nulos
+> 2. `object_type`: vehicle 48,43 % · sign 26,46 % · pedestrian 24,67 % · cyclist **0,45 %**
+> 3. `detection_difficulty`: LEVEL_1 87,67 % · LEVEL_2 **12,33 %**
+> 4. `weather`: **100 % `sunny`** (sesgo del censo, no de la Tierra)
+> 5. `location`: SF 398.065 · PHX 132.331
+> 6. `time_of_day`: Day 461.090 · Night 51.867 · Dawn/Dusk 17.439
+> 7. Mediana `speed_mps` **0,0133** (muchos objetos parados o casi)
+> 8. Valores imposibles: **0**
+> 9. Un solo segmento no alcanza para train/test sin fuga
+> 10. `camera_box` y E2E **no** entran al modelo
 >
-> **Señal de alerta durante la clase:** si un grupo termina el bloque 3 en 15 minutos,
-> probablemente está ejecutando sin leer. Pregúntale por el porcentaje de nulos de `speed_mps`
-> **en LEVEL_2 nocturno**: si no lo tiene, no miró el patrón.
+> **Señal de alerta durante la clase:** si un grupo termina diciendo que hay que `dropna()`,
+> no miró el 0 % de nulos. Pregúntale el % de `cyclist` y el de `sunny`.
 """
     ),
 ]

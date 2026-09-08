@@ -1,23 +1,21 @@
 """Registro de pipelines del proyecto.
 
 Cada experiencia de la asignatura suma la suya. El orden entre ellas no lo decide
-este archivo: lo decide el grafo. Que ``supervisado`` corra después de
-``preprocesamiento`` no está escrito en ninguna parte — se deduce de que consume
-``detecciones_limpias``, que el otro produce.
+este archivo: lo decide el grafo.
 
-**El pipeline ``waymo_real`` no duplica ni un nodo.** Reutiliza los mismos de
-siempre remapeando su entrada: donde leían el CSV sintético, ahora leen
-``detecciones_reales`` (Perception v2). ``camera_box`` y el JSON E2E salen de
-``ingesta`` y **no** se remapean al clasificador: el contrato lo fija
-``tests/test_pipeline_supervisado.py``.
+**Un solo hilo de datos: Perception v2 real.** No hay CSV de pauta ni recorrido
+paralelo. ``__default__`` y ``waymo_real`` son el mismo grafo: ingesta de la
+muestra local más calidad, preprocesamiento, supervisado, no supervisado y
+optimización. ``camera_box`` y el JSON E2E salen de ``ingesta`` y **no** entran
+al clasificador (lo fija ``tests/test_pipeline_supervisado.py``).
 
-Conteos que los tests bloquean: ``__default__`` = 30, ``ingesta`` = 5,
-``waymo_real`` = 35.
+Conteos que los tests bloquean: ``ingesta`` = 4, ``__default__`` = ``waymo_real``
+= 34 (esas 4 + 30 de análisis).
 """
 
 from __future__ import annotations
 
-from kedro.pipeline import Pipeline, pipeline
+from kedro.pipeline import Pipeline
 
 from kedro_mly1101.pipelines.calidad.pipeline import create_pipeline as calidad
 from kedro_mly1101.pipelines.ingesta.pipeline import create_pipeline as ingesta
@@ -30,47 +28,6 @@ from kedro_mly1101.pipelines.preprocesamiento.pipeline import (
 )
 from kedro_mly1101.pipelines.supervisado.pipeline import create_pipeline as supervisado
 
-# Qué salidas del recorrido sobre datos reales se guardan en disco. Las que no
-# están aquí quedan en memoria: existen durante la ejecución y no se persisten.
-SALIDAS_REALES = {
-    "resumen_calidad": "resumen_calidad_real",
-    "valores_imposibles": "valores_imposibles_real",
-    "nulos_por_grupo": "nulos_por_grupo_real",
-    "detecciones_limpias": "detecciones_limpias_reales",
-    "informe_limpieza": "informe_limpieza_real",
-    "metricas_por_clase": "metricas_por_clase_real",
-    "matriz_confusion": "matriz_confusion_real",
-    "fuga_de_variable": "fuga_de_variable_real",
-    "perfil_de_grupos": "perfil_de_grupos_real",
-    "grupos_vs_etiqueta": "grupos_vs_etiqueta_real",
-    "busqueda_de_k": "busqueda_de_k_real",
-    "varianza_pca": "varianza_pca_real",
-    "comparacion_modelos": "comparacion_modelos_real",
-    "seleccion_de_modelo": "seleccion_de_modelo_real",
-    "ganancia_del_ajuste": "ganancia_del_ajuste_real",
-    "fuga_por_ajuste": "fuga_por_ajuste_real",
-    "busqueda_hiperparametros": "busqueda_hiperparametros_real",
-    "robustez_modelos": "robustez_modelos_real",
-}
-
-# Los parámetros se comparten entre el recorrido sintético y el real: son las
-# mismas decisiones. Si hubiera que ajustarlas para datos reales, este es el
-# único sitio que habría que tocar.
-PARAMETROS_COMPARTIDOS = {
-    f"params:{clave}": f"params:{clave}"
-    for clave in [
-        "mapas_categorias",
-        "centinelas",
-        "reglas_dominio",
-        "columnas_a_descartar",
-        "sesgo",
-        "modelo",
-        "fuga",
-        "agrupamiento",
-        "ajuste",
-    ]
-}
-
 
 def register_pipelines() -> dict[str, Pipeline]:
     p_calidad = calidad()
@@ -80,20 +37,10 @@ def register_pipelines() -> dict[str, Pipeline]:
     p_ingesta = ingesta()
     p_optimizacion = optimizacion()
 
-    # El recorrido completo sobre el dataset sintético de la asignatura.
     analisis = (
         p_calidad + p_preprocesamiento + p_supervisado + p_no_supervisado + p_optimizacion
     )
-
-    # El mismo recorrido, sobre Perception v2. Cambia la entrada, no los nodos.
-    # camera_box / E2E viven en p_ingesta y no entran a este remap.
-    analisis_real = pipeline(
-        analisis,
-        inputs={"detecciones_crudas": "detecciones_reales"},
-        outputs=SALIDAS_REALES,
-        parameters=PARAMETROS_COMPARTIDOS,
-        namespace="real",
-    )
+    completo = p_ingesta + analisis
 
     return {
         "calidad": p_calidad,
@@ -102,6 +49,6 @@ def register_pipelines() -> dict[str, Pipeline]:
         "no_supervisado": p_no_supervisado,
         "optimizacion": p_optimizacion,
         "ingesta": p_ingesta,
-        "waymo_real": p_ingesta + analisis_real,
-        "__default__": analisis,
+        "waymo_real": completo,
+        "__default__": completo,
     }

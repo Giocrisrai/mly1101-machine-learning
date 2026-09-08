@@ -574,8 +574,7 @@ def traducir_esquema(cajas: pd.DataFrame, stats: pd.DataFrame) -> pd.DataFrame:
        ``speed.x`` es un error silencioso: da valores plausibles y equivocados.
 
     2. **El tipo de objeto es un entero**, no una cadena. Hay que traducirlo con
-       ``TIPOS_DE_OBJETO``, y existe el valor ``0`` (*unknown*), que el dataset
-       sintético no tiene.
+       ``TIPOS_DE_OBJETO``, y existe el valor ``0`` (*unknown*).
 
     3. **El ``NaN`` de la dificultad NO es un dato faltante.** Waymo solo rellena
        ``difficulty_level.detection`` cuando la detección es difícil (valor ``2``);
@@ -583,16 +582,13 @@ def traducir_esquema(cajas: pd.DataFrame, stats: pd.DataFrame) -> pd.DataFrame:
        ``NaN`` de 18.633 filas: tratarlos como faltantes borraría el 82 % de los
        datos y dejaría un dataset con una sola clase.
 
-       Es el reverso exacto del defecto que se estudia en la Actividad 1.3, donde
-       un ``-1`` disfraza un faltante. Aquí un faltante disfraza un valor.
-
     Args:
         cajas: contenido de ``lidar_box.parquet``.
         stats: contenido de ``stats.parquet``.
 
     Returns:
-        DataFrame con el esquema de ``detecciones_waymo_like.csv``, más la columna
-        ``location``, que existe en los datos reales y no en el sintético.
+        DataFrame de detecciones del curso (una fila por caja LiDAR), más
+        ``location``.
     """
     tabla = _renombrar(cajas, EQUIVALENCIAS_CAJAS).merge(
         _renombrar(stats, EQUIVALENCIAS_STATS),
@@ -970,6 +966,27 @@ def cargar_o_preparar(
     return preparar_lote(carpeta, n=n)
 
 
+MENSAJE_SIN_DATOS_REALES = (
+    "Faltan los datos reales de Waymo. No van en el repositorio "
+    "(licencia de uso no comercial, sin redistribución). "
+    "Acepta los términos en https://waymo.com/open/terms/ y corre:\n"
+    "  uv run python herramientas/descargar_waymo.py --muestra 40"
+)
+
+
+def ruta_detecciones_reales(raiz: Path) -> Path:
+    """Única tabla de trabajo del curso: Perception v2 ensamblada en local."""
+    return Path(raiz) / "datos" / "waymo_real" / "detecciones_reales.parquet"
+
+
+def exigir_detecciones_reales(raiz: Path) -> Path:
+    """Ruta del parquet real, o error que dice cómo bajarlo. Sin fallback."""
+    ruta = ruta_detecciones_reales(raiz)
+    if not ruta.exists():
+        raise FileNotFoundError(MENSAJE_SIN_DATOS_REALES)
+    return ruta
+
+
 def leer_tabla(ruta: Path | str) -> pd.DataFrame:
     """Lee CSV o Parquet. Una función para no preguntar el formato en cada notebook."""
     texto = str(ruta)
@@ -982,19 +999,10 @@ def leer_tabla(ruta: Path | str) -> pd.DataFrame:
 
 
 def cargar_tabla_curso(raiz: Path) -> tuple[pd.DataFrame, str, Path]:
-    """Tabla de trabajo: lote real si existe, si no el CSV de la asignatura.
+    """Tabla de trabajo del curso: solo Perception v2 real.
 
     Returns:
-        ``(tabla, origen, ruta)`` con ``origen`` en ``{"real", "sintetico"}``.
+        ``(tabla, origen, ruta)`` con ``origen`` siempre ``"real"``.
     """
-    real = raiz / "datos" / "waymo_real" / "detecciones_reales.parquet"
-    if real.exists():
-        return pd.read_parquet(real), "real", real
-    csv = raiz / "datos" / "crudos" / "detecciones_waymo_like.csv"
-    if not csv.exists():
-        raise FileNotFoundError(
-            "No hay tabla de trabajo. Arma el lote (notebook 14 o "
-            "`python herramientas/descargar_waymo.py --lote 8`) "
-            "o genera el CSV: python src/generar_dataset.py"
-        )
-    return pd.read_csv(csv), "sintetico", csv
+    ruta = exigir_detecciones_reales(raiz)
+    return pd.read_parquet(ruta), "real", ruta

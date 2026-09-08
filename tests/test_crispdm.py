@@ -93,7 +93,7 @@ def test_validar_carta_acepta_una_carta_completa() -> None:
     carta = {
         "pregunta_de_negocio": "¿Se puede anticipar cuándo una detección LiDAR no es confiable?",
         "criterio_de_exito": "F1 de LEVEL_2 ≥ 0,60 en un split por segmento",
-        "fuentes": "detecciones_waymo_like.csv (sintético, semilla 42)",
+        "fuentes": "Perception v2 (datos/waymo_real/detecciones_reales.parquet, 40 segmentos)",
         "riesgos": "desbalance de ciclistas (~2 %) y nulos MNAR de speed_mps de noche",
         "proxima_fase": "modelado",
     }

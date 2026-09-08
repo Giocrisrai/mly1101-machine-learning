@@ -15,7 +15,7 @@ nombrarlas**. Hoy se nombra el mapa, se cierra la fase que se saltaron (negocio)
 planifica el resto del RA2 y del RA3. CRISP-DM no es una diapositiva: es la estructura
 que el EFT va a pedir por escrito.
 
-Las cifras de la pauta salen de ``detecciones_waymo_like.csv`` (semilla 42) y de
+Las cifras de la pauta salen de Perception v2 real y de
 ``src/crispdm.py``, cubierto por ``tests/test_crispdm.py``.
 
 Regenerar tras editar:
@@ -124,7 +124,8 @@ else:
     RAIZ = Path("..").resolve()
 
 sys.path.insert(0, str(RAIZ / "src"))
-RUTA_DATOS = RAIZ / "datos" / "crudos" / "detecciones_waymo_like.csv"
+import waymo
+RUTA_DATOS = waymo.exigir_detecciones_reales(RAIZ)
 
 print("Colab:", EN_COLAB, "| dataset:", RUTA_DATOS.exists())
 """
@@ -139,7 +140,7 @@ import eda
 pd.set_option("display.max_columns", 40)
 pd.set_option("display.width", 140)
 
-df = pd.read_csv(RUTA_DATOS)
+df = pd.read_parquet(RUTA_DATOS)
 print(f"{df.shape[0]:,} detecciones en {df['segment_id'].nunique()} segmentos")
 print("fases CRISP-DM:", len(crispdm.FASES))
 """
@@ -234,8 +235,8 @@ Estos hallazgos ya los midieron. Cada uno pertenece a **una** fase principal.
 
 | Hallazgo | Fase (clave de `crispdm.FASES`) |
 |---|---|
-| El CSV tiene 10 defectos intencionales y 40.680 filas | `____` |
-| `CYCLIST` es ~2 % de las filas | `____` |
+| 530.396 detecciones reales, 40 segmentos, 0 % nulos | `____` |
+| `cyclist` es 0,45 % de las filas | `____` |
 | La tabla de decisiones de limpieza (qué se imputa, qué se tira) | `____` |
 | El censo de Waymo: 793 de 798 segmentos son `sunny` | `____` |
 | Parquet conserva tipos; CSV los pierde | `____` |
@@ -445,7 +446,7 @@ carta_waymo = {
         "¿Se puede anticipar cuándo una detección LiDAR no es confiable?"
     ),
     "criterio_de_exito": "F1 de LEVEL_2 ≥ 0,60 en un split por segment_id",
-    "fuentes": "detecciones_waymo_like.csv (sintético, semilla 42, 40.680 filas, 153 segmentos)",
+    "fuentes": "Perception v2 (detecciones_reales.parquet, 40 segmentos, 530.396 filas)",
     "riesgos": (
         "CYCLIST ~1,94 %; nulos MNAR de speed_mps de noche; "
         "censo real 793/798 sunny; duplicados lógicos"

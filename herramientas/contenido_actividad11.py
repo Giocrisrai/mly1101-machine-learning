@@ -140,7 +140,8 @@ else:
     RAIZ = Path("..").resolve()
 
 sys.path.insert(0, str(RAIZ / "src"))
-RUTA_DATOS = RAIZ / "datos" / "crudos" / "detecciones_waymo_like.csv"
+import waymo
+RUTA_DATOS = waymo.exigir_detecciones_reales(RAIZ)
 
 print("Colab:", EN_COLAB)
 print("Raíz del repositorio:", RAIZ)
@@ -295,55 +296,45 @@ tiene que **adivinar** el tipo de cada columna al leerlo.
     ),
     code(
         """
-df = pd.read_csv(RUTA_DATOS)
+df = pd.read_parquet(RUTA_DATOS)
 print(f"Filas: {df.shape[0]:,}   Columnas: {df.shape[1]}   Segmentos: {df['segment_id'].nunique()}")
 df.head(3)
 """
     ),
     md(
         """
-### ✏️ TODO 2 — Vía 2: leer por URL
+### ✏️ TODO 2 — Vía 2: el dato remoto no es GitHub
 
-En Colab no siempre vas a clonar un repositorio. Muchas veces el dato está publicado en una URL
-y se lee directamente, sin descargarlo a mano.
+En muchos cursos el CSV viaja con el repo y se lee con `pd.read_csv(url)`. **Aquí no.**
+La licencia de Waymo es de uso no comercial y **prohíbe redistribuir** los datos: no hay
+una URL *raw* de GitHub con esta tabla.
 
-Completa la lectura desde la URL *raw* de GitHub y comprueba que obtienes las mismas filas.
+La vía remota de la asignatura es **GCS**, con cuenta que aceptó los términos
+([waymo.com/open/terms](https://waymo.com/open/terms/)), y el script
+`herramientas/descargar_waymo.py`. El notebook 14 lo recorre.
 
-*Pista: `pd.read_csv` acepta una URL igual que acepta una ruta de archivo.*
+Comprueba que la tabla de trabajo es el parquet local (el mismo que acaba de leer la vía 1)
+y que **no** existe un CSV espejo en el repositorio.
 """
     ),
     code(
-        f"""
-URL_CSV = (
-    "{URL_REPO.replace('github.com', 'raw.githubusercontent.com')}"
-    "/main/datos/crudos/detecciones_waymo_like.csv"
-)
-
-try:
-    df_url = pd.read_csv(URL_CSV)
-    print(f"Leídas {{len(df_url):,}} filas desde la URL")
-    print("¿Mismas dimensiones que el CSV local?:", df_url.shape == df.shape)
-except Exception as error:
-    # Sin conexión (o repositorio privado) el ejercicio no debe detener la clase.
-    df_url = df.copy()
-    print("No se pudo leer desde la URL:", type(error).__name__)
-    print("Se sigue con el CSV local. La sintaxis es la misma.")
+        """
+csv_del_repo = RAIZ / "datos" / "crudos" / "detecciones_waymo_like.csv"
+print("Parquet de trabajo:", RUTA_DATOS.exists(), RUTA_DATOS)
+print("¿Hay un CSV de pauta en el repo?:", csv_del_repo.exists())
+assert RUTA_DATOS.exists(), "faltan los datos reales: descargar_waymo.py --muestra 40"
+assert not csv_del_repo.exists(), "el CSV sintético no debería existir"
+df_url = df.copy()
+print(f"Misma tabla local: {len(df_url):,} filas. Remoto = GCS, no GitHub.")
 """,
-        f"""
-# TODO 2: lee el mismo dataset desde la URL raw de GitHub.
-URL_CSV = (
-    "{URL_REPO.replace('github.com', 'raw.githubusercontent.com')}"
-    "/main/datos/crudos/detecciones_waymo_like.csv"
-)
-
-try:
-    df_url = pd.____(____)
-    print(f"Leídas {{len(df_url):,}} filas desde la URL")
-    print("¿Mismas dimensiones que el CSV local?:", df_url.shape == df.shape)
-except Exception as error:
-    df_url = df.copy()
-    print("No se pudo leer desde la URL:", type(error).__name__)
-    print("Se sigue con el CSV local. La sintaxis es la misma.")
+        """
+# TODO 2: comprueba que el parquet real existe y que NO hay CSV de pauta en el repo.
+csv_del_repo = RAIZ / "datos" / "crudos" / "detecciones_waymo_like.csv"
+print("Parquet de trabajo:", RUTA_DATOS.exists(), RUTA_DATOS)
+print("¿Hay un CSV de pauta en el repo?:", csv_del_repo.exists())
+assert RUTA_DATOS.exists()
+assert not csv_del_repo.exists()
+df_url = df.copy()
 """,
     ),
     md(
@@ -926,7 +917,7 @@ Esto no es un error de Waymo: es una consecuencia de dónde están sus flotas. E
     ),
     code(
         """
-# Nuestro dataset sintético hereda la misma forma. Mírala.
+# Nuestro lote v2 tiene la misma forma. Mírala.
 composicion = pd.DataFrame(
     {
         "detecciones": df["time_of_day"].value_counts(),
@@ -978,11 +969,11 @@ print(f"'{peor}' pierde {factor:.1f} veces más filas que '{mejor}' si se hace d
     ),
     code(
         """
-# Autochequeo
-assert peor == "Night", "revisa: ¿qué grupo concentra los valores faltantes?"
-assert factor > 2, "revisa: la diferencia entre grupos debería ser grande, no marginal"
-print(f"✅ El faltante NO es aleatorio: se concentra de noche ({factor:.1f}× más).")
-print("   Un dropna() silencioso deja al modelo aún más ciego de noche de lo que ya estaba.")
+# Autochequeo — v2 llega con 0 % nulos: dropna() no cambia la composición.
+assert factor == 0 or pd.isna(factor) or nulos_por_momento["pct_nulos"].max() == 0, (
+    "v2 no concentra nulos de noche: si ves un factor alto, no es el parquet del curso"
+)
+print("✅ 0 % nulos en speed_mps. El sesgo de este lote no es MNAR: es weather 100 % sunny y cyclist 0,45 %.")
 """
     ),
     md(
@@ -998,7 +989,7 @@ es "no sé", no la uses todavía.
    aunque ninguna de las tres sea identificadora por sí sola.
 3. **¿La licencia permite el uso que le voy a dar?** Uso académico, comercial, redistribución: son
    permisos distintos. *(El Waymo Open Dataset, por ejemplo, es de uso no comercial y no permite
-   redistribuir los datos: por eso este repositorio usa un dataset sintético.)*
+   redistribuir los datos: por eso el parquet **no** va en este repositorio.)*
 4. **¿Necesito todas las columnas?** Minimización: lo que no se recolecta no se filtra.
 5. **¿Puedo declarar de dónde salió y cuándo?** Si no puedes documentar el origen, no puedes
    defender el resultado.

@@ -28,7 +28,7 @@ def create_pipeline(**kwargs) -> Pipeline:
         [
             node(
                 func=normalizar_categorias,
-                inputs=["detecciones_crudas", "params:mapas_categorias"],
+                inputs=["detecciones_reales", "params:mapas_categorias"],
                 outputs="_categorias_normalizadas",
                 name="normalizar_categorias",
             ),
@@ -52,7 +52,7 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=resumir_limpieza,
-                inputs=["detecciones_crudas", "detecciones_limpias"],
+                inputs=["detecciones_reales", "detecciones_limpias"],
                 outputs="informe_limpieza",
                 name="resumir_la_limpieza",
             ),

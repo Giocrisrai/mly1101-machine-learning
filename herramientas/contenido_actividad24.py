@@ -17,7 +17,7 @@ agrupamiento, y se cubre la interpretación de **regresión** (MAE/RMSE en unida
 que el IL2.2 exige y que la Parcial 2 va a pedir sobre *House Prices*.
 
 Las cifras de clasificación salen del mismo pipeline que la Act. 2.2
-(``detecciones_waymo_like.csv``, semilla 42). Las funciones viven en
+(``datos/waymo_real/detecciones_reales.parquet``). Las funciones viven en
 ``src/interpretacion.py``, cubiertas por ``tests/test_interpretacion.py``.
 
 Regenerar:  python herramientas/construir_notebooks.py
@@ -125,7 +125,8 @@ else:
 sys.path.insert(0, str(RAIZ / "src"))
 sys.path.insert(0, str(RAIZ / "kedro_mly1101" / "src"))
 
-RUTA_DATOS = RAIZ / "datos" / "crudos" / "detecciones_waymo_like.csv"
+import waymo
+RUTA_DATOS = waymo.exigir_detecciones_reales(RAIZ)
 RUTA_PARAMETROS = RAIZ / "kedro_mly1101" / "conf" / "base" / "parameters.yml"
 print("Colab:", EN_COLAB, "| dataset:", RUTA_DATOS.exists())
 """
@@ -145,7 +146,7 @@ pd.set_option("display.width", 140)
 
 PARAMETROS = yaml.safe_load(RUTA_PARAMETROS.read_text(encoding="utf-8"))
 
-crudo = pd.read_csv(RUTA_DATOS)
+crudo = pd.read_parquet(RUTA_DATOS)
 paso = limpieza.normalizar_categorias(crudo, PARAMETROS["mapas_categorias"])
 paso = limpieza.descubrir_faltantes(paso, PARAMETROS["centinelas"])
 paso = limpieza.marcar_imposibles(paso, PARAMETROS["reglas_dominio"])

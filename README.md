@@ -18,8 +18,8 @@ tabla** y partir train/test **por segmento**. Las fotos (JPEG) y las nubes LiDAR
 | **2** | Abre el notebook, *guardar copia en Drive*, misma cuenta | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/14_opcional_waymo_buckets.ipynb) `14_opcional_waymo_buckets.ipynb` |
 | **3** | Una celda arma el lote (o en local: `uv run python herramientas/descargar_waymo.py --lote 8`) | Sale `datos/waymo_real/detecciones_reales.parquet`. Si ya hay `muestra/` con varios segmentos, **no pide GCS**: los junta. |
 | **4** | Analítica, **partir por grupo**, transformaciones (mismos nodos de Kedro), volúmenes | Mismas celdas del notebook 14 |
-| **5** | Actividades 1.1–3.3 del aula | El CSV del repo (mismas cifras que la pauta) |
-| **6** | Proyecto de equipo · pipeline real | Esa tabla; `cd kedro_mly1101 && uv run kedro run --pipeline waymo_real` |
+| **5** | Actividades 1.1–3.3 del aula | El mismo parquet real |
+| **6** | Proyecto de equipo · pipeline | `cd kedro_mly1101 && uv run kedro run` (34 nodos) |
 | **7** | RAM / disco / S3 / Databricks | [`docs/recorrido_waymo.md`](docs/recorrido_waymo.md) · [lab AWS](docs/aws_academy_laboratorio.md) · [Databricks Free](docs/databricks_free.md) |
 
 En local, si ya bajaste segmentos, el paso 3 **no pide GCS de nuevo**.
@@ -223,49 +223,43 @@ uv sync --extra kedro
 cd kedro_mly1101 && uv run kedro run
 ```
 
-**30 nodos** en cinco pipelines sobre el CSV, más `ingesta` (5) y `waymo_real` (35 = esas 5 + el
-grafo remapeado). Del CSV crudo a la selección sustentada del modelo:
+**34 nodos** (`__default__` = `waymo_real`): ingesta de Perception v2 + EDA + ML. Del parquet
+real a la selección sustentada del modelo:
 
 | Experiencia | Pipeline | Nodos | Consume | Estado |
 |---|---|---|---|---|
-| **RA1** · Datos | `calidad` · `preprocesamiento` | 4 + 5 | El CSV crudo | ✅ |
+| **RA1** · Datos | `calidad` · `preprocesamiento` | 4 + 5 | `detecciones_reales` | ✅ |
 | **RA2** · Supervisado (Act. 2.2) | `supervisado` | 8 | `detecciones_limpias` | ✅ |
 | **RA2** · No supervisado (Act. 2.3) | `no_supervisado` | 7 | `detecciones_limpias` | ✅ |
 | **RA3** · Optimización (Act. 3.1–3.3) | `optimizacion` | 6 | Salidas de `supervisado` | ✅ |
-| — · Fuentes reales | `ingesta` | 5 | `datos/waymo_real/` | ✅ inventario + v2 + camera_box + E2E |
-| — · EDA + ML reales | `waymo_real` | 35 | Perception v2 al modelo | ✅ mismo grafo, sin duplicar nodos |
+| — · Fuentes | `ingesta` | 4 | `datos/waymo_real/muestra/` | ✅ inventario + v2 + camera_box + E2E |
+| — · Todo | `__default__` = `waymo_real` | 34 | Perception v2 al modelo | ✅ |
 
 El pipeline `supervisado` responde una pregunta con sustancia: **¿se puede anticipar qué
-detecciones van a ser difíciles?** Alcanza un 90 % de exactitud con un F1 de **0,46 en la clase
-minoritaria** — se pierde el 60 % de las detecciones difíciles, que eran justo las que
-interesaban. Ese contraste es el material de clase, no un defecto que haya que tapar.
-
-### Y lo mismo sobre datos REALES de Waymo
+detecciones van a ser difíciles?** Sobre v2 alcanza exactitud 0,7805 con un F1 de **0,0893 en
+`LEVEL_2`** — se pierde el 94 % de las detecciones difíciles. Ese contraste es el material de
+clase, no un defecto que haya que tapar.
 
 ```bash
 python herramientas/descargar_waymo.py --muestra 40      # ~40 MB, tras aceptar los términos
-cd kedro_mly1101 && uv run kedro run --pipeline waymo_real
+cd kedro_mly1101 && uv run kedro run
 ```
 
-**No duplica ni un nodo:** reutiliza el mismo grafo remapeando su entrada. Cifras **medidas**
-el 2026-09-08 sobre Perception v2 (40 segmentos en `datos/waymo_real/muestra/`):
+Cifras **medidas** el 2026-09-08 sobre Perception v2 (40 segmentos):
 
-| | CSV del repo (pauta) | Waymo v2 (disco) |
-|---|---|---|
-| Filas · segmentos | 40.680 · 153 | **530.396 · 40** |
-| vehicle / sign / peatón / ciclista | 61,73 / 8,12 / 26,22 / 1,94 % | **256.855 / 140.319 / 130.836 / 2.386** |
-| `weather` | 3 categorías sucias | **530.396 `sunny`** |
-| Celdas faltantes / valores imposibles | 10 defectos inyectados | **0 / 0** |
-| F1 `LEVEL_2` (prueba) | 0,46 | **0,0893** (recall 0,0588 · 1.572 aciertos de 26.713) |
-| Exactitud | 0,90 | **0,7805** |
-| Silueta | máximo en k=3 | **0,5228 → 0,6103 (k=2…8), sin codo** |
+| | Waymo v2 |
+|---|---|
+| Filas · segmentos | **530.396 · 40** |
+| vehicle / sign / peatón / ciclista | **256.855 / 140.319 / 130.836 / 2.386** |
+| `weather` | **530.396 `sunny`** |
+| Celdas faltantes / valores imposibles | **0 / 0** |
+| F1 `LEVEL_2` (prueba) | **0,0893** (recall 0,0588 · 1.572 aciertos de 26.713) |
+| Exactitud | **0,7805** |
+| Silueta | **0,5228 → 0,6103 (k=2…8), sin codo** |
 
-> La última fila de F1 es la lección del curso: **un resultado sobre el CSV de práctica no
-> predice el Open Dataset.** El CSV sirve para la pauta; Waymo, para saber si el método aguanta.
-
-**Qué hay en disco (inventario Kedro, 10:55).** v2 entra al modelo. `camera_box` = 407.267 filas
-(40 segmentos, 7,181 MB). E2E = JSON de 479 secuencias (0,035 MB). `camera_image`, v1 y Motion =
-0 archivos. `kedro run --pipeline waymo_real` cerró **35/35** en 1568,4 s (11:21); F1 `LEVEL_2` = 0,0893.
+**Qué hay en disco.** v2 entra al modelo. `camera_box` = 407.267 filas (40 segmentos).
+E2E = JSON de 479 secuencias. `camera_image`, v1 y Motion = 0 archivos.
+`kedro run` cierra **34/34**; F1 `LEVEL_2` = 0,0893.
 
 Los detalles y el informe por clase están en [`kedro_mly1101/README.md`](kedro_mly1101/README.md).
 
@@ -371,33 +365,24 @@ jupyter lab notebooks/01_alumno_exploracion.ipynb
 
 ## Los datos
 
-`datos/crudos/detecciones_waymo_like.csv` — 40.680 detecciones de objetos, 16 columnas.
+**No hay CSV en el repositorio.** La tabla de las Act. 1.1–3.3 es Perception v2 real:
 
-Es un dataset **sintético** que usa el mismo esquema del componente `lidar_box` del
-[Waymo Open Dataset v2](https://waymo.com/open/). Contiene **10 defectos de calidad inyectados a
-propósito**, documentados en `src/generar_dataset.py::CATALOGO_DEFECTOS` y verificados por
-`pytest`. El diccionario de datos está en [`datos/README.md`](datos/README.md).
-
-No hay ningún dato real de Waymo en este repositorio: su licencia es de uso no comercial y no
-permite redistribución. El notebook `00_opcional_waymo_real.ipynb` explica cómo obtener el
-Perception v2 (parquet) y comparar el sintético con el real. `14_opcional_waymo_buckets.ipynb`
-arma el lote liviano, parte por grupo e **inventaria** los otros tres productos de
-[waymo.com/open/download](https://waymo.com/open/download/) — Motion v1.3.1, End-to-End camera
-v1.0.0 y Perception v1.4.3 —: se listan; no se bajan tfrecord de GB ni JPEG. El EDA y el ML del
-curso sobre datos reales corren **solo** sobre v2.
-
-**Los datos reales son más livianos de lo que parece:** el análisis solo necesita los componentes
-`lidar_box` (~1 MB por segmento) y `stats` (~23 KB). Los terabytes del Waymo Open Dataset son las
-imágenes y las nubes de puntos, que aquí no se usan. Un alumno con cuenta de Google puede hacerlo
-en clase.
-
-Para regenerarlo o cambiar su tamaño:
+`datos/waymo_real/detecciones_reales.parquet` — **530.396** detecciones, **40** segmentos
+(medido 2026-09-08). Está en `.gitignore`: la licencia de Waymo es de uso no comercial y
+**prohíbe redistribuir** los datos.
 
 ```bash
-python src/generar_dataset.py --filas 40000 --semilla 42
+# Tras aceptar https://waymo.com/open/terms/
+uv run python herramientas/descargar_waymo.py --muestra 40
 ```
 
-Misma semilla ⇒ archivo idéntico byte a byte.
+El diccionario y los conteos están en [`datos/README.md`](datos/README.md). El notebook
+`14_opcional_waymo_buckets.ipynb` arma el lote; `00_opcional_waymo_real.ipynb` hace EDA de un
+segmento. `kedro run` (34 nodos) es el ciclo completo sobre esa tabla. `camera_box` y E2E se
+inventarian; **no** entran al modelo.
+
+Las evaluaciones parciales y el EFT usan los casos oficiales (*Telco Churn*, *House Prices*,
+*Spotify Tracks*), no este hilo.
 
 ---
 
@@ -408,10 +393,9 @@ pyproject.toml       dependencias, extras y configuración de pytest/ruff (entor
 uv.lock              versiones exactas: es lo que hace reproducible el entorno
 requirements.txt     el mismo entorno para quien prefiera pip
 
-datos/crudos/        dataset de trabajo (versionado, para que Colab funcione con un clic)
+datos/waymo_real/     Perception v2 (gitignored). Tabla de trabajo: detecciones_reales.parquet
 
 src/
-  generar_dataset.py    generador determinista del dataset
   eda.py                utilidades de diagnóstico de calidad de datos      (Act. 1.3)
   fuentes.py            lectura desde SQL, JSON anidado y texto libre      (Act. 1.1)
   formatos.py           benchmark de formatos y pérdida de tipos           (Act. 1.2)
@@ -471,13 +455,12 @@ Editar los `.ipynb` directamente funciona hasta el siguiente build, que los sobr
 uv run pytest        # o simplemente `pytest` si ya activaste el entorno
 ```
 
-**247 tests en total** (contado con `pytest --collect-only` el 2026-09-08), repartidos así:
+**228 tests en total** (contado con `pytest --collect-only` el 2026-09-08), repartidos así:
 
 | Archivo | Tests | Qué verifica |
 |---|---|---|
-| `tests/test_generar_dataset.py` | 19 | Reproducibilidad byte a byte y presencia de **cada uno de los 10 defectos** |
 | `tests/test_pipeline_kedro.py` | 19 | Los nodos de calidad y limpieza, y que el grafo se construya sin ciclos |
-| `tests/test_pipeline_supervisado.py` | 17 | La partición sin fuga, el entrenamiento, las fugas y que `waymo_real` = 35 nodos |
+| `tests/test_pipeline_supervisado.py` | 17 | La partición sin fuga, el entrenamiento, las fugas y que `__default__` = `waymo_real` = 34 nodos |
 | `tests/test_pipeline_no_supervisado.py` | 14 | El escalado antes de agrupar, la elección de k y la interpretación |
 | `tests/test_ingesta_waymo.py` | 17 | Traducción v2, `camera_box`/E2E a la vista y que no entran al RF |
 | `tests/test_pipeline_optimizacion.py` | 14 | Que la búsqueda nunca toque la prueba, y la selección sustentada |
@@ -558,7 +541,8 @@ En términos prácticos, puedes:
 Si lo reutilizas, una atribución razonable sería:
 *"Basado en material de MLY1101 · Giocrisrai Godoy Bonillo, Duoc UC (github.com/Giocrisrai/mly1101-machine-learning), CC BY-NC-SA 4.0"*.
 
-El dataset `detecciones_waymo_like.csv` es sintético y queda cubierto por esta misma licencia.
+El dataset de Waymo **no está** en este repositorio (licencia no comercial, sin redistribución).
+El código y el material docente quedan cubiertos por CC BY-NC-SA 4.0.
 El **Waymo Open Dataset no se distribuye aquí**: tiene su propia licencia de uso no comercial
 ([términos](https://waymo.com/open/terms/)) y cada persona debe aceptarla y descargar los datos
 por su cuenta.

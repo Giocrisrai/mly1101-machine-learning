@@ -2,8 +2,8 @@
 
 Produce ``detecciones_reales`` (Perception v2) y deja a la vista las otras
 fuentes locales: inventario, ``camera_box`` (tabla 2D) y metadatos E2E.
-El resto del grafo se remapea sobre ``detecciones_reales``; no se mezclan
-productos (ver ``pipeline_registry.py``).
+El resto del grafo consume ``detecciones_reales``; no se mezclan productos
+(ver ``pipeline_registry.py``).
 """
 
 from __future__ import annotations
@@ -11,7 +11,6 @@ from __future__ import annotations
 from kedro.pipeline import Pipeline, node
 
 from .nodes import (
-    comparar_con_sintetico,
     ensamblar_cajas_camara,
     inventariar_fuentes,
     leer_metadatos_e2e,
@@ -45,12 +44,6 @@ def create_pipeline(**kwargs) -> Pipeline:
                 inputs="params:fuentes_waymo.raiz",
                 outputs="metadatos_e2e",
                 name="leer_metadatos_e2e",
-            ),
-            node(
-                func=comparar_con_sintetico,
-                inputs=["detecciones_reales", "detecciones_crudas"],
-                outputs="comparacion_real_vs_sintetico",
-                name="comparar_real_contra_sintetico",
             ),
         ]
     )

@@ -2,7 +2,7 @@
 
 No se declara el ORDEN de ejecución, solo las dependencias de cada nodo: qué
 recibe y qué produce. Kedro construye el grafo y deduce el orden. Los cuatro
-nodos dependen únicamente de ``detecciones_crudas``, así que son independientes
+nodos dependen únicamente de ``detecciones_reales``, así que son independientes
 entre sí y pueden correr en paralelo con ``--runner=ParallelRunner``.
 """
 
@@ -18,25 +18,25 @@ def create_pipeline(**kwargs) -> Pipeline:
         [
             node(
                 func=diagnosticar,
-                inputs="detecciones_crudas",
+                inputs="detecciones_reales",
                 outputs="resumen_calidad",
                 name="diagnosticar_calidad",
             ),
             node(
                 func=medir_desbalance,
-                inputs=["detecciones_crudas", "params:mapas_categorias"],
+                inputs=["detecciones_reales", "params:mapas_categorias"],
                 outputs="desbalance_clases",
                 name="medir_desbalance_de_clases",
             ),
             node(
                 func=auditar_dominio,
-                inputs=["detecciones_crudas", "params:reglas_dominio"],
+                inputs=["detecciones_reales", "params:reglas_dominio"],
                 outputs="valores_imposibles",
                 name="auditar_reglas_de_dominio",
             ),
             node(
                 func=medir_sesgo,
-                inputs=["detecciones_crudas", "params:sesgo"],
+                inputs=["detecciones_reales", "params:sesgo"],
                 outputs="nulos_por_grupo",
                 name="medir_sesgo_de_faltantes",
             ),

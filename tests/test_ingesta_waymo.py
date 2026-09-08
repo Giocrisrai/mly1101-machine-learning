@@ -4,8 +4,8 @@ Los que necesitan datos reales se **saltan** si no están descargados, igual que
 ``tests/test_mapeo_waymo.py``: la licencia de Waymo prohíbe redistribuirlos, así
 que no pueden vivir en el repositorio.
 
-Los que no los necesitan usan Parquet sintéticos con el esquema real, verificado
-contra un archivo de verdad el 2026-08-26.
+Los que no los necesitan usan un DataFrame con el esquema de ``lidar_box``,
+verificado contra un archivo de verdad el 2026-08-26.
 """
 
 from __future__ import annotations
@@ -192,12 +192,9 @@ def test_leer_metadatos_e2e_vacio_si_no_hay_json(tmp_path: Path) -> None:
     assert list(tabla.columns) == ["secuencia", "cluster"]
 
 
-def test_comparar_con_sintetico_produce_una_tabla(cajas, stats) -> None:
-    reales = waymo.traducir_esquema(cajas, stats)
-    sinteticas = pd.read_csv(RAIZ / "datos" / "crudos" / "detecciones_waymo_like.csv")
-    tabla = ingesta.comparar_con_sintetico(reales, sinteticas)
-    assert set(tabla.columns) == {"metrica", "real", "sintetico"}
-    assert "% cyclist" in set(tabla["metrica"])
+def test_comparar_con_sintetico_ya_no_existe() -> None:
+    """El hilo sintético se retiró: la ingesta no contrasta contra un CSV de pauta."""
+    assert not hasattr(ingesta, "comparar_con_sintetico")
 
 
 # --- Contra los datos reales, si están descargados ---------------------------

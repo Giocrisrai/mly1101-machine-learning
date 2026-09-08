@@ -54,10 +54,9 @@ aplica al **lote real de Waymo** (notebook 14) o al dataset que elijan.
 3. Rellena los campos marcados con `____` y ejecuta las celdas en orden.
 4. Trabaja en una rama, no en `main`, y entra a `main` por Pull Request.
 
-> **Funciona sin configurar nada.** Si existe `datos/waymo_real/detecciones_reales.parquet`
-> (lo arma el notebook 14), lo carga. Si no, usa el CSV de la asignatura para que el
-> notebook corra como ejemplo. Si eligen **otro** dataset, cambian **una sola variable**
-> (`RUTA_MI_DATASET`) y el resto se aplica solo.
+> **Funciona sin configurar nada** si ya corriste el notebook 14 (o
+> `descargar_waymo.py --muestra 40`). Carga `datos/waymo_real/detecciones_reales.parquet`.
+> Si eligen **otro** dataset, cambian **una sola variable** (`RUTA_MI_DATASET`).
 
 ---
 
@@ -116,7 +115,7 @@ import waymo
 # ---------------------------------------------------------------------------
 # ⬇️  LA ÚNICA LÍNEA QUE TIENEN QUE CAMBIAR
 #
-#     None                      -> lote real (notebook 14) o CSV de la asignatura
+#     None                      -> lote real (notebook 14)
 #     "mis_datos.csv"           -> un archivo que subieron a Colab
 #     "https://.../datos.csv"   -> una URL pública
 # ---------------------------------------------------------------------------
@@ -133,12 +132,9 @@ else:
     ORIGEN = RUTA_MI_DATASET
 
 print("Colab:", EN_COLAB)
-if ES_EJEMPLO and origen == "real":
+if ES_EJEMPLO:
     print("✅ Lote real de Waymo (notebook 14):", ORIGEN)
     print("    Parte train/test por segment_id (waymo.partir_por_grupo), no al azar.")
-elif ES_EJEMPLO:
-    print("⚠️  CSV de la asignatura (ejemplo). Para datos reales: notebook 14, luego reejecuta.")
-    print("    O cambia RUTA_MI_DATASET cuando tengan el suyo.")
 else:
     print("✅ Usando el dataset del equipo:", ORIGEN)
 """

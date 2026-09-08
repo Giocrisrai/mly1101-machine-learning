@@ -1,9 +1,9 @@
 # Catálogo de datos — el ÚNICO lugar del proyecto donde hay rutas.
 #
-# Los nodos conocen los datos por su nombre; dónde viven y en qué formato se
-# declara aquí. Por eso cambiar de CSV local a un Volume de Databricks (Delta) es editar
-# este archivo y ni una línea del análisis (ver docs/databricks_free.md y el bloque 7 del
-# notebook 04). Los nodos siguen en pandas: el catálogo no los vuelve Spark solos.
+# Un solo hilo: Perception v2 real. Los nodos conocen los datos por su nombre;
+# dónde viven y en qué formato se declara aquí. Cambiar a un Volume de Databricks
+# (Delta) es editar este archivo y ni una línea del análisis
+# (ver docs/databricks_free.md y el bloque 7 del notebook 04).
 #
 # Las capas siguen la convención de Kedro:
 #   01_raw          lo que llegó, no se toca
@@ -11,14 +11,38 @@
 #   03_primary      el dataset limpio, listo para modelar
 
 # --------------------------------------------------------------------------
-# 01_raw — la entrada. Ruta relativa a la raíz de ESTE proyecto, no del repo.
+# 01_raw — Perception v2. No está en el repositorio (licencia Waymo).
+#   python herramientas/descargar_waymo.py --muestra 40
 # --------------------------------------------------------------------------
-detecciones_crudas:
+waymo_muestra:
+  type: partitions.PartitionedDataset
+  path: ../datos/waymo_real/muestra
+  dataset: pandas.ParquetDataset
+  filename_suffix: ".parquet"
+
+# La ingesta traduce la muestra a esta tabla. Los notebooks leen el mismo archivo.
+detecciones_reales:
+  type: pandas.ParquetDataset
+  filepath: ../datos/waymo_real/detecciones_reales.parquet
+
+inventario_fuentes_waymo:
   type: pandas.CSVDataset
-  filepath: ../datos/crudos/detecciones_waymo_like.csv
+  filepath: data/02_intermediate/inventario_fuentes_waymo.csv
+  save_args:
+    index: false
+
+cajas_camara_2d:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/cajas_camara_2d.parquet
+
+metadatos_e2e:
+  type: pandas.CSVDataset
+  filepath: data/02_intermediate/metadatos_e2e.csv
+  save_args:
+    index: false
 
 # --------------------------------------------------------------------------
-# 02_intermediate — salidas del diagnóstico de calidad (RA1, Actividad 1.3)
+# 02_intermediate — diagnósticos de calidad (RA1, Actividad 1.3)
 # --------------------------------------------------------------------------
 resumen_calidad:
   type: pandas.CSVDataset
@@ -45,11 +69,7 @@ nulos_por_grupo:
     index: true
 
 # --------------------------------------------------------------------------
-# 03_primary — el dataset limpio.
-#
-# Parquet y no CSV, por lo medido en la Actividad 1.2: pesa 0,40x y es el único
-# formato que conserva los dtypes. Guardar aquí en CSV desharía el trabajo de
-# preprocesamiento en el momento de escribirlo.
+# 03_primary — el dataset limpio (Parquet para conservar dtypes).
 # --------------------------------------------------------------------------
 detecciones_limpias:
   type: pandas.ParquetDataset
@@ -140,175 +160,40 @@ proyeccion_2d:
   filepath: data/07_model_output/proyeccion_2d.parquet
 
 # --------------------------------------------------------------------------
-# Datos REALES de Waymo (opcionales)
-#
-# NO están en el repositorio: la licencia de Waymo es de uso no comercial y
-# prohíbe redistribuirlos. Se descargan con herramientas/descargar_waymo.py
-# tras aceptar los términos en https://waymo.com/open/terms/
-#
-# Sin ellos, `kedro run` (el pipeline por defecto) funciona igual: solo el
-# pipeline `waymo_real` los necesita.
-# --------------------------------------------------------------------------
-# Varios segmentos, no uno: con un solo segmento no se puede partir en
-# entrenamiento y prueba sin fuga (todas las detecciones comparten contexto).
-#   python herramientas/descargar_waymo.py --muestra 40
-#   (si ya está la muestra, ` --lote 8` ensambla la tabla sin pedir GCS)
-waymo_muestra:
-  type: partitions.PartitionedDataset
-  path: ../datos/waymo_real/muestra
-  dataset: pandas.ParquetDataset
-  filename_suffix: ".parquet"
-
-detecciones_reales:
-  type: pandas.ParquetDataset
-  filepath: data/01_raw/detecciones_reales.parquet
-
-inventario_fuentes_waymo:
-  type: pandas.CSVDataset
-  filepath: data/02_intermediate/inventario_fuentes_waymo.csv
-  save_args:
-    index: false
-
-cajas_camara_2d:
-  type: pandas.ParquetDataset
-  filepath: data/02_intermediate/cajas_camara_2d.parquet
-
-metadatos_e2e:
-  type: pandas.CSVDataset
-  filepath: data/02_intermediate/metadatos_e2e.csv
-  save_args:
-    index: false
-
-comparacion_real_vs_sintetico:
-  type: pandas.CSVDataset
-  filepath: data/02_intermediate/comparacion_real_vs_sintetico.csv
-  save_args:
-    index: false
-
-# --------------------------------------------------------------------------
-# Salidas del recorrido sobre datos REALES (pipeline `waymo_real`)
-#
-# Son los mismos nodos que producen las salidas de arriba, remapeados. Van a
-# carpetas aparte para poder comparar los dos recorridos lado a lado.
-# --------------------------------------------------------------------------
-resumen_calidad_real:
-  type: pandas.CSVDataset
-  filepath: data/waymo/02_intermediate/resumen_calidad.csv
-  save_args: {index: true}
-
-valores_imposibles_real:
-  type: pandas.CSVDataset
-  filepath: data/waymo/02_intermediate/valores_imposibles.csv
-  save_args: {index: false}
-
-nulos_por_grupo_real:
-  type: pandas.CSVDataset
-  filepath: data/waymo/02_intermediate/nulos_por_grupo.csv
-  save_args: {index: true}
-
-detecciones_limpias_reales:
-  type: pandas.ParquetDataset
-  filepath: data/waymo/03_primary/detecciones_limpias.parquet
-
-informe_limpieza_real:
-  type: pandas.CSVDataset
-  filepath: data/waymo/03_primary/informe_limpieza.csv
-  save_args: {index: false}
-
-metricas_por_clase_real:
-  type: pandas.CSVDataset
-  filepath: data/waymo/07_model_output/metricas_por_clase.csv
-  save_args: {index: false}
-
-matriz_confusion_real:
-  type: pandas.CSVDataset
-  filepath: data/waymo/07_model_output/matriz_confusion.csv
-  save_args: {index: true}
-
-fuga_de_variable_real:
-  type: pandas.CSVDataset
-  filepath: data/waymo/07_model_output/fuga_de_variable.csv
-  save_args: {index: false}
-
-perfil_de_grupos_real:
-  type: pandas.CSVDataset
-  filepath: data/waymo/07_model_output/perfil_de_grupos.csv
-  save_args: {index: false}
-
-grupos_vs_etiqueta_real:
-  type: pandas.CSVDataset
-  filepath: data/waymo/07_model_output/grupos_vs_etiqueta.csv
-  save_args: {index: false}
-
-busqueda_de_k_real:
-  type: pandas.CSVDataset
-  filepath: data/waymo/07_model_output/busqueda_de_k.csv
-  save_args: {index: false}
-
-varianza_pca_real:
-  type: pandas.CSVDataset
-  filepath: data/waymo/07_model_output/varianza_pca.csv
-  save_args: {index: false}
-
-# --------------------------------------------------------------------------
 # RA3 · Optimización y ensamble
 # --------------------------------------------------------------------------
 busqueda_hiperparametros:
   type: pandas.CSVDataset
   filepath: data/07_model_output/busqueda_hiperparametros.csv
-  save_args: {index: false}
+  save_args:
+    index: false
 
 ganancia_del_ajuste:
   type: pandas.CSVDataset
   filepath: data/07_model_output/ganancia_del_ajuste.csv
-  save_args: {index: false}
+  save_args:
+    index: false
 
 fuga_por_ajuste:
   type: pandas.CSVDataset
   filepath: data/07_model_output/fuga_por_ajuste.csv
-  save_args: {index: false}
+  save_args:
+    index: false
 
 comparacion_modelos:
   type: pandas.CSVDataset
   filepath: data/07_model_output/comparacion_modelos.csv
-  save_args: {index: false}
+  save_args:
+    index: false
 
 robustez_modelos:
   type: pandas.CSVDataset
   filepath: data/07_model_output/robustez_modelos.csv
-  save_args: {index: false}
+  save_args:
+    index: false
 
 seleccion_de_modelo:
   type: pandas.CSVDataset
   filepath: data/07_model_output/seleccion_de_modelo.csv
-  save_args: {index: false}
-
-busqueda_hiperparametros_real:
-  type: pandas.CSVDataset
-  filepath: data/waymo/07_model_output/busqueda_hiperparametros.csv
-  save_args: {index: false}
-
-ganancia_del_ajuste_real:
-  type: pandas.CSVDataset
-  filepath: data/waymo/07_model_output/ganancia_del_ajuste.csv
-  save_args: {index: false}
-
-fuga_por_ajuste_real:
-  type: pandas.CSVDataset
-  filepath: data/waymo/07_model_output/fuga_por_ajuste.csv
-  save_args: {index: false}
-
-comparacion_modelos_real:
-  type: pandas.CSVDataset
-  filepath: data/waymo/07_model_output/comparacion_modelos.csv
-  save_args: {index: false}
-
-robustez_modelos_real:
-  type: pandas.CSVDataset
-  filepath: data/waymo/07_model_output/robustez_modelos.csv
-  save_args: {index: false}
-
-seleccion_de_modelo_real:
-  type: pandas.CSVDataset
-  filepath: data/waymo/07_model_output/seleccion_de_modelo.csv
-  save_args: {index: false}
+  save_args:
+    index: false

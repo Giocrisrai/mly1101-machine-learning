@@ -22,12 +22,11 @@ uv run kedro run --pipeline calidad            # solo el diagnóstico
 uv run kedro run --pipeline preprocesamiento   # solo la limpieza
 uv run kedro run --pipeline supervisado        # solo el modelamiento
 uv run kedro run --pipeline no_supervisado     # solo el agrupamiento
-uv run kedro run --pipeline ingesta            # 5 nodos: inventario + v2 + camera_box + E2E
-uv run kedro run --pipeline waymo_real         # 35 nodos: eso + EDA + ML sobre Perception v2
+uv run kedro run --pipeline ingesta            # 4 nodos: inventario + v2 + camera_box + E2E
+uv run kedro run --pipeline waymo_real         # alias de `kedro run`: 34 nodos, Perception v2
 ```
 
-Las salidas van a `data/` (sintético) y `data/waymo/` (real), que **no se versionan**. El
-recorrido sintético tarda un par de minutos; `waymo_real` sobre 530 k filas, alrededor de 15.
+Las salidas van a `data/` (no se versionan). Sobre 530 k filas tarda alrededor de 15 minutos.
 
 Para ver el grafo en el navegador:
 

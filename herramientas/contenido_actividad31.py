@@ -3,7 +3,7 @@
 Indicador de logro **IL 3.1**: *aplica estrategias de ajuste de hiperparámetros para
 maximizar el rendimiento y la eficiencia de los modelos seleccionados.*
 
-**6 horas pedagógicas.** Cifras medidas sobre ``detecciones_waymo_like.csv``, semilla 42.
+**6 horas pedagógicas.** Cifras medidas sobre Perception v2 real.
 
 Regenerar:  python herramientas/construir_notebooks.py
 """
@@ -33,7 +33,8 @@ else:
 sys.path.insert(0, str(RAIZ / "src"))
 sys.path.insert(0, str(RAIZ / "kedro_mly1101" / "src"))
 
-RUTA_DATOS = RAIZ / "datos" / "crudos" / "detecciones_waymo_like.csv"
+import waymo
+RUTA_DATOS = waymo.exigir_detecciones_reales(RAIZ)
 RUTA_PARAMETROS = RAIZ / "kedro_mly1101" / "conf" / "base" / "parameters.yml"
 print("Colab:", EN_COLAB, "| dataset:", RUTA_DATOS.exists())
 """
@@ -57,7 +58,7 @@ PARAMETROS = yaml.safe_load(RUTA_PARAMETROS.read_text(encoding="utf-8"))
 CONFIG, FUGA, AJUSTE = PARAMETROS["modelo"], PARAMETROS["fuga"], PARAMETROS["ajuste"]
 
 # La misma cadena de siempre: limpieza del RA1 -> partición del RA2.
-crudo = pd.read_csv(RUTA_DATOS)
+crudo = pd.read_parquet(RUTA_DATOS)
 paso = limpieza.normalizar_categorias(crudo, PARAMETROS["mapas_categorias"])
 paso = limpieza.descubrir_faltantes(paso, PARAMETROS["centinelas"])
 paso = limpieza.marcar_imposibles(paso, PARAMETROS["reglas_dominio"])

@@ -68,24 +68,23 @@ estructural.
    declara su versión resuelta y, opcionalmente, su versión con `TODO`. Nunca crees dos versiones
    separadas: se desincronizan.
 
-3. **Los 10 defectos del dataset son intencionales.** Están en
-   `src/generar_dataset.py::CATALOGO_DEFECTOS` y cada uno tiene un test. No los "arregles". Si
-   cambias el generador, los tests te dirán qué pauta quedó desalineada.
+3. **No hay dataset sintético.** La única tabla de las Act. 1.1–3.3 es Perception v2
+   (`datos/waymo_real/detecciones_reales.parquet`, gitignored). Si faltan los datos, el código
+   **falla** y dice cómo bajarlos. No generes CSV, no inventes filas, no pongas un fallback.
 
 4. **El material está bajo CC BY-NC-SA 4.0** (ver `LICENSE`). No agregues contenido de terceros
    con licencia incompatible.
 
 5. **Nunca agregues datos reales de Waymo al repositorio.** Su licencia es de uso no comercial y
-   prohíbe la redistribución. `datos/waymo_real/` está en `.gitignore`. El pipeline `waymo_real`
-   los lee de ahí y **se salta limpio** si no están: `pytest` y `kedro run` funcionan sin ellos.
+   prohíbe la redistribución. `datos/waymo_real/` está en `.gitignore`. Sin la muestra,
+   `kedro run` no arranca; los tests de Waymo se **saltan** y el resto de `pytest` sigue verde.
 
    Para el recorrido supervisado hacen falta **varios segmentos**
    (`descargar_waymo.py --muestra 40`): con uno solo no se puede partir en entrenamiento y prueba
    sin fuga, y el pipeline falla a propósito con un mensaje que lo explica en vez de apañarlo.
 
-6. **Las cifras de la pauta y de la rúbrica deben verificarse contra el CSV**, no citarse de
-   memoria. Si cambias `--filas` o la semilla, todas las cifras del solucionario, del guion de
-   clase y de la rúbrica quedan obsoletas.
+6. **Las cifras de la pauta y de la rúbrica se verifican contra el parquet real**, no de
+   memoria. El lote medido el 2026-09-08: 530.396 filas, 40 segmentos.
 
 7. **`pandas` está fijado por debajo de 3.0 a propósito.** En pandas 3 una columna de texto deja
    de tener `dtype == object` y pasa a `str`. Varias celdas del material —y sus tests— enseñan
@@ -98,11 +97,11 @@ estructural.
    ocultaba porque escribe a Parquet y al releer vuelve a `float`; los notebooks de las
    Act. 2.2 y 2.3 llaman los nodos **en proceso** y ahí sí falla. Hay dos tests que lo fijan.
 
-9. **El pipeline de `kedro_mly1101/` SÍ se versiona; sus salidas (`data/`) no.** Es la columna
-   de ingeniería del curso: `calidad`, `preprocesamiento`, `supervisado` (RA2 · Act. 2.2),
-   `no_supervisado` (RA2 · Act. 2.3), `optimizacion` (RA3) e `ingesta`. El pipeline `waymo_real` corre **el mismo grafo sobre
-   datos reales remapeando su entrada**: nunca dupliques nodos para datos reales. Sus nodos **reutilizan `src/eda.py`**, nunca reimplementan el análisis, y las decisiones
-   de limpieza viven en `conf/base/parameters.yml`, no en el código.
+9. **El pipeline de `kedro_mly1101/` SÍ se versiona; sus salidas (`data/`) no.**
+   `__default__` y `waymo_real` son **el mismo grafo** (34 nodos): ingesta de la muestra +
+   calidad + preprocesamiento + supervisado + no supervisado + optimización. Nunca dupliques
+   nodos. Reutilizan `src/eda.py`. Las decisiones de limpieza viven en
+   `conf/base/parameters.yml`, no en el código.
 
 10. **La rúbrica usa dos numeraciones y ambas son necesarias.** Los PPT definen IL 1.1, 1.2 y 1.3
    (uno por actividad); la corrección usa cinco dimensiones D1–D5, que en el código y en
@@ -113,10 +112,9 @@ estructural.
 
 ```bash
 uv sync                                        # entorno reproducible (pyproject.toml + uv.lock)
-uv run pytest                                  # 247 tests (esta máquina, extras + muestra)
-cd kedro_mly1101 && uv run kedro run && cd ..  # sintético: 30/30 nodos
-# Con datos reales descargados:  uv run kedro run --pipeline ingesta     # fuentes
-#                                uv run kedro run --pipeline waymo_real  # 35 nodos
+uv run pytest                                  # 228 tests (esta máquina, extras + muestra)
+cd kedro_mly1101 && uv run kedro run && cd ..  # 34 nodos, Perception v2 real
+# equivalente: uv run kedro run --pipeline waymo_real
 uv run python herramientas/construir_notebooks.py   # regenera todos los notebooks
 
 # Los notebooks con código resuelto deben ejecutar completos:
@@ -175,7 +173,7 @@ es sobre `google.cloud.storage`.
 | RA3 · Act. 3.1, 3.2 y 3.3 | ✅ completas y verificadas |
 | Evaluaciones formativas, parciales y EFT | ⏳ pendientes, sobre los casos oficiales |
 | Plantilla de proyecto de equipo | ✅ ejecuta de extremo a extremo |
-| Pipeline Kedro (`kedro_mly1101/`) | ✅ sintético 30/30 · `ingesta` 5/5 (2026-09-08 10:55) · `waymo_real` = 5+30 remapeados |
+| Pipeline Kedro (`kedro_mly1101/`) | ✅ `__default__` = `waymo_real` = 34 nodos (ingesta 4 + análisis 30) |
 | RA2 · Act. 2.2 y 2.3 (notebooks, pautas, pipeline) | ✅ completas y verificadas |
 | Datos reales de Waymo (`waymo_real`) | medido 2026-09-08: 530.396 detecciones v2 · 407.267 `camera_box` · 479 secuencias E2E. El RF **solo** ve v2. `kedro run --pipeline waymo_real` **35/35** en 1568,4 s (11:21) y **35/35** en 1107,6 s (13:48). F1 `LEVEL_2` = 0,0893 (mismos números que 09:09) |
 | Notebook opcional de Kedro y Databricks | ✅ `04_opcional_kedro_databricks` ejecutó local (nbconvert, 191,9 s). Free Edition en vivo 2026-09-08: Git Folder del repo público (rama `main`, sin PAT) + Volume managed `workspace.default.mly1101` (`/Volumes/workspace/default/mly1101`, vacío; no subir parquet al repo). `kedro run` **no** se muda al workspace |
@@ -231,7 +229,6 @@ PCA: 2 componentes explican **0,7447**. Grupos vs tipo: tres ~100 % `vehicle`; e
 
 **`camera_box` tipos** (enteros Waymo): type 1 = 297.902 · type 2 = 107.507 · type 4 = 1.858.
 
-El CSV sintético (40.680 filas, 10 defectos) es **solo** pauta de las Act. 1.1–3.3. No es Waymo.
 Telco / House Prices / Spotify: evaluaciones, no este hilo.
 
 `notebooks/00_opcional_waymo_real.ipynb`: EDA de un segmento, 2026-08-13,

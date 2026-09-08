@@ -8,8 +8,8 @@ De este archivo salen dos notebooks:
 - ``notebooks/03_alumno_estructuras.ipynb``   (versión con TODO)
 - ``notebooks/03_docente_estructuras.ipynb``  (versión resuelta con pauta)
 
-Todas las cifras de la pauta están medidas sobre ``detecciones_waymo_like.csv`` con la semilla
-42. Si se cambia ``--filas`` o la semilla del generador, hay que volver a medirlas.
+Todas las cifras de la pauta están medidas sobre Perception v2 real
+(``datos/waymo_real/detecciones_reales.parquet``).
 
 Regenerar los notebooks tras editar este archivo:
 
@@ -127,7 +127,8 @@ else:
     RAIZ = Path("..").resolve()
 
 sys.path.insert(0, str(RAIZ / "src"))
-RUTA_DATOS = RAIZ / "datos" / "crudos" / "detecciones_waymo_like.csv"
+import waymo
+RUTA_DATOS = waymo.exigir_detecciones_reales(RAIZ)
 
 # Carpeta de trabajo para los archivos que vamos a exportar en el bloque 6.
 SALIDAS = Path("salidas_act12")
@@ -151,7 +152,7 @@ import formatos  # comparación de formatos de almacenamiento: src/formatos.py
 pd.set_option("display.max_columns", 40)
 pd.set_option("display.width", 140)
 
-df = pd.read_csv(RUTA_DATOS)
+df = pd.read_parquet(RUTA_DATOS)
 print("pandas", pd.__version__, "| numpy", np.__version__)
 print(f"Dataset: {df.shape[0]:,} filas × {df.shape[1]} columnas")
 """
@@ -565,7 +566,7 @@ Dejan de coincidir en cuanto filtras, ordenas o eliminas filas. Y ahí empieza e
     ),
     code(
         """
-ciclistas = df[df["object_type"] == "CYCLIST"]
+ciclistas = df[df["object_type"].str.lower() == "cyclist"]
 
 print(f"Ciclistas: {len(ciclistas)}")
 print("Índice del resultado:", ciclistas.index[:5].tolist(), "...")

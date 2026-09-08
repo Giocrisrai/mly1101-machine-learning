@@ -3,9 +3,8 @@
 **Para el alumno.** Un mapa de **este** repositorio: qué clonas, qué bajas, dónde corre, y
 qué hace cada fase (analítica, EDA, modelamiento, pipelines, reentrenamiento y “productivo”).
 
-No es evaluación. Las Act. 1.1–3.3 se califican sobre el **CSV sintético** del repo. El lote
-real y `kedro run --pipeline waymo_real` son el hilo de clase / proyecto. Las parciales y el
-EFT van sobre *Telco Churn*, *House Prices* o *Spotify Tracks*.
+No es evaluación. Las Act. 1.1–3.3 y `kedro run` usan **Perception v2 real**. Las parciales
+y el EFT van sobre *Telco Churn*, *House Prices* o *Spotify Tracks*.
 
 El mapa de **servicios AWS** (sí/no, USD 50) está en
 [`aws_academy_laboratorio.md`](aws_academy_laboratorio.md). Aquí está el **ciclo de ML**.
@@ -20,7 +19,7 @@ cómo se enlaza un parquet que armaste en Colab.
 
 No hay un dataset “de Colab”, otro “de AWS” y otro “de Databricks”. Hay **una** tabla
 `datos/waymo_real/detecciones_reales.parquet` (y, para Kedro, `muestra/` con ≥ 2 segmentos).
-Esa tabla es Perception v2 (`lidar_box` + `stats`). El CSV sintético es solo la pauta.
+Esa tabla es Perception v2 (`lidar_box` + `stats`). No hay un CSV de pauta.
 
 ```
 GCS Waymo (lidar_box + stats, ~1 MB/segmento)
@@ -91,14 +90,13 @@ o `uv sync --extra kedro`.
 
 | Hay | No hay |
 |---|---|
-| `datos/crudos/detecciones_waymo_like.csv` (pauta, 40.680 filas) | `datos/waymo_real/detecciones_reales.parquet` |
-| notebooks, `src/`, `kedro_mly1101/` (sin `data/`) | segmentos en `muestra/`, JPEG, nubes LiDAR |
+| notebooks, `src/`, `kedro_mly1101/` (sin `data/`) | `datos/waymo_real/detecciones_reales.parquet` |
+| | segmentos en `muestra/`, JPEG, nubes LiDAR |
 
 Compruébalo:
 
 ```bash
-ls datos/crudos/detecciones_waymo_like.csv
-ls datos/waymo_real 2>/dev/null || echo "vacío: hay que enlazar o descargar el lote"
+ls datos/waymo_real 2>/dev/null || echo "vacío: hay que descargar el lote (licencia Waymo)"
 ```
 
 ---
@@ -172,15 +170,13 @@ sin website, sin ACL pública. Licencia Waymo: **no redistribuir**.
 
 | Comando / fuente | Qué es | Entra al modelo |
 |---|---|---|
-| CSV del clone | 40.680 filas sintéticas, 10 defectos a propósito | Pauta Act. 1.1–3.3 · `kedro run` |
 | `--lote 8` | Tabla liviana `lidar_box` + `stats` | Notebook 14, proyecto |
-| `--muestra 40` | Varios segmentos en `muestra/` | `kedro run --pipeline waymo_real` |
+| `--muestra 40` | Varios segmentos en `muestra/` | `kedro run` (34 nodos) |
 | `camera_box` | Cajas 2D (píxeles), otra tabla | Inventario / Kedro `ingesta`. **No** al RF |
 | `camera_image` / `lidar` | JPEG y nubes | **No** |
 | Perception v1, Motion | Otros buckets GCS | Se **listan** en el notebook 14; no se bajan |
 
 Medido 2026-09-08 con 40 segmentos v2: 530.396 filas, 0 % nulos, F1 `LEVEL_2` = 0,0893.
-Eso **no** son las cifras de la pauta del CSV.
 
 ---
 
@@ -363,12 +359,10 @@ Cifras **medidas** el 2026-09-08 en esta máquina (pandas 2.x). No las redondees
 
 | Tabla | Disco | RAM pandas | Filas |
 |---|---|---|---|
-| CSV pauta `detecciones_waymo_like.csv` | **4,64 MB** | **20,1 MB** | 40.680 |
-| Parquet limpio sintético (Kedro) | 1,49 MB | 15,7 MB | 40.200 |
 | Parquet real (40 segmentos v2) | **19,85 MB** | **257 MB** | 530.396 |
 | Carpeta `datos/waymo_real/` (muestra + extras) | **83 MB** | — | — |
 | `muestra/` (`lidar_box`+`stats`+algo de `camera_box`) | 42 MB | — | — |
-| Salidas Kedro `data/` + `data/waymo/` | 61 MB | — | se regeneran |
+| Salidas Kedro `data/` | 61 MB | — | se regeneran |
 | JPEG `camera_image` × 40 | ~13 GB | no entra | **no se baja** |
 
 Regla práctica: pandas suele ocupar **4–13×** el archivo (aquí el real es ~13× por columnas

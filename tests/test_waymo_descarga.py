@@ -650,11 +650,10 @@ def test_leer_metadatos_e2e_tabula_el_json(tmp_path: Path) -> None:
     assert set(tabla["secuencia"]) == {"aaa", "bbb"}
 
 
-def test_cargar_tabla_curso_prefiere_el_lote_real(tmp_path: Path) -> None:
+def test_cargar_tabla_curso_exige_el_lote_real(tmp_path: Path) -> None:
     real_dir = tmp_path / "datos" / "waymo_real"
     real_dir.mkdir(parents=True)
     tabla = pd.DataFrame({"object_type": ["vehicle"], "num_lidar_points": [3]})
-    (real_dir / "detecciones_reales.parquet").parent.mkdir(parents=True, exist_ok=True)
     tabla.to_parquet(real_dir / "detecciones_reales.parquet")
     df, origen, ruta = waymo.cargar_tabla_curso(tmp_path)
     assert origen == "real"
@@ -662,15 +661,9 @@ def test_cargar_tabla_curso_prefiere_el_lote_real(tmp_path: Path) -> None:
     assert ruta.name == "detecciones_reales.parquet"
 
 
-def test_cargar_tabla_curso_cae_al_csv_si_no_hay_lote(tmp_path: Path) -> None:
-    crudos = tmp_path / "datos" / "crudos"
-    crudos.mkdir(parents=True)
-    csv = crudos / "detecciones_waymo_like.csv"
-    pd.DataFrame({"object_type": ["sign"]}).to_csv(csv, index=False)
-    df, origen, ruta = waymo.cargar_tabla_curso(tmp_path)
-    assert origen == "sintetico"
-    assert df["object_type"].iloc[0] == "sign"
-    assert ruta.suffix == ".csv"
+def test_cargar_tabla_curso_falla_si_no_hay_lote(tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError, match="descargar_waymo.py --muestra"):
+        waymo.cargar_tabla_curso(tmp_path)
 
 
 def test_leer_tabla_distingue_parquet_de_csv(tmp_path: Path) -> None:

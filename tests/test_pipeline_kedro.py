@@ -195,7 +195,7 @@ def test_las_pipelines_de_la_ea1_se_registran_y_su_grafo_es_valido() -> None:
 
     # Lo unico que espera de fuera son los datos crudos y los parametros.
     entradas = {e for e in ea1.inputs() if not e.startswith("params:")}
-    assert entradas == {"detecciones_crudas"}
+    assert entradas == {"detecciones_reales"}
 
     # ``outputs()`` devuelve solo las salidas LIBRES: ``detecciones_limpias`` no
     # esta ahi porque la consume ``resumir_la_limpieza``. Que sea intermedia no le

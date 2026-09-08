@@ -11,7 +11,7 @@ De este archivo salen dos notebooks:
 - ``notebooks/06_docente_no_supervisado.ipynb``  (versión resuelta con pauta)
 
 Igual que la Actividad 2.2, **reutiliza los nodos del pipeline** en vez de duplicarlos. Cifras
-medidas sobre ``detecciones_waymo_like.csv`` con la semilla 42.
+medidas sobre Perception v2 real.
 
 Regenerar tras editar:
 
@@ -139,7 +139,8 @@ else:
 sys.path.insert(0, str(RAIZ / "src"))
 sys.path.insert(0, str(RAIZ / "kedro_mly1101" / "src"))
 
-RUTA_DATOS = RAIZ / "datos" / "crudos" / "detecciones_waymo_like.csv"
+import waymo
+RUTA_DATOS = waymo.exigir_detecciones_reales(RAIZ)
 RUTA_PARAMETROS = RAIZ / "kedro_mly1101" / "conf" / "base" / "parameters.yml"
 
 print("Colab:", EN_COLAB, "| dataset:", RUTA_DATOS.exists())
@@ -163,7 +164,7 @@ sns.set_theme(style="whitegrid")
 PARAMETROS = yaml.safe_load(RUTA_PARAMETROS.read_text(encoding="utf-8"))
 CONFIG = PARAMETROS["agrupamiento"]
 
-crudo = pd.read_csv(RUTA_DATOS)
+crudo = pd.read_parquet(RUTA_DATOS)
 paso = limpieza.normalizar_categorias(crudo, PARAMETROS["mapas_categorias"])
 paso = limpieza.descubrir_faltantes(paso, PARAMETROS["centinelas"])
 paso = limpieza.marcar_imposibles(paso, PARAMETROS["reglas_dominio"])

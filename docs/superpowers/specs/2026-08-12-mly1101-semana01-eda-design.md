@@ -1,5 +1,9 @@
 # Especificación — MLY1101 Semana 01 / EA1: Análisis y Preprocesamiento de Datos
 
+> **Superado (2026-09-08).** El CSV sintético se retiró. El hilo de la asignatura es
+> Perception v2 real (`datos/waymo_real/detecciones_reales.parquet`). Este documento
+> describe la decisión original; no volver a generar el CSV.
+
 - **Fecha:** 2026-08-12
 - **Autor:** Giocrisrai Godoy Bonillo (docente)
 - **Estado:** aprobado e implementado

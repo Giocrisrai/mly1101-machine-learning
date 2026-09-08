@@ -149,25 +149,25 @@ Este es el indicador de mayor peso: es el núcleo de la sesión.
 
 | Nivel | Criterio observable |
 |---|---|
-| **4** | Encuentra 9 o 10 de los defectos; detecta el patrón MNAR de `speed_mps` y lo describe con cifras por subgrupo; distingue duplicado exacto de lógico; separa outlier imposible de legítimo con argumento de dominio |
-| **3** | Encuentra al menos 7 defectos, incluidos **los dos nulos ocultos** (`-1` y `"N/D"`) y **el duplicado lógico**, y los cuantifica |
-| **2** | Encuentra los defectos evidentes (nulos declarados, duplicados exactos, categorías inconsistentes) pero no los ocultos |
-| **1** | Reporta que "hay datos sucios" sin cifras |
+| **4** | Cuantifica desbalance (`cyclist` 0,45 %), sesgo de muestreo (`weather` 100 % `sunny`), rareza de `LEVEL_2` (12,33 %) y 0 % nulos; distingue outlier estadístico de valor de dominio (buses > 12 m) |
+| **3** | Reporta las cifras grandes (filas, tipos, clima constante) pero no conecta el desbalance con el modelado |
+| **2** | Describe el esquema sin cifras, o trata el 0 % de nulos como si hubiera que `dropna()` |
+| **1** | Reporta que "los datos están sucios" o "están limpios" sin cifras |
 
-**Los 10 defectos** (referencia para la corrección):
+**Hallazgos de referencia** (lote de 40 segmentos, medido 2026-09-08, 530.396 filas):
 
-| # | Defecto | Cifra esperada |
+| # | Hallazgo | Cifra |
 |---|---|---|
-| 1 | `timestamp_micros` con `"N/D"` → dtype `object` | 60 filas (0,15 %) |
-| 2 | `num_lidar_points` con `-1` como nulo oculto | 1.198 filas (2,9 %) |
-| 3 | `weather`: 11 variantes para 3 categorías + nulos | 2.075 nulos (5,1 %) |
-| 4 | `object_type`: 7 variantes para 4 categorías | 2.343 filas afectadas |
-| 5 | Duplicados exactos y lógicos | 480 exactos + 200 lógicos |
-| 6 | Outliers imposibles | 157 sobre 60 m/s · 122 con alto 0 · 80 con largo negativo |
-| 7 | Outliers legítimos (buses) | 608 con largo > 12 m |
-| 8 | Nulos MNAR en `speed_mps` | 787 nulos; **33,8 %** en LEVEL_2 nocturno vs. 0,4 % en LEVEL_1 |
-| 9 | Desbalance de clases | `CYCLIST` 1,9 % |
-| 10 | `sensor_version` constante · `id_interno` 98,3 % único | — |
+| 1 | Nulos | **0 %** |
+| 2 | Valores imposibles | **0** |
+| 3 | Duplicados exactos / lógicos | **0 / 0** |
+| 4 | `object_type` | vehicle 48,43 % · sign 26,46 % · pedestrian 24,67 % · cyclist **0,45 %** |
+| 5 | `detection_difficulty` | LEVEL_1 87,67 % · LEVEL_2 **12,33 %** |
+| 6 | `weather` | **100 % `sunny`** |
+| 7 | `location` | SF 398.065 · PHX 132.331 |
+| 8 | `time_of_day` | Day 461.090 · Night 51.867 · Dawn/Dusk 17.439 |
+| 9 | Mediana `speed_mps` | **0,0133** |
+| 10 | `box_length` máximo (buses, no error) | **16,76 m** |
 
 **Criterio de corrección:** se acepta una tolerancia razonable en las cifras (el alumno puede
 redondear o contar de otra manera), pero **no** se acepta una afirmación sin cifra.

@@ -65,13 +65,11 @@ mano. El análisis es el mismo.
 ## 3 · Datos: un Volume, no el bucket de Google
 
 Waymo real **no** está en Git. Enlázalo como en Academy: el parquet que armaste en Colab
-(notebook **14**) o el CSV del clone.
+(notebook **14**).
 
 1. **Catalog** (Unity Catalog) → el esquema `default` del workspace → **Create volume**
    `mly1101` (privado, tipo **Managed**; no External).
-2. Upload:
-   - `detecciones_waymo_like.csv` (4,6 MB, pauta), y/o
-   - `detecciones_reales.parquet` (tu lote; ~20 MB con 40 segmentos, ~8 MB el lote de 8).
+2. Upload: `detecciones_reales.parquet` (tu lote; ~20 MB con 40 segmentos).
 3. Ruta en Free Edition (medida 2026-09-08; Volume vacío hasta que subas archivos):
 
 ```text
@@ -92,17 +90,14 @@ REPO = Path.cwd()  # o Path("/Workspace/Repos/.../mly1101-machine-learning")
 if (VOL / "detecciones_reales.parquet").exists():
     tabla = pd.read_parquet(VOL / "detecciones_reales.parquet")
     origen = "volume-real"
-elif (REPO / "datos/waymo_real/detecciones_reales.parquet").exists():
+else:
     tabla = pd.read_parquet(REPO / "datos/waymo_real/detecciones_reales.parquet")
     origen = "repo-real"
-else:
-    tabla = pd.read_csv(REPO / "datos/crudos/detecciones_waymo_like.csv")
-    origen = "csv-pauta"
 
 print(origen, tabla.shape)
 ```
 
-Eso es el mismo contrato que `waymo.cargar_tabla_curso`: real si existe, si no el CSV.
+Sin parquet, **falla**: no hay CSV de pauta. `waymo.cargar_tabla_curso` es el mismo contrato.
 **El Volume guarda la copia de trabajo, no un dataset distinto.** Colab, Kedro y Databricks
 leen la misma tabla.
 
@@ -115,8 +110,7 @@ leen la misma tabla.
 ```
 Colab / CloudShell / local          Databricks Free Edition
 ──────────────────────────          ─────────────────────────
-kedro run  (30 nodos, CSV)          pandas en el driver (EDA)
-kedro run --pipeline waymo_real     una celda spark.read.parquet + count()
+kedro run  (34 nodos, Perception v2) pandas en el driver (EDA)
 catalog.yml  (rutas locales)        el YAML que *cambiarías* (no lo ejecutes aquí)
 parameters.yml (decisiones)         las mismas reglas; no las dupliques
 pickle del RF                       no lo sirvas como endpoint
@@ -126,12 +120,12 @@ El puente de ingeniería es **una edición de catálogo**, no un Dockerfile ni u
 
 ```yaml
 # Hoy (kedro_mly1101/conf/base/catalog.yml) — esto SÍ corre en CloudShell
-detecciones_crudas:
-  type: pandas.CSVDataset
-  filepath: ../datos/crudos/detecciones_waymo_like.csv
+detecciones_reales:
+  type: pandas.ParquetDataset
+  filepath: ../datos/waymo_real/detecciones_reales.parquet
 
 # Lo que cambiarías si el equipo fuera a Spark de verdad
-# detecciones_crudas:
+# detecciones_reales:
 #   type: spark.SparkDataset
 #   filepath: /Volumes/workspace/default/mly1101/detecciones
 #   file_format: delta

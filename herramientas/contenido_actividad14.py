@@ -12,8 +12,8 @@ De este archivo salen dos notebooks:
 **5 horas pedagógicas** según el programa.
 
 Todas las cifras están medidas: las del censo de Waymo salen de ``docs/sesgo_waymo.md``
-(los 798 segmentos del split de training, no una muestra) y las del dataset sintético, de
-``detecciones_waymo_like.csv`` con la semilla 42.
+(los 798 segmentos del split de training, no una muestra) y las del lote v2 de clase,
+de ``datos/waymo_real/detecciones_reales.parquet``.
 
 Regenerar tras editar:
 
@@ -122,7 +122,8 @@ else:
     RAIZ = Path("..").resolve()
 
 sys.path.insert(0, str(RAIZ / "src"))
-RUTA_DATOS = RAIZ / "datos" / "crudos" / "detecciones_waymo_like.csv"
+import waymo
+RUTA_DATOS = waymo.exigir_detecciones_reales(RAIZ)
 
 print("Colab:", EN_COLAB, "| dataset:", RUTA_DATOS.exists())
 """
@@ -140,7 +141,7 @@ pd.set_option("display.max_columns", 40)
 pd.set_option("display.width", 140)
 sns.set_theme(style="whitegrid")
 
-df = pd.read_csv(RUTA_DATOS)
+df = pd.read_parquet(RUTA_DATOS)
 print(f"{df.shape[0]:,} detecciones en {df['segment_id'].nunique()} segmentos")
 """
     ),
@@ -434,15 +435,10 @@ efecto
     ),
     code(
         """
-# Autochequeo
-assert factor > 2, "revisa: la diferencia entre grupos debería ser grande, no marginal"
-assert efecto.loc["Night", "cambio_pp"] < 0, "la noche debería PERDER peso tras el dropna"
-print(f"✅ El dropna borra el {100*perdidas/len(df):.2f} % del dataset...")
-print(f"   ...pero el {efecto.loc['Night', 'pct_del_grupo_perdido']:.2f} % de las detecciones nocturnas,")
-print(f"   contra el {efecto.loc['Dawn/Dusk', 'pct_del_grupo_perdido']:.2f} % de las del amanecer.")
-print()
-print("   Una operación que en el informe aparece como 'se limpiaron los datos'")
-print("   acaba de sesgar el dataset contra la condición peor medida.")
+# Autochequeo — v2: 0 nulos, dropna no mueve la composición.
+assert nulos_por_momento["pct_nulos"].max() == 0
+assert (efecto["cambio_pp"] == 0).all()
+print("✅ dropna() no borra nada: 0 nulos. El sesgo de este lote es otro: 100 % sunny y cyclist 0,45 %.")
 """
     ),
     md(

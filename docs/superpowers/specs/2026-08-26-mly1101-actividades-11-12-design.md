@@ -1,7 +1,8 @@
 # Especificación — Semana 1 completa: actividades 1.1 y 1.2, proyecto de equipo y entorno reproducible
 
 **Fecha:** 2026-08-26
-**Estado:** implementado y verificado
+**Estado:** implementado. **Superado en datos (2026-09-08):** no hay CSV sintético;
+el hilo es Perception v2 real.
 **Extiende:** [`2026-08-12-mly1101-semana01-eda-design.md`](2026-08-12-mly1101-semana01-eda-design.md)
 
 ---

@@ -12,10 +12,9 @@ Sirven para dos cosas:
 
 1. Confirmar que los nombres de columna del notebook opcional siguen siendo los
    del dataset real (Waymo puede cambiar el esquema entre versiones).
-2. Confirmar que las relaciones que el dataset sintético reproduce (distancia
-   vs. puntos láser, coherencia dimensional por tipo de objeto) existen también
-   en los datos reales. Si no existieran, el dataset de clase estaría enseñando
-   algo falso.
+2. Confirmar relaciones de dominio que el EDA debe ver en v2 (distancia vs.
+   puntos láser, altura del peatón, rareza del ciclista). Si no existieran,
+   el material estaría enseñando algo falso.
 """
 
 from __future__ import annotations
@@ -128,7 +127,7 @@ def test_la_union_por_llave_encuentra_correspondencia(
     assert sin_clima < 0.05, f"{sin_clima:.1%} de las cajas quedó sin clima tras la unión"
 
 
-# --- Las relaciones que el dataset sintético reproduce existen de verdad ----
+# --- Relaciones de dominio que el EDA debe ver en v2 ------------------------
 
 
 def test_menos_puntos_laser_a_mayor_distancia(cajas: pd.DataFrame) -> None:
@@ -136,11 +135,11 @@ def test_menos_puntos_laser_a_mayor_distancia(cajas: pd.DataFrame) -> None:
     distancia = np.sqrt(cajas[f"{LB}.box.center.x"] ** 2 + cajas[f"{LB}.box.center.y"] ** 2)
     puntos = cajas[f"{LB}.num_lidar_points_in_box"]
     correlacion = distancia.corr(puntos, method="spearman")
-    assert correlacion < -0.3, f"correlación real {correlacion:.3f}: revisar el dataset sintético"
+    assert correlacion < -0.3, f"correlación real {correlacion:.3f}: revisar la muestra"
 
 
 def test_las_dimensiones_son_coherentes_por_tipo(cajas: pd.DataFrame) -> None:
-    """Un peatón real mide en torno a 1,7 m: el sintético usa esa misma escala."""
+    """Un peatón real mide en torno a 1,7 m."""
     peatones = cajas[cajas[f"{LB}.type"] == 2]
     if peatones.empty:
         pytest.skip("este segmento no tiene peatones")
@@ -149,7 +148,7 @@ def test_las_dimensiones_son_coherentes_por_tipo(cajas: pd.DataFrame) -> None:
 
 
 def test_el_desbalance_de_clases_es_real(cajas: pd.DataFrame) -> None:
-    """Los ciclistas son minoría también en los datos reales (justifica el 2 % sintético)."""
+    """Los ciclistas son minoría también en Perception v2 (~0,45 % en el lote de 40 segmentos)."""
     proporciones = cajas[f"{LB}.type"].value_counts(normalize=True)
     ciclistas = proporciones.get(4, 0.0)
     vehiculos = proporciones.get(1, 0.0)
