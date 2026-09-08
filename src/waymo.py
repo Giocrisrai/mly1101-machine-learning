@@ -30,38 +30,56 @@ from pathlib import Path
 BUCKET = "waymo_open_dataset_v_2_0_1"
 SPLIT = "training"
 COMPONENTES_LIVIANOS = ("lidar_box", "stats")
+# Tablas parquet de un segmento (KB–cientos de KB). El alumno las abre en pandas;
+# no entran al Random Forest. JPEG / nubes / tfrecord no están aquí.
+COMPONENTES_MANIPULABLES = ("camera_box", "vehicle_pose", "camera_calibration")
 TAMANO_MAXIMO_MB = 50.0
 TAMANO_MAXIMO_CLASE_MB = 250.0
 LOTE_CLASE = 8
 PAGINA_DESCARGA = "https://waymo.com/open/download/"
 
 # Qué hay en un segmento de Perception v2 y qué baja el curso.
-# camera_box es tabla (cajas 2D). camera_image son JPEG: no se tocan en clase.
+# Pesos: un segmento GCS (10017090168044687777_…), 2026-09-08. camera_box es tabla 2D.
 COMPONENTES_V2: dict[str, dict[str, str]] = {
     "lidar_box": {
         "uso": "curso",
-        "peso": "~1 MB",
-        "que": "cajas 3D de cada detección LiDAR (tabla)",
+        "peso": "0,25–0,95 MB",
+        "que": "cajas 3D de cada detección LiDAR (tabla del RF)",
     },
     "stats": {
         "uso": "curso",
-        "peso": "~23 KB",
+        "peso": "0,02 MB",
         "que": "clima, hora y ciudad del segmento",
     },
     "camera_box": {
         "uso": "opcional",
-        "peso": "~1 MB",
+        "peso": "0,08–0,28 MB",
         "que": "cajas 2D sobre la foto: sigue siendo tabla, no es la imagen",
+    },
+    "camera_calibration": {
+        "uso": "opcional",
+        "peso": "0,01 MB",
+        "que": "intrínsecos de cámara (tabla); se abre, no entra al RF",
+    },
+    "vehicle_pose": {
+        "uso": "opcional",
+        "peso": "0,04 MB",
+        "que": "pose del vehículo (tabla); trayectoria x/y, no entra al RF",
     },
     "camera_image": {
         "uso": "no",
-        "peso": "~330 MB por segmento",
+        "peso": "~320 MB por segmento",
         "que": "JPEG de las cámaras: no se baja en clase",
     },
     "lidar": {
         "uso": "no",
-        "peso": "GB",
+        "peso": "~165 MB por segmento",
         "que": "nube de puntos: no se baja en clase",
+    },
+    "lidar_camera_projection": {
+        "uso": "no",
+        "peso": "~71 MB",
+        "que": "proyección LiDAR→cámara: pasa el tope de 50 MB/archivo",
     },
 }
 
@@ -77,8 +95,10 @@ CATALOGO_BUCKETS: dict[str, dict[str, str]] = {
         "pagina": PAGINA_DESCARGA,
         "para_que": (
             "Perception v2.0.1 (modular, sin mapas): el hilo del curso. "
-            "Un segmento de lidar_box (~1 MB) + stats (~23 KB) alcanza."
+            "Un segmento de lidar_box (0,25–0,95 MB) + stats (0,02 MB) alcanza."
         ),
+        "en_clase": "tabla",
+        "tamano_medido": "lidar_box 0,25–0,95 MB · stats 0,02 MB (GCS 2026-09-08)",
     },
     "percepcion_v1": {
         "bucket": "waymo_open_dataset_v_1_4_3",
@@ -88,8 +108,10 @@ CATALOGO_BUCKETS: dict[str, dict[str, str]] = {
         "pagina": PAGINA_DESCARGA,
         "para_que": (
             "Perception v1.4.3 (con mapas): un Frame protobuf por registro, "
-            "imágenes y LiDAR pegados. Cada tfrecord pesa GB; el curso usa v2."
+            "imágenes y LiDAR pegados. Cada tfrecord mide 894–1.062 MB; el curso usa v2."
         ),
+        "en_clase": "listar",
+        "tamano_medido": "tfrecord 894–1.062 MB por segmento (GCS 2026-09-08)",
     },
     "motion": {
         "bucket": "waymo_open_dataset_motion_v_1_3_1",
@@ -98,9 +120,11 @@ CATALOGO_BUCKETS: dict[str, dict[str, str]] = {
         "consola": "https://console.cloud.google.com/storage/browser/waymo_open_dataset_motion_v_1_3_1",
         "pagina": PAGINA_DESCARGA,
         "para_que": (
-            "Motion v1.3.1: trayectorias a 9 s y mapa. Los tfrecord superan 1 GB; "
-            "en clase solo se listan."
+            "Motion v1.3.1: trayectorias a 9 s y mapa. Un shard tf_example mide "
+            "1,17–1,32 GB (1000 shards); scenario 434–480 MB. En clase solo se listan."
         ),
+        "en_clase": "listar",
+        "tamano_medido": "tf_example 1,17–1,32 GB · scenario 434–480 MB (GCS 2026-09-08)",
     },
     "e2e_camara": {
         "bucket": "waymo_open_dataset_end_to_end_camera_v_1_0_0",
@@ -112,9 +136,11 @@ CATALOGO_BUCKETS: dict[str, dict[str, str]] = {
         ),
         "pagina": PAGINA_DESCARGA,
         "para_que": (
-            "E2E cámara v1.0.0: los tfrecord son ~1,6 GB. El JSON de metadatos "
-            "(~36 KB) sí cabe; no hay carpeta val_sequence/."
+            "E2E cámara v1.0.0: los tfrecord miden 1,59–1,68 GB. El JSON de metadatos "
+            "(0,03 MB, 479 clusters) sí cabe; no hay carpeta val_sequence/."
         ),
+        "en_clase": "json",
+        "tamano_medido": "JSON 0,03 MB · tfrecord 1,59–1,68 GB (GCS 2026-09-08)",
     },
 }
 
@@ -225,6 +251,38 @@ def descargar_segmento(segmento: str, carpeta: Path) -> dict[str, Path]:
 def descargar_camera_box(segmento: str, carpeta: Path) -> Path:
     """Cajas 2D de un segmento (~50–360 KB). Es tabla, no JPEG."""
     return descargar("camera_box", segmento, carpeta)
+
+
+def descargar_tablas_chicas(segmento: str, carpeta: Path) -> dict[str, Path]:
+    """Baja las tablas manipulables de un segmento (cajas 2D, pose, calibración).
+
+    No baja JPEG, nubes ni tfrecord. Cada archivo cabe en Colab. Si ya está en
+    disco, no vuelve a GCS.
+    """
+    rutas: dict[str, Path] = {}
+    for componente in COMPONENTES_MANIPULABLES:
+        rutas[componente] = descargar(componente, segmento, carpeta)
+    return rutas
+
+
+def completar_tablas_chicas(
+    muestra: Path, limite: int | None = LOTE_CLASE
+) -> list[str]:
+    """Baja cajas 2D, pose y calibración en segmentos **ya** completos.
+
+    No toca ``lidar_box``. Por defecto los primeros 8 (lote de clase).
+    ``limite=None`` recorre todos. Lista vacía si aún no hay ``muestra/``.
+    """
+    if not muestra.is_dir():
+        return []
+    carpetas = segmentos_completos(muestra)
+    if limite is not None:
+        carpetas = carpetas[:limite]
+    nombres: list[str] = []
+    for carpeta in carpetas:
+        descargar_tablas_chicas(carpeta.name, carpeta)
+        nombres.append(carpeta.name)
+    return nombres
 
 
 def producto(clave: str) -> dict[str, str]:
@@ -556,6 +614,43 @@ EQUIVALENCIAS_STATS = {
 # El entero que Waymo usa para el tipo de objeto.
 TIPOS_DE_OBJETO = {0: "unknown", 1: "vehicle", 2: "pedestrian", 3: "sign", 4: "cyclist"}
 
+# Cámaras de Perception v2 (enum CameraName). 1 = frente; no son archivos JPEG.
+NOMBRES_DE_CAMARA = {
+    1: "FRONT",
+    2: "FRONT_LEFT",
+    3: "FRONT_RIGHT",
+    4: "SIDE_LEFT",
+    5: "SIDE_RIGHT",
+}
+
+_CB = "[CameraBoxComponent]"
+_CC = "[CameraCalibrationComponent]"
+_VP = "[VehiclePoseComponent]"
+
+EQUIVALENCIAS_CAMERA_BOX = {
+    "key.segment_context_name": "segment_id",
+    "key.frame_timestamp_micros": "timestamp_micros",
+    "key.camera_name": "camera_name",
+    "key.camera_object_id": "id_interno",
+    f"{_CB}.type": "object_type",
+    f"{_CB}.box.center.x": "box_center_x_px",
+    f"{_CB}.box.center.y": "box_center_y_px",
+    f"{_CB}.box.size.x": "box_width_px",
+    f"{_CB}.box.size.y": "box_height_px",
+    f"{_CB}.difficulty_level.detection": "detection_difficulty",
+}
+
+EQUIVALENCIAS_CALIBRACION = {
+    "key.segment_context_name": "segment_id",
+    "key.camera_name": "camera_name",
+    f"{_CC}.intrinsic.f_u": "f_u",
+    f"{_CC}.intrinsic.f_v": "f_v",
+    f"{_CC}.intrinsic.c_u": "c_u",
+    f"{_CC}.intrinsic.c_v": "c_v",
+    f"{_CC}.width": "ancho_px",
+    f"{_CC}.height": "alto_px",
+}
+
 
 def _renombrar(datos: pd.DataFrame, equivalencias: dict) -> pd.DataFrame:
     """Se queda con las columnas conocidas y les pone el nombre de la clase."""
@@ -614,6 +709,117 @@ def traducir_esquema(cajas: pd.DataFrame, stats: pd.DataFrame) -> pd.DataFrame:
         )
 
     return tabla.reset_index(drop=True)
+
+
+def _traducir_tipo_y_dificultad(tabla: pd.DataFrame) -> pd.DataFrame:
+    """Mismos enteros y el mismo NaN = LEVEL_1 que en ``traducir_esquema``."""
+    if "object_type" in tabla.columns:
+        tabla["object_type"] = (
+            tabla["object_type"].map(TIPOS_DE_OBJETO).fillna("desconocido")
+        )
+    if "detection_difficulty" in tabla.columns:
+        tabla["detection_difficulty"] = np.where(
+            tabla["detection_difficulty"] == 2, "LEVEL_2", "LEVEL_1"
+        )
+    return tabla
+
+
+def traducir_camera_box(cajas: pd.DataFrame) -> pd.DataFrame:
+    """Pasa ``camera_box`` a nombres de clase. Las cajas quedan en **píxeles**.
+
+    No cruce esta tabla con el LiDAR fila a fila: metros ≠ píxeles. Sirve para
+    contar tipos, ver cámaras y el NaN de dificultad (el mismo reverso que en
+    ``lidar_box``).
+    """
+    tabla = _renombrar(cajas, EQUIVALENCIAS_CAMERA_BOX).copy()
+    tabla = _traducir_tipo_y_dificultad(tabla)
+    if "camera_name" in tabla.columns:
+        tabla["camara"] = tabla["camera_name"].map(NOMBRES_DE_CAMARA).fillna(
+            "desconocida"
+        )
+    return tabla.reset_index(drop=True)
+
+
+def traducir_calibracion_camara(calibracion: pd.DataFrame) -> pd.DataFrame:
+    """Intrínsecos y tamaño de cada cámara (una fila por cámara del segmento)."""
+    tabla = _renombrar(calibracion, EQUIVALENCIAS_CALIBRACION).copy()
+    if "camera_name" in tabla.columns:
+        tabla["camara"] = tabla["camera_name"].map(NOMBRES_DE_CAMARA).fillna(
+            "desconocida"
+        )
+    return tabla.reset_index(drop=True)
+
+
+def traducir_pose_vehiculo(pose: pd.DataFrame) -> pd.DataFrame:
+    """Una fila por frame: segmento, tiempo y traslación ``(x, y, z)`` en mundo.
+
+    La matriz 4×4 se deja fuera: en clase basta la trayectoria. Vacío si no hay
+    columna de transform.
+    """
+    claves = {
+        "key.segment_context_name": "segment_id",
+        "key.frame_timestamp_micros": "timestamp_micros",
+    }
+    tabla = _renombrar(pose, claves).copy()
+    col_tf = f"{_VP}.world_from_vehicle.transform"
+    if col_tf not in pose.columns:
+        return tabla.reset_index(drop=True)
+
+    xs, ys, zs = [], [], []
+    for valor in pose[col_tf]:
+        arr = np.asarray(valor, dtype=float).reshape(-1)
+        if arr.size >= 12:
+            xs.append(float(arr[3]))
+            ys.append(float(arr[7]))
+            zs.append(float(arr[11]))
+        else:
+            xs.append(np.nan)
+            ys.append(np.nan)
+            zs.append(np.nan)
+    tabla["pos_x"] = xs
+    tabla["pos_y"] = ys
+    tabla["pos_z"] = zs
+    return tabla.reset_index(drop=True)
+
+
+def ficha_tabla(tabla: pd.DataFrame) -> pd.DataFrame:
+    """Una fila por columna: dtype, nulos y valores distintos. Para explorar."""
+    if tabla.empty:
+        return pd.DataFrame(columns=["columna", "dtype", "nulos_pct", "n_unicos"])
+    filas = []
+    for columna in tabla.columns:
+        serie = tabla[columna]
+        filas.append(
+            {
+                "columna": columna,
+                "dtype": str(serie.dtype),
+                "nulos_pct": round(float(serie.isna().mean() * 100), 2),
+                "n_unicos": int(serie.nunique(dropna=True)),
+            }
+        )
+    return pd.DataFrame(filas)
+
+
+def comparar_conteos_por_tipo(
+    lidar: pd.DataFrame, camara: pd.DataFrame
+) -> pd.DataFrame:
+    """Conteos de ``object_type`` en LiDAR (metros) vs cámara (píxeles).
+
+    No une filas. ``sign`` suele aparecer en LiDAR y no en ``camera_box``: es el
+    dato, no un bug de merge.
+    """
+    def _conteo(origen: pd.DataFrame) -> pd.Series:
+        if origen.empty or "object_type" not in origen.columns:
+            return pd.Series(dtype="int64")
+        return origen["object_type"].value_counts()
+
+    juntos = pd.DataFrame(
+        {"lidar_n": _conteo(lidar), "camara_n": _conteo(camara)}
+    ).fillna(0)
+    juntos["lidar_n"] = juntos["lidar_n"].astype(int)
+    juntos["camara_n"] = juntos["camara_n"].astype(int)
+    juntos.index.name = "object_type"
+    return juntos.reset_index()
 
 
 def informe_analitica(tabla: pd.DataFrame) -> dict:
@@ -804,19 +1010,22 @@ def inventario_fuentes(carpeta: Path) -> pd.DataFrame:
     return pd.DataFrame(filas)
 
 
-def ensamblar_camera_box(muestra: Path) -> pd.DataFrame:
-    """Concatena los ``camera_box.parquet`` de ``muestra/``. Vacío si no hay."""
+def ensamblar_componente(muestra: Path, componente: str) -> pd.DataFrame:
+    """Concatena ``muestra/*/<componente>.parquet``. Vacío si no hay archivos."""
     if not muestra.is_dir():
         return pd.DataFrame()
     piezas = [
         pd.read_parquet(ruta)
-        for ruta in sorted(muestra.glob("*/camera_box.parquet"))
+        for ruta in sorted(muestra.glob(f"*/{componente}.parquet"))
     ]
     if not piezas:
-        return pd.DataFrame(
-            columns=["key.segment_context_name", "key.camera_name"]
-        )
+        return pd.DataFrame()
     return pd.concat(piezas, ignore_index=True)
+
+
+def ensamblar_camera_box(muestra: Path) -> pd.DataFrame:
+    """Concatena los ``camera_box.parquet`` de ``muestra/``. Vacío si no hay."""
+    return ensamblar_componente(muestra, "camera_box")
 
 
 def leer_metadatos_e2e(carpeta: Path) -> pd.DataFrame:

@@ -51,14 +51,15 @@ El cupo de horas es limitado. **Apaga** el compute al salir.
 2. URL: `https://github.com/Giocrisrai/mly1101-machine-learning.git`
 3. Rama `main`. Clone sparse no hace falta: el repo es liviano (el parquet Waymo **no** viene).
 
-Quedas con notebooks, `src/`, `kedro_mly1101/` y el CSV de la pauta. Igual que un `git clone`.
+Quedas con notebooks, `src/` y `kedro_mly1101/`. Igual que un `git clone`. **No** hay CSV de
+pauta.
 
 **Probado 2026-09-08 en Free Edition:** el repo público clona sin PAT; queda la carpeta
 `mly1101-machine-learning` en `main` (`datos/`, `docs/`, `kedro_mly1101/`, `notebooks/`,
 `src/`). El parquet Waymo **no** viene en ese clone.
 
-Si Git Folder falla (permisos Free Edition): **Import** del `.ipynb` suelto y sube el CSV a
-mano. El análisis es el mismo.
+Si Git Folder falla (permisos Free Edition): **Import** del `.ipynb` suelto y sube el
+**parquet** v2 a mano (`detecciones_reales.parquet` al Volume). El análisis es el mismo.
 
 ---
 

@@ -14,6 +14,7 @@ Uso:
 
     python herramientas/descargar_waymo.py                 # primer segmento disponible
     python herramientas/descargar_waymo.py --lote 8        # recomendado: tabla de clase
+    python herramientas/descargar_waymo.py --tablas-chicas # camera_box + pose + calibración
     python herramientas/descargar_waymo.py --muestra 40    # mismos livianos, para Kedro
     python herramientas/descargar_waymo.py --censo-stats   # stats de los 798 segmentos
 
@@ -181,7 +182,33 @@ def main() -> None:
         action="store_true",
         help="baja el stats de TODOS los segmentos de training (~798, ~18 MB)",
     )
+    parser.add_argument(
+        "--tablas-chicas",
+        action="store_true",
+        help="en segmentos ya bajados, completa camera_box + pose + calibración (KB, no JPEG)",
+    )
     args = parser.parse_args()
+
+    if args.tablas_chicas:
+        import waymo
+
+        muestra = DESTINO / "muestra"
+        existentes = waymo.segmentos_completos(muestra)
+        if not existentes:
+            sys.exit(
+                "No hay segmentos completos en datos/waymo_real/muestra/.\n"
+                "  Primero:  python herramientas/descargar_waymo.py --lote 8"
+            )
+        limite = args.lote if args.lote else waymo.LOTE_CLASE
+        print(
+            f"\nTablas chicas en hasta {limite} segmentos ya bajados "
+            f"(hay {len(existentes)} completos)."
+        )
+        _comprobar_requisitos()
+        hechos = waymo.completar_tablas_chicas(muestra, limite=limite)
+        print(f"Listo: {len(hechos)} segmentos con {list(waymo.COMPONENTES_MANIPULABLES)}.")
+        print("Siguiente: notebooks/14_opcional_waymo_buckets.ipynb sección 5.")
+        return
 
     if args.lote:
         import waymo

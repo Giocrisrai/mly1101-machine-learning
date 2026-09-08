@@ -187,7 +187,7 @@ redistribuirlos. Sin ellos, `kedro run` **no arranca**.
 | Fuente | Nodos | EDA | Supervisado / k-medias / RA3 |
 |---|---|---|---|
 | Perception v2 (`lidar_box` + `stats`) | 30 de análisis | 530.396 filas, 0 nulos | F1 LEVEL_2 = 0,0893; k sin codo |
-| `camera_box` | 1 (`ensamblar_cajas_camara`) | **407.267** × 11 | no entra al RF |
+| `camera_box` | 1 (`ensamblar_cajas_camara`) | tabla 2D **traducida** (píxeles, nombres de clase) | no entra al RF |
 | JSON E2E | 1 (`leer_metadatos_e2e`) | **479** clusters | no |
 | v1 / Motion / `camera_image` | 0 | 0 archivos en disco | no |
 

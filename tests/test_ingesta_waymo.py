@@ -166,7 +166,10 @@ def test_la_ingesta_junta_camera_box_sin_meterlo_en_lidar(cajas, stats) -> None:
     camara = ingesta.ensamblar_cajas_camara(particiones)
     assert len(lidar) == 2
     assert len(camara) == 1
-    assert "key.camera_name" in camara.columns
+    assert "camara" in camara.columns
+    assert "object_type" in camara.columns
+    assert "key.camera_name" not in camara.columns
+    assert "box_center_x" not in camara.columns
 
 
 def test_sin_camera_box_la_tabla_2d_sale_vacia() -> None:
@@ -215,6 +218,23 @@ def test_la_traduccion_funciona_sobre_un_segmento_real() -> None:
     assert set(df["detection_difficulty"]) <= {"LEVEL_1", "LEVEL_2"}
     assert set(df["object_type"]) <= {"unknown", "vehicle", "pedestrian", "sign", "cyclist"}
     assert (df["speed_mps"] >= 0).all()
+
+
+@pytest.mark.skipif(
+    not MUESTRA_REAL.exists(),
+    reason="requiere: python herramientas/descargar_waymo.py --muestra 40",
+)
+def test_camera_box_real_se_traduce_a_pixeles_sin_mezclar() -> None:
+    ruta = next(MUESTRA_REAL.glob("*/camera_box.parquet"), None)
+    if ruta is None:
+        pytest.skip("no hay camera_box en muestra/")
+    camara = waymo.traducir_camera_box(pd.read_parquet(ruta))
+    assert "box_center_x_px" in camara.columns
+    assert "box_center_x" not in camara.columns
+    assert set(camara["detection_difficulty"]) <= {"LEVEL_1", "LEVEL_2"}
+    assert camara["object_type"].isin(
+        list(waymo.TIPOS_DE_OBJETO.values()) + ["desconocido"]
+    ).all()
 
 
 @pytest.mark.skipif(

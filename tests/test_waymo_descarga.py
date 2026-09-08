@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import numpy as np
 import pytest
 
 RAIZ = Path(__file__).resolve().parents[1]
@@ -163,6 +164,8 @@ CAMPOS_OBLIGATORIOS = (
     "consola",
     "para_que",
     "pagina",
+    "en_clase",
+    "tamano_medido",
 )
 
 
@@ -176,6 +179,15 @@ def test_las_imagenes_no_entran_en_el_lote_de_clase() -> None:
     assert waymo.COMPONENTES_V2["camera_image"]["uso"] == "no"
     assert waymo.COMPONENTES_V2["lidar"]["uso"] == "no"
     assert set(waymo.COMPONENTES_LIVIANOS) == {"lidar_box", "stats"}
+
+
+def test_solo_v2_y_el_json_e2e_entran_al_lote_de_clase() -> None:
+    """v1/Motion/video E2E superan TAMANO_MAXIMO_CLASE_MB; AWS no cambia el tope."""
+    assert waymo.CATALOGO_BUCKETS["percepcion_v2"]["en_clase"] == "tabla"
+    assert waymo.CATALOGO_BUCKETS["e2e_camara"]["en_clase"] == "json"
+    assert waymo.CATALOGO_BUCKETS["percepcion_v1"]["en_clase"] == "listar"
+    assert waymo.CATALOGO_BUCKETS["motion"]["en_clase"] == "listar"
+    assert waymo.TAMANO_MAXIMO_CLASE_MB == 250.0
 
 
 def test_e2e_muestra_es_el_json_liviano_no_una_carpeta() -> None:
@@ -631,7 +643,104 @@ def test_inventario_fuentes_declara_que_entra_al_modelo_y_que_no(
     assert int(inv.loc["camera_image", "archivos"]) == 0
 
 
-def test_ensamblar_camera_box_vacio_si_no_hay(tmp_path: Path) -> None:
+def test_descargar_tablas_chicas_pide_tres_parquet_no_jpeg(
+    monkeypatch, tmp_path: Path
+) -> None:
+    visto: list[str] = []
+
+    def fake(componente: str, segmento: str, carpeta: Path, forzar: bool = False) -> Path:
+        visto.append(componente)
+        destino = carpeta / f"{componente}.parquet"
+        destino.write_bytes(b"ok")
+        return destino
+
+    monkeypatch.setattr(waymo, "descargar", fake)
+    rutas = waymo.descargar_tablas_chicas("seg_x", tmp_path)
+    assert visto == list(waymo.COMPONENTES_MANIPULABLES)
+    assert set(rutas) == set(waymo.COMPONENTES_MANIPULABLES)
+    assert "camera_image" not in visto
+
+
+def test_traducir_camera_box_nombres_en_pixeles_y_nan_es_level1() -> None:
+    crudo = pd.DataFrame(
+        {
+            "key.segment_context_name": ["s1", "s1"],
+            "key.frame_timestamp_micros": [1, 2],
+            "key.camera_name": [1, 2],
+            "key.camera_object_id": ["a", "b"],
+            "[CameraBoxComponent].type": [1, 2],
+            "[CameraBoxComponent].box.center.x": [10.0, 20.0],
+            "[CameraBoxComponent].box.center.y": [5.0, 6.0],
+            "[CameraBoxComponent].box.size.x": [30.0, 40.0],
+            "[CameraBoxComponent].box.size.y": [15.0, 16.0],
+            "[CameraBoxComponent].difficulty_level.detection": [np.nan, 2.0],
+        }
+    )
+    tabla = waymo.traducir_camera_box(crudo)
+    assert list(tabla["object_type"]) == ["vehicle", "pedestrian"]
+    assert list(tabla["detection_difficulty"]) == ["LEVEL_1", "LEVEL_2"]
+    assert list(tabla["camara"]) == ["FRONT", "FRONT_LEFT"]
+    assert "box_center_x_px" in tabla.columns
+    assert "box_center_x" not in tabla.columns
+
+
+def test_traducir_pose_extrae_xyz_de_la_matriz() -> None:
+    matriz = [0] * 16
+    matriz[3], matriz[7], matriz[11] = 10.0, 20.0, 3.0
+    crudo = pd.DataFrame(
+        {
+            "key.segment_context_name": ["s1"],
+            "key.frame_timestamp_micros": [1],
+            "[VehiclePoseComponent].world_from_vehicle.transform": [matriz],
+        }
+    )
+    pose = waymo.traducir_pose_vehiculo(crudo)
+    assert pose.loc[0, ["pos_x", "pos_y", "pos_z"]].tolist() == [10.0, 20.0, 3.0]
+
+
+def test_comparar_conteos_no_une_filas_y_deja_sign_solo_en_lidar() -> None:
+    lidar = pd.DataFrame({"object_type": ["vehicle", "vehicle", "sign"]})
+    camara = pd.DataFrame({"object_type": ["vehicle", "pedestrian"]})
+    tabla = waymo.comparar_conteos_por_tipo(lidar, camara).set_index("object_type")
+    assert int(tabla.loc["vehicle", "lidar_n"]) == 2
+    assert int(tabla.loc["vehicle", "camara_n"]) == 1
+    assert int(tabla.loc["sign", "camara_n"]) == 0
+    assert int(tabla.loc["pedestrian", "lidar_n"]) == 0
+
+
+def test_completar_tablas_chicas_solo_segmentos_completos(
+    monkeypatch, tmp_path: Path
+) -> None:
+    bueno = tmp_path / "aa"
+    incompleto = tmp_path / "bb"
+    bueno.mkdir()
+    incompleto.mkdir()
+    (bueno / "lidar_box.parquet").write_bytes(b"x")
+    (bueno / "stats.parquet").write_bytes(b"x")
+    (incompleto / "stats.parquet").write_bytes(b"x")
+    visto: list[str] = []
+
+    def fake(segmento: str, carpeta, **kwargs):
+        visto.append(segmento)
+        return {}
+
+    monkeypatch.setattr(waymo, "descargar_tablas_chicas", fake)
+    nombres = waymo.completar_tablas_chicas(tmp_path, limite=8)
+    assert nombres == ["aa"]
+    assert visto == ["aa"]
+    ficha = waymo.ficha_tabla(pd.DataFrame())
+    assert list(ficha.columns) == ["columna", "dtype", "nulos_pct", "n_unicos"]
+
+
+def test_ensamblar_componente_concatena(tmp_path: Path) -> None:
+    a = tmp_path / "aa"
+    b = tmp_path / "bb"
+    a.mkdir()
+    b.mkdir()
+    pd.DataFrame({"x": [1]}).to_parquet(a / "vehicle_pose.parquet")
+    pd.DataFrame({"x": [2]}).to_parquet(b / "vehicle_pose.parquet")
+    tabla = waymo.ensamblar_componente(tmp_path, "vehicle_pose")
+    assert sorted(tabla["x"].tolist()) == [1, 2]
     tabla = waymo.ensamblar_camera_box(tmp_path / "muestra")
     assert tabla.empty
 

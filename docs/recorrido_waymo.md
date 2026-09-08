@@ -7,7 +7,9 @@ No es evaluación. Las Act. 1.1–3.3 y `kedro run` usan **Perception v2 real**.
 y el EFT van sobre *Telco Churn*, *House Prices* o *Spotify Tracks*.
 
 El mapa de **servicios AWS** (sí/no, USD 50) está en
-[`aws_academy_laboratorio.md`](aws_academy_laboratorio.md). Aquí está el **ciclo de ML**.
+[`aws_academy_laboratorio.md`](aws_academy_laboratorio.md). Los cuatro productos de la
+página de descarga (qué cabe, qué no, ni en SageMaker) están en
+[`productos_waymo.md`](productos_waymo.md). Aquí está el **ciclo de ML**.
 
 Verificado en el lab de Academy el **2026-09-08**: consola `us-east-1`, usuario federado
 `voclabs/…`, CloudShell abre a `~ $` (git y AWS CLI ya vienen). **Actions → Upload file** es
@@ -30,15 +32,17 @@ datos/waymo_real/muestra/<segmento>/*.parquet
         │
         ├─ Colab / local     notebooks 14 · 10 · 00     waymo.cargar_tabla_curso
         ├─ Kedro             kedro run (34 nodos)       catalog.yml
-        │                    salidas → kedro_mly1101/data/waymo/
+        │                    salidas → kedro_mly1101/data/
         ├─ CloudShell        Upload file  o  aws s3 cp  al mismo path
         ├─ S3 privado        s3://…/detecciones_reales.parquet   (opcional, no público)
         └─ Databricks Volume /Volumes/…/mly1101/detecciones_reales.parquet
                              pandas en el driver; Spark solo para un count()
 ```
 
-Si el parquet no está, el material **cae al CSV** para no romperse. Eso no es el hilo de
-clase: el hilo es el real. `camera_box` y el JSON E2E se inventarian; **no** entran al RF.
+Si el parquet no está, el código **falla** y dice cómo bajarlo. No hay CSV de pauta.
+`camera_box` y el JSON E2E se inventarian; **no** entran al RF. Motion / v1 / video E2E
+ni siquiera se bajan: un shard pesa más que CloudShell
+([`productos_waymo.md`](productos_waymo.md)).
 
 ---
 
@@ -48,7 +52,9 @@ clase: el hilo es el real. `camera_box` y el JSON E2E se inventarian; **no** ent
 |---|---|
 | ¿Tengo que crear una **EC2**? | **No.** CloudShell es suficiente. SageMaker notebook `medium` solo si el Jupyter no cabe en Colab. |
 | ¿Tengo que crear un **bucket S3**? | **No** para trabajar. Es **opcional**: guardar *tu* parquet entre sesiones. Privado, `us-east-1`, Block public access ON. |
-| ¿El `git clone` trae Waymo? | **No.** Trae código, notebooks y el CSV de la pauta. `datos/waymo_real/` está en `.gitignore` (licencia: no redistribuir). |
+| ¿El `git clone` trae Waymo? | **No.** Trae código y notebooks. `datos/waymo_real/` está en `.gitignore` (licencia: no redistribuir). |
+| ¿AWS resuelve Motion / v1 / E2E video? | **No.** Más RAM sirve para el parquet **v2**. Un tfrecord de 1 GB no es pandas. |
+| ¿Y las otras tablas v2 (cajas 2D, pose)? | **Sí, en KB.** `descargar_waymo.py --tablas-chicas` y notebook 14 sección 5. No van al RF. |
 | ¿Qué problema resuelve el hilo Waymo? | **Clasificación** binaria: `detection_difficulty` (`LEVEL_1` / `LEVEL_2`). |
 | ¿Y la **regresión** del IL2.2? | En las evaluaciones (*House Prices*), no en este parquet. |
 | ¿Supervisado vs no supervisado? | Los **dos** están en el **RA2**. El RA3 es ajuste, ensamble y validación cruzada. |
@@ -373,7 +379,7 @@ ajuste de hiperparámetros.
 
 | Qué | Dónde | Formato |
 |---|---|---|
-| Código y CSV de la pauta | Git clone | CSV versionado |
+| Código y notebooks | Git clone | Python / `.ipynb` generados |
 | Lote Waymo (`detecciones_reales.parquet`, `muestra/`) | Disco local gitignore · Drive · **S3 privado** · Volume Databricks | **Parquet** |
 | Salidas Kedro (`data/`) | Se regeneran con `kedro run`. No se commitean | Parquet + CSV de métricas |
 | Modelo | `data/06_models/clasificador.pickle` | pickle, no endpoint |
@@ -406,12 +412,19 @@ Reset o se llena CloudShell (1 GB en `$HOME`).
 - Contenido esperado: **< 200 MB** (tabla + `muestra/` liviana). A precio de S3 eso es
   **fracciones de centavo** del cupo de USD 50. Lo que funde el lab es compute prendido, no
   el parquet.
-- No copies JPEG ni el bucket GCS de Waymo a S3.
+- No copies JPEG, tfrecord de Motion/v1/E2E ni el bucket GCS de Waymo a S3.
+  Redistribuir viola la licencia; además un shard (~1,2 GB) no es el parquet del curso.
 
 ```bash
 aws s3 mb s3://mly1101-waymo-<alias>-$(date +%s) --region us-east-1
 aws s3 cp datos/waymo_real/detecciones_reales.parquet s3://…/detecciones_reales.parquet
 ```
+
+### Motion, Perception v1 y video E2E
+
+No entran al grafo Kedro. AWS no los vuelve tabla: CloudShell tiene ~1 GB de `$HOME` y un
+shard de Motion mide **1,17–1,32 GB**. Guía con tamaños medidos:
+[`productos_waymo.md`](productos_waymo.md).
 
 ### Otros servicios
 

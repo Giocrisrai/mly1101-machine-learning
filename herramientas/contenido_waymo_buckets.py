@@ -57,7 +57,7 @@ misma tabla es la de las actividades 1.1–3.3.
 | 12–20 | Sección 3: tipos, dificultad, clima. Pregunta al curso: ¿qué clase va a costar? |
 | 20–28 | Sección 4: partir por `segment_id`. La pregunta de oro: ¿algún segmento en los dos lados? |
 | 28–38 | Sección 4b: EDA + RF chico. Cada equipo **extiende** una celda |
-| 38–48 | Sección 4c: volúmenes, transformaciones (mismos nodos de Kedro) y estrategias |
+| 38–48 | Sección 5: las otras tablas que **sí caben** (cajas 2D, pose, JSON E2E) |
 | 48–55 | Cierre: el notebook 10 toma este parquet. Kedro `waymo_real` es el mismo grafo |
 """
     ),
@@ -356,7 +356,7 @@ print("Orden: limpiar PRIMERO, convertir a category DESPUÉS.")
         """
 **Qué deben poder explicar después de esta celda**
 
-1. Por qué el informe de limpieza en datos reales da diferencia ~0, y en el CSV de la pauta no.
+1. Por qué el informe de limpieza en datos reales da diferencia ~0 (el lote v2 ya viene curado).
 2. Por qué un `speed_mps` de 15 m/s no se marca (legítimo) y un `box_height <= 0` sí.
 3. Qué estrategia usarían si el lote fueran 40 millones de filas: Parquet, tipos, partir por
    grupo, no bajar imágenes, muestrear para explorar y reservar el pipeline para el número
@@ -390,95 +390,100 @@ y `docs/recorrido_waymo.md`. No EMR, no Bedrock, no GPU, no Docker.
     ),
     md(
         """
-## 5 · Imágenes: por qué no las cargas
+## 5 · Las otras tablas que sí caben (paso a paso)
 
-En el bucket v2 cada segmento tiene más componentes. El curso **no** baja fotos ni nubes:
+No hace falta el dataset al 100 %. Con lo que ya está en disco (o cabe en KB) el alumno
+**abre, traduce y compara**. JPEG, nubes y tfrecord de Motion/v1 **no** entran: el tope de
+clase es 250 MB y un shard de esos pesa ~1 GB.
 
-| Componente | Qué es | ¿En clase? |
+| Etapa | Qué haces | Qué no |
 |---|---|---|
-| `lidar_box` | cajas 3D (tabla, ~1 MB) | sí |
-| `stats` | clima / hora / ciudad (~23 KB) | sí |
-| `camera_box` | cajas 2D sobre la foto (tabla, 50–360 KB) | opcional: sigue siendo pandas |
-| `camera_image` | JPEG empaquetados | **no** (~330 MB **por segmento**) |
-| `lidar` | nube de puntos | **no** (GB) |
+| **A** Listar | qué parquet hay en `muestra/` | abrir la consola GCS “a ver” |
+| **B** Bajar lo chico | `camera_box` + pose + calibración del lote | `camera_image` (~320 MB) / `lidar` (~165 MB) |
+| **C** Traducir | nombres de clase, cajas en **píxeles** | pegar esas columnas al RF de LiDAR |
+| **D** Comparar tipos | conteos LiDAR vs cámara | `merge` fila a fila (metros ≠ píxeles) |
+| **E** Pose / E2E | trayectoria x/y y clusters del JSON | video E2E ni Motion |
 
-`camera_box` no es una imagen: es otra tabla. Si aparece en tu `muestra/`, el inventario lo
-muestra y el nodo `ensamblar_cajas_camara` de Kedro la junta. **El Random Forest no la usa:**
-el modelo solo ve `lidar_box` + `stats` (Perception v2).
+En local, si el lote ya está:
+
+```bash
+uv run python herramientas/descargar_waymo.py --tablas-chicas --lote 8
+```
 """
     ),
     code(
         """
+# A · Qué hay en disco (sin GCS)
 inventario = waymo.inventario_muestra(DESTINO / "muestra")
 print("Componentes en disco:")
 if inventario.empty:
-    print("  (aún no hay muestra/; el lote de 8 la crea)")
+    print("  (aún no hay muestra/; corre la celda 2)")
 else:
-    curso = inventario[inventario["completo"]]
-    print(curso.groupby("componente")["mb"].agg(["count", "sum"]).round(2))
-    raros = set(curso["componente"]) - {"lidar_box", "stats"}
-    print("Otros en segmentos del curso (no se usan):", raros or "ninguno — bien")
-    sueltos = inventario.loc[~inventario["completo"], "segmento"].nunique()
-    if sueltos:
-        print(
-            f"Carpetas incompletas (solo stats, no las usa el pipeline): {sueltos}. "
-            "Puedes ignorarlas; el censo vive en datos/waymo_real/censo_stats/."
-        )
+    print(inventario.groupby("componente")["mb"].agg(["count", "sum"]).round(3))
 
-print("\\nRegla:")
+print("\\nRegla del curso (COMPONENTES_V2):")
 for nombre, meta in waymo.COMPONENTES_V2.items():
-    print(f"  {nombre:13} [{meta['uso']:8}] {meta['peso']:18} {meta['que']}")
-
-# Un camera_box del primer segmento: tabla 2D (~100–300 KB), no es la foto.
-seg = tabla["segment_id"].iloc[0]
-try:
-    ruta_2d = waymo.descargar_camera_box(seg, DESTINO / "muestra" / seg)
-    cajas_2d = pd.read_parquet(ruta_2d)
-    print(f"\\ncamera_box de {seg[:24]}… → {cajas_2d.shape[0]} filas × {cajas_2d.shape[1]} cols")
-    print("columnas:", list(cajas_2d.columns)[:8], "…")
-except Exception as error:
-    print("\\ncamera_box omitido (hace falta GCS):", error)
-"""
-    ),
-    md(
-        """
-## 5b · Tipos y flujo de cada tabla que sí está en disco
-
-El modelo **no** mezcla productos. Cada fuente se mira sola: dtypes, nulos, qué pregunta
-responde. Cifras de una máquina con 40 segmentos (2026-09-08).
-
-| Fuente | Forma | Dtypes que importan | Flujo | Análisis en este curso |
-|---|---|---|---|---|
-| Perception v2 | 530.396 × 16 | `object` limpio; `speed_mps` float | `muestra/` → traducir → `kedro run` | EDA, RF, k-medias, RA3 |
-| `camera_box` | 407.267 × 11 | `type` int8; cajas en **píxeles**; dificultad con NaN | `ensamblar_cajas_camara` y se **detiene** | EDA de tabla 2D; no entra al RF |
-| JSON E2E | 479 × 2 | dos `object` | `leer_metadatos_e2e` y se **detiene** | conteo de clusters; no es video |
-| Censo `stats` | 798 parquet | clima / hora / ciudad | `analizar_sesgo_waymo.py` | sesgo (793/798 `sunny`) |
-| v1 / Motion / JPEG | 0 archivos | — | no se bajan | no |
-| Telco / House Prices / Spotify | no están en el repo | — | Parciales y EFT | no este hilo |
-
-`camera_box` usa los mismos enteros de tipo que el LiDAR (1 vehículo, 2 peatón, 4 ciclista).
-Las cajas son `(center.x, center.y, size.x, size.y)` en la imagen, no metros. El `NaN` de
-dificultad es el **mismo reverso** de la Act. 1.3: vacío = fácil, no “falta el dato”.
+    print(f"  {nombre:24} [{meta['uso']:8}] {meta['peso']:18} {meta['que']}")
 """
     ),
     code(
         """
-cajas = waymo.ensamblar_camera_box(DESTINO / "muestra")
-print("camera_box:", cajas.shape)
-if cajas.empty:
-    print("No hay camera_box en muestra/. El lote de clase no las exige.")
+# B · Completar tablas chicas en los segmentos del lote (KB; si ya están, no re-baja)
+try:
+    hechos = waymo.completar_tablas_chicas(DESTINO / "muestra", limite=waymo.LOTE_CLASE)
+    print("Segmentos con", list(waymo.COMPONENTES_MANIPULABLES), "→", len(hechos))
+except Exception as error:
+    print("Sin GCS ahora (las que ya estén en disco igual se pueden abrir):")
+    print(" ", str(error).splitlines()[0])
+"""
+    ),
+    code(
+        """
+# C · Traducir a nombres de clase (igual que el LiDAR: enteros → texto, NaN → LEVEL_1)
+cajas_crudo = waymo.ensamblar_camera_box(DESTINO / "muestra")
+camara = waymo.traducir_camera_box(cajas_crudo) if not cajas_crudo.empty else cajas_crudo
+print("camera_box traducida:", camara.shape)
+if camara.empty:
+    print("No hay camera_box. El lote de clase no las exige; etapa B las baja si hay GCS.")
 else:
-    print("\\ndtypes:")
-    print(cajas.dtypes.to_string())
-    print("\\nnulos %:")
-    print((cajas.isna().mean() * 100).round(2).to_string())
-    tipo = cajas["[CameraBoxComponent].type"].map(waymo.TIPOS_DE_OBJETO)
-    print("\\ntipo (entero Waymo → nombre):")
-    print(tipo.value_counts().to_string())
-    print("\\ncámaras (1–5, no son JPEG):")
-    print(cajas["key.camera_name"].value_counts().sort_index().to_string())
-    nan_dif = cajas["[CameraBoxComponent].difficulty_level.detection"].isna().mean()
-    print(f"\\nNaN en dificultad de detección: {100 * nan_dif:.1f} %  → no hagas dropna")
+    print(waymo.ficha_tabla(camara).to_string(index=False))
+    print("\\nTipos (píxeles, no metros):")
+    print(camara["object_type"].value_counts().to_string())
+    print("\\nCámaras (nombres, no JPEG):")
+    print(camara["camara"].value_counts().to_string())
+    nan_level1 = (camara["detection_difficulty"] == "LEVEL_1").mean()
+    print(f"\\nLEVEL_1 (incluye el NaN de Waymo): {100 * nan_level1:.1f} %  → no hagas dropna")
+"""
+    ),
+    code(
+        """
+# D · Comparar conteos. No es un join: sign suele estar en LiDAR y no en cámara.
+if camara.empty:
+    print("Sin camera_box no hay comparación 3D vs 2D.")
+else:
+    comparacion = waymo.comparar_conteos_por_tipo(tabla, camara)
+    print(comparacion.to_string(index=False))
+    print("\\nSi 'sign' tiene camara_n = 0, es el dato (las señales son 3D), no un bug.")
+"""
+    ),
+    code(
+        """
+# E · Pose del vehículo (1 fila por frame) y JSON E2E (clusters, no video)
+pose_crudo = waymo.ensamblar_componente(DESTINO / "muestra", "vehicle_pose")
+if pose_crudo.empty:
+    print("Sin vehicle_pose. Etapa B lo baja (~40 KB por segmento).")
+else:
+    pose = waymo.traducir_pose_vehiculo(pose_crudo)
+    print("pose:", pose.shape, list(pose.columns))
+    print(pose[["pos_x", "pos_y", "pos_z"]].describe().round(2))
+
+calib_crudo = waymo.ensamblar_componente(DESTINO / "muestra", "camera_calibration")
+if calib_crudo.empty:
+    print("Sin camera_calibration.")
+else:
+    calib = waymo.traducir_calibracion_camara(calib_crudo)
+    print("\\ncalibración:")
+    print(calib[["camara", "ancho_px", "alto_px", "f_u", "f_v"]].to_string(index=False))
 
 e2e = waymo.leer_metadatos_e2e(DESTINO)
 print("\\nE2E JSON:", e2e.shape, list(e2e.columns))
@@ -492,7 +497,7 @@ if not e2e.empty:
 ## 6 · Pipeline Kedro (el mismo grafo, datos reales)
 
 Con ≥2 segmentos en `muestra/` el pipeline `ingesta` **ve** las fuentes locales
-(Perception v2, `camera_box`, JSON E2E) y deja `detecciones_reales` para el modelo.
+(Perception v2, `camera_box` ya traducido, JSON E2E) y deja `detecciones_reales` para el modelo.
 `waymo_real` es eso más calidad → preproceso → supervisado (por grupo) → no
 supervisado → optimización. **No mezcla** productos: el Random Forest solo usa v2.
 
@@ -502,22 +507,21 @@ uv run kedro run --pipeline ingesta       # 4 nodos, segundos
 uv run kedro run                          # 34 nodos: fuentes + EDA + ML
 ```
 
-| Fuente | EDA | ML (RF / k-medias / RA3) |
+| Etapa Kedro | Fuente que usa | Las tablas chicas |
 |---|---|---|
-| Esta tabla v2 (`lidar_box` + `stats`) | ✅ calidad + ML | ✅ partido por `segment_id` |
-| `camera_box` | tipos, nulos, cámaras (celda 5b) | ❌ no entra al RF |
-| JSON E2E | clusters (celda 5b) | ❌ no es video |
-| v1 / Motion / fotos | no se bajan | ❌ |
+| `ingesta` | v2 + inventario + cámara 2D + JSON E2E | se **ven** (cámara traducida a píxeles) |
+| `calidad` → `preprocesamiento` | solo `detecciones_reales` | no |
+| `supervisado` / `no_supervisado` / `optimizacion` | solo v2, partido por `segment_id` | no |
 
-No duplica código. Si solo hay un segmento, el nodo de partición **falla a propósito** y te
-dice que bajes más. Eso no es un bug: es el desafío de la Act. 2.2 (fuga por agrupación).
+Si solo hay un segmento, el nodo de partición **falla a propósito** y te dice que bajes más.
+Eso no es un bug: es el desafío de la Act. 2.2 (fuga por agrupación).
 
 En una máquina con los 40 segmentos del curso, el inventario Kedro (2026-09-08 10:55) midió:
 
 | fuente | archivos | MB | ¿entra al RF? |
 |---|---|---|---|
 | percepcion_v2 | 40 | 34,943 | sí |
-| camera_box | 40 | 7,181 | no (407.267 filas × 11) |
+| camera_box | 40 | 7,181 | no (tabla 2D; ahora con nombres de clase) |
 | e2e_camara | 1 | 0,035 | no (479 secuencias) |
 | camera_image / v1 / motion | 0 | 0 | no |
 """
@@ -530,14 +534,14 @@ En una máquina con los 40 segmentos del curso, el inventario Kedro (2026-09-08 
 |---|---|
 | Esta tabla (`detecciones_reales.parquet`) | **Proyecto de equipo** (notebook 10): lo carga solo |
 | El método (calidad, modelos, métricas) | Actividades 1.1–3.3: el mismo parquet |
-| Hallazgos de la 4b | Mini-informe del proyecto: desbalance, grupos, clima |
+| `camera_box` / pose / JSON E2E | Ficha de fuentes (Act. 1.1) y EDA 2D; **no** el RF |
 | Varios `segment_id` + `partir_por_grupo` | Train/test **sin fuga**; Kedro hace lo mismo |
 
 Cómo mejorar el análisis (eligen una y la miden):
 
 - ¿El F1 de `LEVEL_2` sube si entrenan solo de día, o baja?
 - ¿`cyclist` (la clase rara) se parece en geometría a `pedestrian`?
-- `camera_box` es **otra** tabla: tipos y NaN de dificultad; no la peguen al RF de LiDAR.
+- En la comparación 3D vs 2D: ¿cuánto `sign` “desaparece” en cámara? Eso es un hallazgo, no un join.
 - Kedro: `uv run kedro run --pipeline waymo_real` corre el grafo completo sobre este parquet.
 
 En el proyecto, si este parquet existe, la plantilla lo toma sola. No hace falta copiar rutas.
@@ -547,17 +551,20 @@ la celda 2. Si solo borras el parquet y `muestra/` tiene varios segmentos, los v
 
 ---
 
-### Apéndice · Los otros productos de la página de descarga
+### Apéndice · Los otros productos (ni AWS los vuelve pandas)
 
-Son los mismos cuatro de <https://waymo.com/open/download/>. El curso trabaja Perception v2.
-Los demás se **listan**; si el archivo más chico cabe, se baja. Nunca `cp -r` del bucket.
+Los cuatro de <https://waymo.com/open/download/>. El curso trabaja Perception v2.
+Los demás se **listan**. Un shard de Motion mide **1,17–1,32 GB**; CloudShell tiene ~1 GB.
+Guía: `docs/productos_waymo.md`.
 """
     ),
     code(
         """
 print("Página:", waymo.PAGINA_DESCARGA)
+print("Tope de clase:", waymo.TAMANO_MAXIMO_CLASE_MB, "MB")
 for clave, meta in waymo.CATALOGO_BUCKETS.items():
-    print(f"\\n{clave}  [{meta['formato']}]  gs://{meta['bucket']}")
+    print(f"\\n{clave}  [{meta['formato']}]  en_clase={meta['en_clase']}")
+    print(" ", meta["tamano_medido"])
     print(" ", meta["para_que"])
     try:
         objetos = waymo.listar_objetos(meta["bucket"], meta["prefijo_muestra"], limite=3)

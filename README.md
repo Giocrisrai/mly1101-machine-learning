@@ -14,13 +14,13 @@ tabla** y partir train/test **por segmento**. Las fotos (JPEG) y las nubes LiDAR
 
 | Paso | Qué haces | Dónde |
 |---|---|---|
-| **1** | Acepta los términos con tu cuenta Google en [waymo.com/open/download](https://waymo.com/open/download/) | Ahí ves Perception v2/v1, Motion y E2E. **No** descargues el bucket: el curso solo usa v2 liviano. |
+| **1** | Acepta los términos con tu cuenta Google en [waymo.com/open/download](https://waymo.com/open/download/) | Ahí ves Perception v2/v1, Motion y E2E. **No** descargues el bucket: el curso usa v2 liviano. [Por qué los otros no caben, ni en AWS](docs/productos_waymo.md). |
 | **2** | Abre el notebook, *guardar copia en Drive*, misma cuenta | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/14_opcional_waymo_buckets.ipynb) `14_opcional_waymo_buckets.ipynb` |
 | **3** | Una celda arma el lote (o en local: `uv run python herramientas/descargar_waymo.py --lote 8`) | Sale `datos/waymo_real/detecciones_reales.parquet`. Si ya hay `muestra/` con varios segmentos, **no pide GCS**: los junta. |
 | **4** | Analítica, **partir por grupo**, transformaciones (mismos nodos de Kedro), volúmenes | Mismas celdas del notebook 14 |
 | **5** | Actividades 1.1–3.3 del aula | El mismo parquet real |
 | **6** | Proyecto de equipo · pipeline | `cd kedro_mly1101 && uv run kedro run` (34 nodos) |
-| **7** | RAM / disco / S3 / Databricks | [`docs/recorrido_waymo.md`](docs/recorrido_waymo.md) · [lab AWS](docs/aws_academy_laboratorio.md) · [Databricks Free](docs/databricks_free.md) |
+| **7** | RAM / disco / S3 / Databricks | [`docs/recorrido_waymo.md`](docs/recorrido_waymo.md) · [lab AWS](docs/aws_academy_laboratorio.md) · [Databricks Free](docs/databricks_free.md) · [cuatro productos Waymo](docs/productos_waymo.md) |
 
 En local, si ya bajaste segmentos, el paso 3 **no pide GCS de nuevo**.
 

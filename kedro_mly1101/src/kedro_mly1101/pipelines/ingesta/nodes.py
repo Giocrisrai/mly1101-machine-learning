@@ -65,10 +65,9 @@ def traducir_waymo(particiones: dict) -> pd.DataFrame:
 
 
 def ensamblar_cajas_camara(particiones: dict) -> pd.DataFrame:
-    """Junta los ``camera_box`` de la muestra. Vacío si nadie los bajó.
+    """Junta los ``camera_box`` y los traduce al esquema de clase (píxeles).
 
-    No entran al clasificador: son otra tabla (cajas 2D). El pipeline las ve
-    para que el alumno distinga fuente tabular de JPEG.
+    Vacío si nadie los bajó. No entran al clasificador: son otra tabla 2D.
     """
     trozos = []
     for identificador, cargar in sorted(particiones.items()):
@@ -76,10 +75,8 @@ def ensamblar_cajas_camara(particiones: dict) -> pd.DataFrame:
         if componente == "camera_box":
             trozos.append(cargar())
     if not trozos:
-        return pd.DataFrame(
-            columns=["key.segment_context_name", "key.camera_name"]
-        )
-    return pd.concat(trozos, ignore_index=True)
+        return pd.DataFrame()
+    return waymo.traducir_camera_box(pd.concat(trozos, ignore_index=True))
 
 
 def inventariar_fuentes(raiz: str) -> pd.DataFrame:

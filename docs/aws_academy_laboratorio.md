@@ -26,7 +26,8 @@ Entras con **tu** cuenta de estudiante de Academy. No uses la del docente.
 
 Sigue **sin** bajarse el bucket de Waymo (terabytes). Solo `lidar_box` + `stats` (~1 MB por
 segmento). El parquet es de **tu** cuenta: no lo publiques
-([términos Waymo](https://waymo.com/open/terms/)).
+([términos Waymo](https://waymo.com/open/terms/)). Motion, Perception v1 y el video E2E **no
+caben** en este lab: [por qué, con MB medidos](productos_waymo.md).
 
 ---
 
@@ -207,7 +208,8 @@ pip install -U pip
 pip install -r requirements.txt
 ```
 
-El clone trae el CSV de la pauta. **No** trae `datos/waymo_real/` (gitignore).
+El clone trae código y notebooks. **No** trae `datos/waymo_real/` (gitignore). **No** hay CSV
+de pauta: si falta el parquet, el material falla y te dice cómo bajarlo.
 
 3. Enlaza datos (una vía):
 
@@ -247,6 +249,25 @@ Create bucket → `us-east-1` → Block all public access ON. Sube solo **tu** p
 - Partir train/test al azar por fila.
 - Publicar el parquet.
 - Dejar SageMaker/EC2 prendidos.
+- Bajar un tfrecord de Motion / v1 / E2E “porque SageMaker tiene disco”. Un shard mide
+  **1,2–1,7 GB**, CloudShell tiene **1 GB**, y el grafo Kedro no los usa. Detalle:
+  [`productos_waymo.md`](productos_waymo.md).
+
+### 5.5 Motion, v1 y video E2E (AWS no los vuelve pandas)
+
+La consola de Google muestra cuatro productos. El lab de USD 50 **no** es un atajo para
+tenerlos “resueltos”:
+
+| Producto | Objeto típico (GCS 2026-09-08) | En Academy |
+|---|---|---|
+| Perception v2 (`lidar_box`+`stats`) | 0,25–0,95 MB | **Sí.** Es el parquet del curso |
+| Perception v1 | tfrecord 894–1.062 MB | Listar. No cabe en CloudShell; no es pandas |
+| Motion `tf_example` | shard 1,17–1,32 GB | Listar. Un shard **ya** supera el `$HOME` de CloudShell |
+| E2E JSON | 0,03 MB | **Sí**, inventario (479 clusters). El video ~1,6 GB **no** |
+
+SageMaker `xlarge` puede *almacenar* un tfrecord. Sigue haciendo falta TensorFlow y una
+pregunta de ML que **no** está en los RA (trayectorias / video). No copies esos shards a S3
+para repartirlos: la licencia Waymo lo prohíbe.
 
 ---
 
@@ -264,8 +285,9 @@ parquet a un Volume privado y pruebas `spark.read.parquet(…).count()`. No EMR.
 
 | Situación | Dónde |
 |---|---|
-| Actividades 1.1–3.3 (CSV de la pauta) | Colab, notebook alumno |
+| Actividades 1.1–3.3 (parquet v2) | Colab, notebook alumno |
 | Lote real de 8 segmentos | Colab, notebook **14** |
+| “¿Y Motion / v1 / el video?” | No se bajan. [Mapa de productos](productos_waymo.md) |
 | “Se me acabó la RAM / el disco” | AWS Academy, esta guía |
 | Quiero ver Spark | Databricks Free Edition |
 | Proyecto de equipo | 14 → parquet → notebook **10**; Kedro `waymo_real` si hay ≥2 segmentos |
