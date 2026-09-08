@@ -84,6 +84,38 @@ Si necesitas la lista completa con las respuestas, está al final de
 
 ## `waymo_real/`
 
-Carpeta para los datos reales del Waymo Open Dataset. **Está en `.gitignore`**: la licencia de
-Waymo es de uso no comercial y no permite redistribuir los datos. Cada persona debe aceptar los
-términos en <https://waymo.com/open/terms/> y descargarlos por su cuenta.
+Carpeta para los datos reales del Waymo Open Dataset. **Está en `.gitignore`**.
+
+| Archivo | Qué es |
+|---|---|
+| `detecciones_reales.parquet` | **530.396** filas, **40** `segment_id`. Ensamblado desde `muestra/` (lidar_box+stats). |
+| `lidar_box.parquet` + `stats.parquet` | Un segmento suelto (notebook 00). Medido: `10023947602400723454_1120_000_1140_000` → 18.633 detecciones. Un solo segmento **no** alcanza para partir train/test. |
+| `muestra/` | 40 `lidar_box` + 40 `stats` (34,943 MB, entran al modelo) y 40 `camera_box` (7,181 MB, 407.267 filas, no entran). **0** `camera_image`. |
+| `val_sequence_name_to_scenario_cluster.json` | **36.235 bytes**, 479 secuencias. Clusters (grafía de Waymo): Interections 116, Foreign Object Debris 78, Cyclist 71, Pedestrian 52, … |
+| `censo_stats/` | Stats de muchos segmentos (sesgo de muestreo). No entra al modelo. |
+
+Flujo: [waymo.com/open/download](https://waymo.com/open/download/) → notebook
+`14_opcional_waymo_buckets.ipynb` → esa tabla. Pipeline de fuentes:
+`cd kedro_mly1101 && uv run kedro run --pipeline ingesta` (5 nodos; inventario escrito
+2026-09-08 10:55). ML: `uv run kedro run --pipeline waymo_real` (el RF **solo** ve v2).
+No copies el bucket entero.
+
+### Conteos medidos 2026-09-08 (no son el CSV de la pauta)
+
+| object_type | n | detection_difficulty | n | weather | n |
+|---|---|---|---|---|---|
+| vehicle | 256.855 | LEVEL_1 | 465.002 | sunny | 530.396 |
+| sign | 140.319 | LEVEL_2 | 65.394 | | |
+| pedestrian | 130.836 | | | | |
+| cyclist | 2.386 | | | | |
+
+location: `location_sf` 398.065 · `location_phx` 132.331.
+time_of_day: Day 461.090 · Night 51.867 · Dawn/Dusk 17.439.
+Nulos: 0 %. Valores imposibles: 0. Mediana `speed_mps`: 0,0133.
+
+| Fuente local | En disco | Modelo |
+|---|---|---|
+| Perception v2 | 40 segmentos, 530.396 filas | sí |
+| `camera_box` | 407.267 filas | no |
+| JSON E2E | 479 filas | no |
+| v1 / Motion / JPEG | 0 archivos | no |

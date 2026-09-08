@@ -96,7 +96,8 @@ def particionar(tabla: pd.DataFrame, config: dict) -> pd.DataFrame:
             "ubicación: cualquier corte deja entrenamiento y prueba contaminados, y "
             "la métrica mediría memoria, no generalización.\n\n"
             "Si estás usando datos reales de Waymo, descarga varios segmentos:\n"
-            "    python herramientas/descargar_waymo.py --muestra 40"
+            "    python herramientas/descargar_waymo.py --muestra 40\n"
+            "    (o --lote 8 para la tabla de clase; hacen falta ≥2 segmentos)"
         )
 
     separador = GroupShuffleSplit(

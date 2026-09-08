@@ -149,9 +149,47 @@ def test_la_ingesta_ignora_los_segmentos_incompletos(cajas, stats) -> None:
     assert len(ingesta.traducir_waymo(particiones)) == 2
 
 
+def test_la_ingesta_junta_camera_box_sin_meterlo_en_lidar(cajas, stats) -> None:
+    cajas_2d = pd.DataFrame(
+        {
+            "key.segment_context_name": ["seg_a"],
+            "key.camera_name": [1],
+            "[CameraBoxComponent].type": [1],
+        }
+    )
+    particiones = {
+        "seg_a/lidar_box": lambda: cajas,
+        "seg_a/stats": lambda: stats,
+        "seg_a/camera_box": lambda: cajas_2d,
+    }
+    lidar = ingesta.traducir_waymo(particiones)
+    camara = ingesta.ensamblar_cajas_camara(particiones)
+    assert len(lidar) == 2
+    assert len(camara) == 1
+    assert "key.camera_name" in camara.columns
+
+
+def test_sin_camera_box_la_tabla_2d_sale_vacia() -> None:
+    assert ingesta.ensamblar_cajas_camara({"seg_a/stats": lambda: pd.DataFrame()}).empty
+
+
 def test_sin_ningun_segmento_el_error_dice_que_hacer() -> None:
     with pytest.raises(ValueError, match="descargar_waymo.py --muestra"):
         ingesta.traducir_waymo({"solo/stats": lambda: pd.DataFrame()})
+
+
+def test_inventariar_fuentes_declara_que_v2_entra_y_el_resto_no(tmp_path: Path) -> None:
+    inv = ingesta.inventariar_fuentes(str(tmp_path)).set_index("fuente")
+    assert bool(inv.loc["percepcion_v2", "entra_al_modelo"])
+    for fuente in ("camera_box", "camera_image", "e2e_camara", "percepcion_v1", "motion"):
+        assert not bool(inv.loc[fuente, "entra_al_modelo"])
+        assert int(inv.loc[fuente, "archivos"]) == 0
+
+
+def test_leer_metadatos_e2e_vacio_si_no_hay_json(tmp_path: Path) -> None:
+    tabla = ingesta.leer_metadatos_e2e(str(tmp_path))
+    assert tabla.empty
+    assert list(tabla.columns) == ["secuencia", "cluster"]
 
 
 def test_comparar_con_sintetico_produce_una_tabla(cajas, stats) -> None:

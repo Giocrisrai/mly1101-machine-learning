@@ -6,9 +6,13 @@ este archivo: lo decide el grafo. Que ``supervisado`` corra después de
 ``detecciones_limpias``, que el otro produce.
 
 **El pipeline ``waymo_real`` no duplica ni un nodo.** Reutiliza los mismos de
-siempre remapeando su entrada: donde leían el CSV sintético, ahora leen la salida
-de la ingesta de Waymo. Esa es, en una línea, la razón de haber separado el
-catálogo del análisis.
+siempre remapeando su entrada: donde leían el CSV sintético, ahora leen
+``detecciones_reales`` (Perception v2). ``camera_box`` y el JSON E2E salen de
+``ingesta`` y **no** se remapean al clasificador: el contrato lo fija
+``tests/test_pipeline_supervisado.py``.
+
+Conteos que los tests bloquean: ``__default__`` = 30, ``ingesta`` = 5,
+``waymo_real`` = 35.
 """
 
 from __future__ import annotations
@@ -81,7 +85,8 @@ def register_pipelines() -> dict[str, Pipeline]:
         p_calidad + p_preprocesamiento + p_supervisado + p_no_supervisado + p_optimizacion
     )
 
-    # El mismo recorrido, sobre datos reales. Cambia la entrada, no los nodos.
+    # El mismo recorrido, sobre Perception v2. Cambia la entrada, no los nodos.
+    # camera_box / E2E viven en p_ingesta y no entran a este remap.
     analisis_real = pipeline(
         analisis,
         inputs={"detecciones_crudas": "detecciones_reales"},

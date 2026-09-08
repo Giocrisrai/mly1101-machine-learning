@@ -1,4 +1,4 @@
-"""Descarga de componentes del Waymo Open Dataset v2, en Colab o en local.
+"""Descarga de componentes del Waymo Open Dataset, en Colab o en local.
 
 Existe porque **las credenciales funcionan distinto en cada entorno**:
 
@@ -10,6 +10,10 @@ Existe porque **las credenciales funcionan distinto en cada entorno**:
   Python en cambio pediría credenciales por defecto (``gcloud auth
   application-default login``), que es un paso extra.
 
+El curso usa Perception **v2** (parquet). ``CATALOGO_BUCKETS`` documenta también
+Motion, End-to-End camera y Perception v1.4.3: se listan y se baja un objeto
+chico, nunca el bucket entero.
+
 Poner esto en un módulo y no en una celda del notebook tiene una razón: así se
 puede probar. ``tests/test_waymo_descarga.py`` verifica la lógica de selección
 de entorno sin necesidad de credenciales.
@@ -17,6 +21,7 @@ de entorno sin necesidad de credenciales.
 
 from __future__ import annotations
 
+import json
 import shutil
 import subprocess
 import sys
@@ -25,6 +30,103 @@ from pathlib import Path
 BUCKET = "waymo_open_dataset_v_2_0_1"
 SPLIT = "training"
 COMPONENTES_LIVIANOS = ("lidar_box", "stats")
+TAMANO_MAXIMO_MB = 50.0
+TAMANO_MAXIMO_CLASE_MB = 250.0
+LOTE_CLASE = 8
+PAGINA_DESCARGA = "https://waymo.com/open/download/"
+
+# Qué hay en un segmento de Perception v2 y qué baja el curso.
+# camera_box es tabla (cajas 2D). camera_image son JPEG: no se tocan en clase.
+COMPONENTES_V2: dict[str, dict[str, str]] = {
+    "lidar_box": {
+        "uso": "curso",
+        "peso": "~1 MB",
+        "que": "cajas 3D de cada detección LiDAR (tabla)",
+    },
+    "stats": {
+        "uso": "curso",
+        "peso": "~23 KB",
+        "que": "clima, hora y ciudad del segmento",
+    },
+    "camera_box": {
+        "uso": "opcional",
+        "peso": "~1 MB",
+        "que": "cajas 2D sobre la foto: sigue siendo tabla, no es la imagen",
+    },
+    "camera_image": {
+        "uso": "no",
+        "peso": "~330 MB por segmento",
+        "que": "JPEG de las cámaras: no se baja en clase",
+    },
+    "lidar": {
+        "uso": "no",
+        "peso": "GB",
+        "que": "nube de puntos: no se baja en clase",
+    },
+}
+
+# Los cuatro productos de https://waymo.com/open/download/ en GCS.
+# El curso usa Perception v2 (parquet, componentes livianos). Los otros tres
+# son tfrecord: se listan y, si cabe, se baja un objeto chico. Nunca el bucket.
+CATALOGO_BUCKETS: dict[str, dict[str, str]] = {
+    "percepcion_v2": {
+        "bucket": "waymo_open_dataset_v_2_0_1",
+        "formato": "parquet",
+        "prefijo_muestra": "training/lidar_box/",
+        "consola": "https://console.cloud.google.com/storage/browser/waymo_open_dataset_v_2_0_1",
+        "pagina": PAGINA_DESCARGA,
+        "para_que": (
+            "Perception v2.0.1 (modular, sin mapas): el hilo del curso. "
+            "Un segmento de lidar_box (~1 MB) + stats (~23 KB) alcanza."
+        ),
+    },
+    "percepcion_v1": {
+        "bucket": "waymo_open_dataset_v_1_4_3",
+        "formato": "tfrecord",
+        "prefijo_muestra": "individual_files/training/",
+        "consola": "https://console.cloud.google.com/storage/browser/waymo_open_dataset_v_1_4_3",
+        "pagina": PAGINA_DESCARGA,
+        "para_que": (
+            "Perception v1.4.3 (con mapas): un Frame protobuf por registro, "
+            "imágenes y LiDAR pegados. Cada tfrecord pesa GB; el curso usa v2."
+        ),
+    },
+    "motion": {
+        "bucket": "waymo_open_dataset_motion_v_1_3_1",
+        "formato": "tfrecord",
+        "prefijo_muestra": "uncompressed/tf_example/training/",
+        "consola": "https://console.cloud.google.com/storage/browser/waymo_open_dataset_motion_v_1_3_1",
+        "pagina": PAGINA_DESCARGA,
+        "para_que": (
+            "Motion v1.3.1: trayectorias a 9 s y mapa. Los tfrecord superan 1 GB; "
+            "en clase solo se listan."
+        ),
+    },
+    "e2e_camara": {
+        "bucket": "waymo_open_dataset_end_to_end_camera_v_1_0_0",
+        "formato": "tfrecord",
+        "prefijo_muestra": "val_sequence_name_to_scenario_cluster.json",
+        "consola": (
+            "https://console.cloud.google.com/storage/browser/"
+            "waymo_open_dataset_end_to_end_camera_v_1_0_0"
+        ),
+        "pagina": PAGINA_DESCARGA,
+        "para_que": (
+            "E2E cámara v1.0.0: los tfrecord son ~1,6 GB. El JSON de metadatos "
+            "(~36 KB) sí cabe; no hay carpeta val_sequence/."
+        ),
+    },
+}
+
+_MENSAJE_403 = (
+    "Google Cloud respondió 403: la cuenta con la que está abierto este entorno no "
+    "tiene acceso al Waymo Open Dataset.\n\n"
+    "  Causa habitual: Colab está abierto con una cuenta de Google distinta de la que "
+    "aceptó los términos en https://waymo.com/open/download/\n\n"
+    "  Solución: cambia de cuenta en Colab (avatar arriba a la derecha) y usa la misma "
+    "con la que te registraste en Waymo, o acepta los términos con esta cuenta.\n\n"
+    "  Mensaje original: {error}"
+)
 
 
 def en_colab() -> bool:
@@ -58,15 +160,7 @@ def _descargar_con_cliente_python(componente: str, segmento: str, destino: Path)
         bucket.blob(ruta_gcs(componente, segmento)).download_to_filename(str(destino))
     except exceptions.Forbidden as error:
         destino.unlink(missing_ok=True)
-        raise RuntimeError(
-            "Google Cloud respondió 403: la cuenta con la que está abierto este entorno no "
-            "tiene acceso al Waymo Open Dataset.\n\n"
-            "  Causa habitual: Colab está abierto con una cuenta de Google distinta de la que "
-            "aceptó los términos en https://waymo.com/open/download/\n\n"
-            "  Solución: cambia de cuenta en Colab (avatar arriba a la derecha) y usa la misma "
-            "con la que te registraste en Waymo, o acepta los términos con esta cuenta.\n\n"
-            f"  Mensaje original: {error}"
-        ) from error
+        raise RuntimeError(_MENSAJE_403.format(error=error)) from error
 
 
 def _descargar_con_gsutil(componente: str, segmento: str, destino: Path) -> None:
@@ -126,6 +220,298 @@ def descargar_segmento(segmento: str, carpeta: Path) -> dict[str, Path]:
         print(f"{componente}: {tamano:.2f} MB  ({ruta})")
         rutas[componente] = ruta
     return rutas
+
+
+def descargar_camera_box(segmento: str, carpeta: Path) -> Path:
+    """Cajas 2D de un segmento (~50–360 KB). Es tabla, no JPEG."""
+    return descargar("camera_box", segmento, carpeta)
+
+
+def producto(clave: str) -> dict[str, str]:
+    """Devuelve una entrada de ``CATALOGO_BUCKETS`` o lista las claves válidas."""
+    try:
+        return CATALOGO_BUCKETS[clave]
+    except KeyError as error:
+        disponibles = ", ".join(CATALOGO_BUCKETS)
+        raise KeyError(
+            f"No hay un producto '{clave}'. Claves: {disponibles}."
+        ) from error
+
+
+def listar_objetos(bucket: str, prefijo: str = "", limite: int = 8) -> list[dict]:
+    """Lista objetos de un bucket (nombre, tamaño, URI gs://), sin descargarlos.
+
+    En Colab usa el cliente Python; en local, ``gsutil ls -l``. El límite evita
+    paginar terabytes: se mira un prefijo, se elige un archivo, y recién ahí se
+    copia.
+    """
+    if en_colab():
+        return _listar_con_cliente_python(bucket, prefijo, limite)
+    return _listar_con_gsutil(bucket, prefijo, limite)
+
+
+def descargar_objeto(
+    bucket: str,
+    blob: str,
+    carpeta: Path,
+    forzar: bool = False,
+    tamano_maximo_mb: float | None = TAMANO_MAXIMO_MB,
+) -> Path:
+    """Copia un objeto cualquiera a ``carpeta / nombre_del_archivo``.
+
+    Args:
+        bucket: nombre del bucket, sin ``gs://``.
+        blob: ruta del objeto dentro del bucket.
+        carpeta: directorio de destino; se crea si no existe.
+        forzar: vuelve a descargar aunque el archivo ya esté.
+        tamano_maximo_mb: tope de seguridad. ``None`` lo desactiva. Un tfrecord
+            de Perception v1 o Motion puede ser cientos de MB o varios GB.
+
+    Raises:
+        RuntimeError: si el archivo supera el tope o si GCS responde 403.
+    """
+    carpeta.mkdir(parents=True, exist_ok=True)
+    destino = carpeta / Path(blob).name
+    if destino.exists() and not forzar:
+        return destino
+
+    if tamano_maximo_mb is not None:
+        bytes_ = _tamano_blob(bucket, blob)
+        tope = tamano_maximo_mb * 1024 * 1024
+        if bytes_ > tope:
+            mb = bytes_ / 1024**2
+            raise RuntimeError(
+                f"gs://{bucket}/{blob} pesa {mb:.0f} MB, por encima del tope de "
+                f"{tamano_maximo_mb:.0f} MB. Un tfrecord de Perception v1 o Motion "
+                "puede ser cientos de MB o varios GB: no lo bajes en Colab por "
+                "accidente. Si lo necesitas de verdad, llama con "
+                "tamano_maximo_mb=None."
+            )
+
+    if en_colab():
+        _copiar_blob_python(bucket, blob, destino)
+    else:
+        _copiar_blob_gsutil(bucket, blob, destino)
+    return destino
+
+
+def elegir_muestra(
+    objetos: list[dict],
+    tamano_maximo_mb: float | None = TAMANO_MAXIMO_CLASE_MB,
+) -> dict:
+    """Elige el objeto más chico que cabe bajo el tope.
+
+    Así se trabaja con datos reales en clase: un fragmento, no el bucket.
+    """
+    if not objetos:
+        raise RuntimeError(
+            "El listado está vacío. 403 suele ser cuenta distinta a la del "
+            "registro en Waymo; lista vacía, un prefijo que no existe."
+        )
+    tope = None if tamano_maximo_mb is None else tamano_maximo_mb * 1024 * 1024
+    candidatos = [
+        o for o in objetos if tope is None or o["bytes"] <= tope
+    ]
+    if not candidatos:
+        mas_chico = min(objetos, key=lambda o: o["bytes"])
+        mb = mas_chico["bytes"] / 1024**2
+        raise RuntimeError(
+            f"Nada del listado cabe bajo {tamano_maximo_mb:.0f} MB. "
+            f"El más chico es {mas_chico['nombre']} ({mb:.0f} MB). "
+            "En local, si tienes disco, llama con tamano_maximo_mb=None."
+        )
+    return min(candidatos, key=lambda o: o["bytes"])
+
+
+def descargar_muestra(
+    clave: str,
+    carpeta: Path,
+    limite: int = 12,
+    tamano_maximo_mb: float | None = TAMANO_MAXIMO_CLASE_MB,
+) -> Path:
+    """Lista el prefijo del producto y copia el fragmento real más chico que cabe.
+
+    Args:
+        clave: una clave de ``CATALOGO_BUCKETS`` (``percepcion_v2``, ``motion``, …).
+        carpeta: destino local (``datos/waymo_real/``).
+        limite: cuántos objetos pedir a GCS al listar.
+        tamano_maximo_mb: tope de clase. ``None`` desactiva el tope.
+    """
+    info = producto(clave)
+    objetos = listar_objetos(info["bucket"], info["prefijo_muestra"], limite=limite)
+    elegido = elegir_muestra(objetos, tamano_maximo_mb=tamano_maximo_mb)
+    return descargar_objeto(
+        info["bucket"],
+        elegido["nombre"],
+        carpeta,
+        tamano_maximo_mb=tamano_maximo_mb,
+    )
+
+
+def resumir_fragmento(ruta: Path) -> dict:
+    """Abre un archivo ya descargado y dice qué hay: formato, tamaño, columnas.
+
+    No baja nada. Sirve para validar el tratamiento después de conectar a GCS.
+    """
+    if not ruta.exists():
+        raise FileNotFoundError(ruta)
+
+    nombre = ruta.name.lower()
+    if ruta.suffix == ".parquet" or nombre.endswith(".parquet"):
+        import pandas as pd
+
+        tabla = pd.read_parquet(ruta)
+        numericas = [
+            c for c in tabla.columns if pd.api.types.is_numeric_dtype(tabla[c])
+        ]
+        return {
+            "formato": "parquet",
+            "filas": int(len(tabla)),
+            "columnas": int(tabla.shape[1]),
+            "numericas": int(len(numericas)),
+            "nombres": list(tabla.columns),
+        }
+
+    if ruta.suffix == ".json" or nombre.endswith(".json"):
+        with ruta.open(encoding="utf-8") as fh:
+            contenido = json.load(fh)
+        if isinstance(contenido, dict):
+            return {
+                "formato": "json",
+                "claves": list(contenido.keys()),
+                "elementos": len(contenido),
+            }
+        if isinstance(contenido, list):
+            return {"formato": "json", "claves": [], "elementos": len(contenido)}
+        return {"formato": "json", "claves": [], "elementos": 1}
+
+    if "tfrecord" in nombre:
+        return {"formato": "tfrecord", "bytes": int(ruta.stat().st_size)}
+
+    return {"formato": ruta.suffix.lstrip(".") or "binario", "bytes": int(ruta.stat().st_size)}
+
+
+def _parsear_listado_gsutil(stdout: str, bucket: str) -> list[dict]:
+    """Convierte ``gsutil ls -l`` en una lista de objetos (sin directorios)."""
+    objetos: list[dict] = []
+    prefijo_gs = f"gs://{bucket}/"
+    for linea in stdout.splitlines():
+        linea = linea.strip()
+        if not linea or linea.startswith("TOTAL"):
+            continue
+        partes = linea.split()
+        if len(partes) < 2:
+            continue
+        try:
+            tamano = int(partes[0])
+        except ValueError:
+            continue
+        gs = partes[-1]
+        if not gs.startswith(prefijo_gs) or gs.endswith("/"):
+            continue
+        objetos.append(
+            {"nombre": gs[len(prefijo_gs) :], "bytes": tamano, "gs": gs}
+        )
+    return objetos
+
+
+def _error_gsutil(stderr: str) -> RuntimeError:
+    """Traduce los fallos de gsutil a un mensaje que el alumno puede ejecutar."""
+    texto = (stderr or "").strip()
+    bajo = texto.lower()
+    if "reauthentication" in bajo or "cannot prompt" in bajo:
+        return RuntimeError(
+            "gcloud pide volver a iniciar sesión (el token caducó).\n"
+            "  Ejecuta en tu terminal:  gcloud auth login\n"
+            "  Usa la MISMA cuenta con la que aceptaste los términos en "
+            "https://waymo.com/open/download/"
+        )
+    if "accessdenied" in bajo or "403" in texto:
+        return RuntimeError(_MENSAJE_403.format(error=texto[:300]))
+    return RuntimeError(f"gsutil falló: {texto[:300]}")
+
+
+def _listar_con_gsutil(bucket: str, prefijo: str, limite: int) -> list[dict]:
+    gsutil = shutil.which("gsutil")
+    if not gsutil:
+        raise RuntimeError(
+            "No se encontró gsutil. Instálalo con: brew install --cask google-cloud-sdk"
+        )
+    uri = f"gs://{bucket}/{prefijo}" if prefijo else f"gs://{bucket}"
+    resultado = subprocess.run(
+        [gsutil, "ls", "-l", uri], capture_output=True, text=True
+    )
+    if resultado.returncode != 0:
+        raise _error_gsutil(resultado.stderr)
+    return _parsear_listado_gsutil(resultado.stdout, bucket)[:limite]
+
+
+def _listar_con_cliente_python(bucket: str, prefijo: str, limite: int) -> list[dict]:
+    from google.api_core import exceptions
+    from google.cloud import storage
+
+    try:
+        blobs = storage.Client(project="mly1101").list_blobs(
+            bucket, prefix=prefijo or None, max_results=limite
+        )
+        objetos = []
+        for blob in blobs:
+            if blob.name.endswith("/"):
+                continue
+            objetos.append(
+                {
+                    "nombre": blob.name,
+                    "bytes": int(blob.size or 0),
+                    "gs": f"gs://{bucket}/{blob.name}",
+                }
+            )
+        return objetos[:limite]
+    except exceptions.Forbidden as error:
+        raise RuntimeError(_MENSAJE_403.format(error=error)) from error
+
+
+def _tamano_blob(bucket: str, blob: str) -> int:
+    """Tamaño en bytes de un objeto, sin descargarlo."""
+    if en_colab():
+        from google.cloud import storage
+
+        remoto = storage.Client(project="mly1101").bucket(bucket).get_blob(blob)
+        if remoto is None:
+            raise RuntimeError(f"No existe gs://{bucket}/{blob}")
+        return int(remoto.size or 0)
+
+    for objeto in _listar_con_gsutil(bucket, blob, 1):
+        if objeto["nombre"] == blob:
+            return int(objeto["bytes"])
+    raise RuntimeError(f"No existe gs://{bucket}/{blob}")
+
+
+def _copiar_blob_python(bucket: str, blob: str, destino: Path) -> None:
+    from google.api_core import exceptions
+    from google.cloud import storage
+
+    try:
+        storage.Client(project="mly1101").bucket(bucket).blob(blob).download_to_filename(
+            str(destino)
+        )
+    except exceptions.Forbidden as error:
+        destino.unlink(missing_ok=True)
+        raise RuntimeError(_MENSAJE_403.format(error=error)) from error
+
+
+def _copiar_blob_gsutil(bucket: str, blob: str, destino: Path) -> None:
+    gsutil = shutil.which("gsutil")
+    if not gsutil:
+        raise RuntimeError(
+            "No se encontró gsutil. Instálalo con: brew install --cask google-cloud-sdk"
+        )
+    resultado = subprocess.run(
+        [gsutil, "cp", f"gs://{bucket}/{blob}", str(destino)],
+        capture_output=True,
+        text=True,
+    )
+    if resultado.returncode != 0:
+        raise _error_gsutil(resultado.stderr)
 
 
 # ===========================================================================
@@ -232,3 +618,383 @@ def traducir_esquema(cajas: pd.DataFrame, stats: pd.DataFrame) -> pd.DataFrame:
         )
 
     return tabla.reset_index(drop=True)
+
+
+def informe_analitica(tabla: pd.DataFrame) -> dict:
+    """Resumen corto para no perderse en el volumen: cuántas filas, qué hay, qué sigue."""
+    tipos = (
+        tabla["object_type"].value_counts().to_dict()
+        if "object_type" in tabla.columns
+        else {}
+    )
+    sin_puntos = 0
+    if "num_lidar_points" in tabla.columns:
+        sin_puntos = int((tabla["num_lidar_points"] == 0).sum())
+    segmentos = (
+        int(tabla["segment_id"].nunique()) if "segment_id" in tabla.columns else 1
+    )
+    return {
+        "filas": int(len(tabla)),
+        "segmentos": segmentos,
+        "tipos": tipos,
+        "cajas_sin_puntos": sin_puntos,
+        "siguiente": (
+            "Esta tabla alimenta el proyecto (notebook 10) y el pipeline Kedro "
+            "(kedro run --pipeline waymo_real). Parte train/test por segment_id, "
+            "no al azar. Las actividades 1.1–3.3 del aula usan el CSV del repo, "
+            "para que coincida la pauta."
+        ),
+    }
+
+
+def texto_informe(informe: dict) -> str:
+    """Versión imprimible del informe de analítica."""
+    lineas = [
+        f"{informe['filas']} detecciones  ·  {informe['segmentos']} segmentos",
+        "tipos: " + ", ".join(f"{k}={v}" for k, v in informe["tipos"].items()),
+        f"cajas con 0 puntos LiDAR: {informe['cajas_sin_puntos']}",
+        informe["siguiente"],
+    ]
+    return "\n".join(lineas)
+
+
+def segmentos_completos(muestra: Path) -> list[Path]:
+    """Carpetas de ``muestra/`` que tienen ``lidar_box`` y ``stats``."""
+    if not muestra.is_dir():
+        return []
+    completos: list[Path] = []
+    for carpeta in sorted(p for p in muestra.iterdir() if p.is_dir()):
+        if (carpeta / "lidar_box.parquet").exists() and (
+            carpeta / "stats.parquet"
+        ).exists():
+            completos.append(carpeta)
+    return completos
+
+
+def ensamblar_muestra(muestra: Path) -> pd.DataFrame:
+    """Traduce todos los segmentos completos de ``muestra/`` a una sola tabla.
+
+    Es la misma traducción que usa el pipeline Kedro: varios segmentos, no uno.
+    Con un solo segmento no se puede partir train/test sin fuga.
+    """
+    carpetas = segmentos_completos(muestra)
+    if not carpetas:
+        raise RuntimeError(
+            "No hay segmentos completos (lidar_box + stats) en "
+            f"{muestra}. Bájalos con: python herramientas/descargar_waymo.py --lote 8"
+        )
+    piezas = [
+        traducir_esquema(
+            pd.read_parquet(carpeta / "lidar_box.parquet"),
+            pd.read_parquet(carpeta / "stats.parquet"),
+        )
+        for carpeta in carpetas
+    ]
+    return pd.concat(piezas, ignore_index=True)
+
+
+def inventario_muestra(muestra: Path) -> pd.DataFrame:
+    """Qué componentes hay en disco, por segmento. Para ver que no bajamos imágenes."""
+    filas: list[dict] = []
+    if not muestra.is_dir():
+        return pd.DataFrame(columns=["segmento", "componente", "mb", "completo"])
+    nombres_completos = {carpeta.name for carpeta in segmentos_completos(muestra)}
+    for carpeta in sorted(p for p in muestra.iterdir() if p.is_dir()):
+        for parquet in sorted(carpeta.glob("*.parquet")):
+            filas.append(
+                {
+                    "segmento": carpeta.name,
+                    "componente": parquet.stem,
+                    "mb": round(parquet.stat().st_size / 1024**2, 3),
+                    "completo": carpeta.name in nombres_completos,
+                }
+            )
+    return pd.DataFrame(filas)
+
+
+def inventario_fuentes(carpeta: Path) -> pd.DataFrame:
+    """Qué productos de Waymo hay en disco y cuáles entran al modelo.
+
+    El clasificador del curso solo usa Perception v2 (``lidar_box`` + ``stats``).
+    El resto se lista para que el pipeline las *vea* sin mezclarlas: ``camera_box``
+    es tabla 2D, E2E/Motion/v1 son otro problema y otro tamaño.
+    """
+    muestra = inventario_muestra(carpeta / "muestra")
+
+    def _de_componente(nombre: str) -> tuple[int, float]:
+        if muestra.empty:
+            return 0, 0.0
+        sub = muestra.loc[muestra["componente"] == nombre]
+        return int(sub["segmento"].nunique()), float(sub["mb"].sum())
+
+    n_v2 = len(segmentos_completos(carpeta / "muestra"))
+    mb_v2 = 0.0
+    if not muestra.empty:
+        mb_v2 = float(
+            muestra.loc[
+                muestra["componente"].isin(("lidar_box", "stats"))
+                & muestra["completo"],
+                "mb",
+            ].sum()
+        )
+    n_box, mb_box = _de_componente("camera_box")
+    n_img, mb_img = _de_componente("camera_image")
+
+    jsons_e2e = list(carpeta.glob("val_sequence*.json")) + list(
+        carpeta.glob("test_sequence*.json")
+    )
+    tf_v1 = [
+        p
+        for p in carpeta.rglob("*.tfrecord*")
+        if "segment-" in p.name and "camera_labels" in p.name
+    ]
+    tf_motion = [
+        p
+        for p in carpeta.rglob("*.tfrecord*")
+        if "tfexample" in p.name.lower() or "motion" in str(p).lower()
+    ]
+    tf_e2e = [
+        p
+        for p in carpeta.glob("*.tfrecord*")
+        if p.name.startswith("test_") or p.name.startswith("val_")
+    ]
+
+    def _mb(rutas: list[Path]) -> float:
+        return round(sum(p.stat().st_size for p in rutas) / 1024**2, 3)
+
+    filas = [
+        {
+            "fuente": "percepcion_v2",
+            "archivos": n_v2,
+            "mb": round(mb_v2, 3),
+            "entra_al_modelo": True,
+            "nota": "lidar_box + stats: el hilo del curso (Act. 2.2 por segmento)",
+        },
+        {
+            "fuente": "camera_box",
+            "archivos": n_box,
+            "mb": round(mb_box, 3),
+            "entra_al_modelo": False,
+            "nota": "cajas 2D (tabla). El pipeline las ve; no van al Random Forest",
+        },
+        {
+            "fuente": "camera_image",
+            "archivos": n_img,
+            "mb": round(mb_img, 3),
+            "entra_al_modelo": False,
+            "nota": "~330 MB por segmento: no se baja en clase",
+        },
+        {
+            "fuente": "e2e_camara",
+            "archivos": len(jsons_e2e) + len(tf_e2e),
+            "mb": round(_mb(jsons_e2e) + _mb(tf_e2e), 3),
+            "entra_al_modelo": False,
+            "nota": "JSON de metadatos (~36 KB) sí; tfrecord ~1,6 GB no",
+        },
+        {
+            "fuente": "percepcion_v1",
+            "archivos": len(tf_v1),
+            "mb": round(_mb(tf_v1), 3),
+            "entra_al_modelo": False,
+            "nota": "tfrecord con mapas (~1 GB). No entra al grafo del curso",
+        },
+        {
+            "fuente": "motion",
+            "archivos": len(tf_motion),
+            "mb": round(_mb(tf_motion), 3),
+            "entra_al_modelo": False,
+            "nota": "trayectorias (~1 GB por shard). No entra al grafo del curso",
+        },
+    ]
+    return pd.DataFrame(filas)
+
+
+def ensamblar_camera_box(muestra: Path) -> pd.DataFrame:
+    """Concatena los ``camera_box.parquet`` de ``muestra/``. Vacío si no hay."""
+    if not muestra.is_dir():
+        return pd.DataFrame()
+    piezas = [
+        pd.read_parquet(ruta)
+        for ruta in sorted(muestra.glob("*/camera_box.parquet"))
+    ]
+    if not piezas:
+        return pd.DataFrame(
+            columns=["key.segment_context_name", "key.camera_name"]
+        )
+    return pd.concat(piezas, ignore_index=True)
+
+
+def leer_metadatos_e2e(carpeta: Path) -> pd.DataFrame:
+    """Lee el JSON liviano de E2E si está. Vacío si no hay archivo."""
+    candidatos = sorted(carpeta.glob("val_sequence*.json")) + sorted(
+        carpeta.glob("test_sequence*.json")
+    )
+    if not candidatos:
+        return pd.DataFrame(columns=["secuencia", "cluster"])
+    with candidatos[0].open(encoding="utf-8") as fh:
+        contenido = json.load(fh)
+    if not isinstance(contenido, dict):
+        return pd.DataFrame(columns=["secuencia", "cluster"])
+
+    def _etiqueta(valor) -> str:
+        if isinstance(valor, dict):
+            if "scenario_cluster" in valor:
+                return str(valor["scenario_cluster"])
+            if valor:
+                return str(next(iter(valor.values())))
+            return ""
+        return str(valor)
+
+    return pd.DataFrame(
+        {
+            "secuencia": list(contenido.keys()),
+            "cluster": [_etiqueta(v) for v in contenido.values()],
+        }
+    )
+
+
+def _contar_segmentos_parquet(ruta: Path) -> int:
+    tabla = pd.read_parquet(ruta)
+    if "segment_id" not in tabla.columns:
+        return 0
+    return int(tabla["segment_id"].nunique())
+
+
+def partir_por_grupo(
+    tabla: pd.DataFrame,
+    columna_grupo: str = "segment_id",
+    test_size: float = 0.25,
+    semilla: int = 42,
+) -> pd.DataFrame:
+    """Marca ``entrenamiento`` / ``prueba`` sin partir un segmento a la mitad.
+
+    Un segmento son ~20 s de la misma calle, el mismo clima y los mismos objetos
+    frame a frame. Si una detección cae en train y la del fotograma siguiente en
+    test, la métrica mide memoria, no generalización.
+    """
+    from sklearn.model_selection import GroupShuffleSplit
+
+    if columna_grupo not in tabla.columns:
+        raise ValueError(
+            f"Falta la columna '{columna_grupo}' para partir por grupo."
+        )
+    n_grupos = tabla[columna_grupo].nunique()
+    if n_grupos < 2:
+        raise ValueError(
+            f"Solo hay {n_grupos} valor de '{columna_grupo}'. Hacen falta al "
+            "menos 2 segmentos: uno entero va a entrenamiento o a prueba, nunca "
+            "a los dos. Baja más con "
+            "`python herramientas/descargar_waymo.py --lote 8` "
+            "(o `--muestra 40` para el pipeline Kedro)."
+        )
+    marcada = tabla.reset_index(drop=True).copy()
+    separador = GroupShuffleSplit(
+        n_splits=1, test_size=test_size, random_state=semilla
+    )
+    _, indices_prueba = next(
+        separador.split(marcada, groups=marcada[columna_grupo])
+    )
+    marcada["particion"] = "entrenamiento"
+    marcada.loc[marcada.index[indices_prueba], "particion"] = "prueba"
+    return marcada
+
+
+def preparar_lote(
+    carpeta: Path,
+    n: int = LOTE_CLASE,
+    segmentos: list[str] | None = None,
+) -> tuple[pd.DataFrame, dict, Path]:
+    """Baja N segmentos livianos, los traduce y deja UNA tabla.
+
+    Solo ``lidar_box`` + ``stats`` (~1 MB por segmento). No toca imágenes ni
+    nubes de puntos. El resultado es ``detecciones_reales.parquet``.
+    """
+    if segmentos is None:
+        objetos = listar_objetos(BUCKET, f"{SPLIT}/lidar_box/", limite=n)
+        segmentos = [Path(objeto["nombre"]).stem for objeto in objetos][:n]
+    if not segmentos:
+        raise RuntimeError("No hay segmentos para armar el lote.")
+
+    piezas: list[pd.DataFrame] = []
+    for segmento in segmentos:
+        rutas = descargar_segmento(segmento, carpeta / "muestra" / segmento)
+        piezas.append(
+            traducir_esquema(
+                pd.read_parquet(rutas["lidar_box"]),
+                pd.read_parquet(rutas["stats"]),
+            )
+        )
+    tabla = pd.concat(piezas, ignore_index=True)
+    salida = carpeta / "detecciones_reales.parquet"
+    tabla.to_parquet(salida, index=False)
+    return tabla, informe_analitica(tabla), salida
+
+
+def cargar_o_preparar(
+    carpeta: Path,
+    n: int = LOTE_CLASE,
+) -> tuple[pd.DataFrame, dict, Path]:
+    """Una tabla para el curso, preferiendo varios segmentos si ya están en disco.
+
+    Orden:
+
+    1. ``muestra/`` con ≥2 segmentos completos — es lo que usa Kedro; si el
+       parquet suelto tiene menos segmentos, lo reescribe.
+    2. ``detecciones_reales.parquet`` ya armado.
+    3. Un par ``lidar_box`` + ``stats`` suelto (un segmento: no alcanza para
+       partir sin fuga).
+    4. Baja ``n`` segmentos livianos (pide GCS).
+    """
+    salida = carpeta / "detecciones_reales.parquet"
+    completos = segmentos_completos(carpeta / "muestra")
+    if len(completos) >= 2:
+        n_parquet = _contar_segmentos_parquet(salida) if salida.exists() else 0
+        if n_parquet < len(completos):
+            tabla = ensamblar_muestra(carpeta / "muestra")
+            tabla.to_parquet(salida, index=False)
+            return tabla, informe_analitica(tabla), salida
+        tabla = pd.read_parquet(salida)
+        return tabla, informe_analitica(tabla), salida
+
+    if salida.exists():
+        tabla = pd.read_parquet(salida)
+        return tabla, informe_analitica(tabla), salida
+
+    suelto = carpeta / "lidar_box.parquet"
+    stats = carpeta / "stats.parquet"
+    if suelto.exists() and stats.exists():
+        tabla = traducir_esquema(pd.read_parquet(suelto), pd.read_parquet(stats))
+        tabla.to_parquet(salida, index=False)
+        return tabla, informe_analitica(tabla), salida
+
+    return preparar_lote(carpeta, n=n)
+
+
+def leer_tabla(ruta: Path | str) -> pd.DataFrame:
+    """Lee CSV o Parquet. Una función para no preguntar el formato en cada notebook."""
+    texto = str(ruta)
+    if texto.startswith(("http://", "https://")):
+        return pd.read_csv(texto)
+    archivo = Path(ruta)
+    if archivo.suffix == ".parquet":
+        return pd.read_parquet(archivo)
+    return pd.read_csv(archivo)
+
+
+def cargar_tabla_curso(raiz: Path) -> tuple[pd.DataFrame, str, Path]:
+    """Tabla de trabajo: lote real si existe, si no el CSV de la asignatura.
+
+    Returns:
+        ``(tabla, origen, ruta)`` con ``origen`` en ``{"real", "sintetico"}``.
+    """
+    real = raiz / "datos" / "waymo_real" / "detecciones_reales.parquet"
+    if real.exists():
+        return pd.read_parquet(real), "real", real
+    csv = raiz / "datos" / "crudos" / "detecciones_waymo_like.csv"
+    if not csv.exists():
+        raise FileNotFoundError(
+            "No hay tabla de trabajo. Arma el lote (notebook 14 o "
+            "`python herramientas/descargar_waymo.py --lote 8`) "
+            "o genera el CSV: python src/generar_dataset.py"
+        )
+    return pd.read_csv(csv), "sintetico", csv

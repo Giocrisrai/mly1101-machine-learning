@@ -22,10 +22,12 @@ uv run kedro run --pipeline calidad            # solo el diagnóstico
 uv run kedro run --pipeline preprocesamiento   # solo la limpieza
 uv run kedro run --pipeline supervisado        # solo el modelamiento
 uv run kedro run --pipeline no_supervisado     # solo el agrupamiento
-uv run kedro run --pipeline waymo_real         # TODO, sobre datos reales de Waymo
+uv run kedro run --pipeline ingesta            # 5 nodos: inventario + v2 + camera_box + E2E
+uv run kedro run --pipeline waymo_real         # 35 nodos: eso + EDA + ML sobre Perception v2
 ```
 
-Las salidas van a `data/`, que **no se versiona**: se regenera en un par de segundos.
+Las salidas van a `data/` (sintético) y `data/waymo/` (real), que **no se versionan**. El
+recorrido sintético tarda un par de minutos; `waymo_real` sobre 530 k filas, alrededor de 15.
 
 Para ver el grafo en el navegador:
 
@@ -50,7 +52,7 @@ src/kedro_mly1101/
     supervisado/          modelamiento: 8 nodos                (RA2 · Act. 2.2)
     no_supervisado/       agrupamiento y PCA: 7 nodos          (RA2 · Act. 2.3)
     optimizacion/         ajuste, ensamble y selección: 6 nodos (RA3)
-    ingesta/              traduccion de Waymo real: 2 nodos
+    ingesta/              fuentes reales: 5 nodos (inventario, v2, camera_box, E2E, comparar)
 data/                     salidas del recorrido sintetico. No se versiona
 data/waymo/               salidas del recorrido real.        No se versiona
 ```
@@ -146,14 +148,14 @@ Es la contracara de la Act. 2.2: allí había etiqueta y se medía el acierto; a
 
 ### Lo que salió, y por qué es mejor que un resultado limpio
 
-| | Sintético | Real (40 segmentos) |
+| | CSV del repo | Waymo v2 (40 segmentos) |
 |---|---|---|
-| Silueta máxima | **k = 3** (0,473), luego cae | **sin codo**: sube hasta 0,610 en k = 8 |
-| ¿Los grupos recuperan el tipo de objeto? | Parcialmente | **No** |
-| PCA: 2 componentes explican | 70,2 % | 74,5 % |
+| Silueta | **k = 3** (0,473), luego cae | **sin codo**: 0,5228 (k=2) … **0,6103** (k=8) |
+| ¿Los grupos recuperan el tipo de objeto? | Parcialmente | **No** (tres ~100 % vehicle; uno 47,24 % peatón / 50,59 % sign) |
+| PCA: 2 componentes explican | 70,2 % | **74,47 %** |
 
-En los datos reales, tres de los cuatro grupos son ~100 % `vehicle` y el cuarto mezcla peatones y
-señalética casi mitad y mitad. El agrupamiento **no descubrió los tipos de objeto**: descubrió
+En los datos reales, tres grupos son 99,9 / 99,57 / 100 % `vehicle` y el otro mezcla peatones
+(47,24 %) y señalética (50,59 %). El agrupamiento **no descubrió los tipos de objeto**: descubrió
 estructura de tamaño y densidad de puntos, que es otra cosa.
 
 Y la silueta no tiene máximo, así que el criterio automático para elegir `k` **falla**. Ambas
@@ -177,15 +179,32 @@ razón de haber separado el catálogo del análisis.
 brew install --cask google-cloud-sdk
 gcloud auth login
 
-# 2. Descargar VARIOS segmentos (no uno: ver más abajo)
+# 2. Descargar VARIOS segmentos livianos (lidar_box + stats; no imágenes)
 python herramientas/descargar_waymo.py --muestra 40     # ~40 MB
+# Si ya están en disco: --lote 8 ensambla la tabla sin pedir GCS
 
-# 3. Correr el análisis completo sobre ellos
-cd kedro_mly1101 && uv run kedro run --pipeline waymo_real
+# 3. Ver las fuentes (rápido) o el análisis completo
+cd kedro_mly1101
+uv run kedro run --pipeline ingesta        # inventario + v2 + camera_box + E2E
+uv run kedro run --pipeline waymo_real     # eso + el mismo grafo de siempre
 ```
 
 Los datos **no están en el repositorio**: la licencia de Waymo es de uso no comercial y prohíbe
-redistribuirlos. Sin ellos, `kedro run` funciona igual; solo `waymo_real` los necesita.
+redistribuirlos. Sin ellos, `kedro run` funciona igual; solo `ingesta` y `waymo_real` los
+necesitan.
+
+### Qué corre EDA + ML y qué solo se ve
+
+| Fuente | Nodos | EDA | Supervisado / k-medias / RA3 |
+|---|---|---|---|
+| CSV sintético (pauta) | 30 (`kedro run`) | ✅ | ✅ |
+| Perception v2 (`lidar_box` + `stats`) | 30 remapeados | 530.396 filas, 0 nulos | F1 LEVEL_2 = 0,0893; k sin codo |
+| `camera_box` | 1 (`ensamblar_cajas_camara`) | **407.267** × 11 | no entra al RF |
+| JSON E2E | 1 (`leer_metadatos_e2e`) | **479** clusters | no |
+| v1 / Motion / `camera_image` | 0 | 0 archivos en disco | no |
+
+`ingesta` = 5 nodos. `waymo_real` = esas 5 + el grafo de 30 **sin duplicar código**. El modelo
+no mezcla productos: una fila de `camera_box` no se concatena con `lidar_box`.
 
 ### Por qué varios segmentos y no uno
 
@@ -210,35 +229,43 @@ Están en `src/waymo.py::traducir_esquema`, con tests:
    Es el **reverso exacto** del defecto que se estudia en la Actividad 1.3, donde un `-1`
    disfraza un faltante. Aquí un faltante disfraza un valor.
 
-### Lo que cambia al pasar del mock a lo real
+### Lo que cambia al pasar del CSV de pauta a Waymo v2 (medido 2026-09-08)
 
-| | Sintético | Real (40 segmentos) |
+Inventario: `data/02_intermediate/inventario_fuentes_waymo.csv`. Clasificador:
+`data/waymo/07_model_output/metricas_por_clase.csv` (09:09, mismos 530.396). k/PCA: 10:55.
+
+| | CSV del repo | Waymo v2 (40 segmentos) |
 |---|---|---|
 | Filas | 40.680 | **530.396** |
 | Segmentos | 153 | 40 |
-| % `cyclist` | 1,94 % | **0,45 %** |
-| % `LEVEL_2` | 11,1 % | 12,3 % |
-| Mediana `speed_mps` | 5,35 | **0,01** (casi todo está detenido) |
-| Clima | 3 categorías sucias | **100 % `sunny`** |
-| Defectos de calidad encontrados | 10 | **0** |
-| F1 de la clase minoritaria (Act. 2.2) | 0,46 | **0,089** |
+| vehicle / sign / peatón / ciclista | 61,73 / 8,12 / 26,22 / 1,94 % | **48,43 / 26,46 / 24,67 / 0,45 %** (256.855 / 140.319 / 130.836 / 2.386) |
+| LEVEL_2 | 11,1 % | 12,33 % (65.394) |
+| Mediana `speed_mps` | 5,35 | **0,0133** |
+| Mediana `num_lidar_points` | 96 | 36 |
+| Mediana `box_length` | 3,99 m | 1,21 m |
+| Clima | 3 categorías sucias | **530.396 `sunny`** |
+| Ubicación | — | SF 398.065 · Phoenix 132.331 |
+| Valores imposibles | hay (inyectados) | **0 filas** |
+| Celdas faltantes tras limpiar | suben (defectos destapados) | **0 → 0** |
+| F1 LEVEL_2 | 0,46 | **0,0893** (prec. 0,1847 · rec. 0,0588 · 1.572/26.713) |
+| Exactitud | 0,90 | **0,7805** |
+| F1-macro | 0,70 | **0,4822** |
+| Silueta | máximo k=3 (0,473) | **0,5228 (k=2) … 0,6103 (k=8), sin codo** |
+| PCA, 2 componentes | 70,2 % | **74,47 %** |
+| Ajuste de hiperparámetros | no mejora (pauta Act. 3.1) | **+0,0789** (0,5104 → 0,5893; sí supera ruido) |
 
-**Las dos últimas filas son las que hay que discutir en clase.**
+Otras fuentes en el mismo `datos/waymo_real/` (no entran al RF):
 
-La limpieza no encuentra nada porque **el Waymo Open Dataset está curado**: los 10 defectos son
-sintéticos y se inyectaron para que hubiera algo que descubrir. Lo que se aprende a detectar
-existe en el mundo real; en *este* dataset publicado, no.
+| | Medido |
+|---|---|
+| `camera_box` | 407.267 × 11 · 40 segmentos · 7,181 MB · tipos 1/2/4 = 297.902 / 107.507 / 1.858 |
+| JSON E2E | 479 secuencias · 36.235 bytes · cluster más frecuente: `Interections` (116, grafía de Waymo) |
+| `camera_image`, v1, Motion | **0 archivos** |
 
-Y el modelo, que sobre el sintético alcanzaba 0,46 de F1 en la clase minoritaria, **cae a 0,089
-sobre datos reales**: acierta el 5,9 % de las detecciones difíciles. El problema resulta ser
-mucho más duro de lo que el mock sugería.
-
-> Es la lección más incómoda del curso y la más valiosa: **un buen resultado sobre datos de
-> juguete no predice nada.** El dataset sintético sirve para aprender el método; para saber si el
-> método funciona hay que salir a los datos de verdad.
-
-Y el `100 % sunny` es el sesgo de muestreo del censo —793 de 798 segmentos soleados—, ahora
-visible en los datos con los que se entrena.
+**Las filas de F1 y de clima son las que hay que discutir en clase.** Waymo publicado está
+curado (0 imposibles). El modelo pierde casi todas las detecciones difíciles (recall 5,88 %).
+El 100 % `sunny` es el sesgo del censo (793 de 798 soleados), ahora en el lote con el que se
+entrena.
 
 ---
 
@@ -250,7 +277,7 @@ uv run pytest tests/test_pipeline_kedro.py tests/test_pipeline_supervisado.py \
               tests/test_ingesta_waymo.py -v
 ```
 
-76 tests de pipeline, desde la raíz del repositorio. Los que necesitan datos reales de Waymo **se saltan** si
+81 tests de pipeline, desde la raíz del repositorio. Los que necesitan datos reales de Waymo **se saltan** si
 no están descargados, así que `pytest` pasa en limpio sin credenciales. Los nodos son funciones normales de Python, así que se
 prueban sin levantar catálogo, ni runner, ni sesión — que es justamente una de las ventajas del
 pipeline sobre el notebook.
@@ -268,7 +295,7 @@ decisión de limpieza, los tests dicen qué pauta quedó desalineada.
 | **RA2** · Supervisado (Act. 2.2) | `supervisado` — partición sin fuga, entrenamiento, evaluación por clase | `detecciones_limpias` | ✅ |
 | **RA2** · No supervisado (Act. 2.3) | `no_supervisado` — agrupamiento y reducción de dimensionalidad | `detecciones_limpias` | ✅ |
 | **RA3** · Optimización (Act. 3.1–3.3) | `optimizacion` — ajuste, ensamble y selección sustentada | Salidas de `supervisado` | ✅ |
-| — | `ingesta` + `waymo_real` — el mismo análisis sobre datos reales | Parquet de Waymo | ✅ |
+| — | `ingesta` (5) + `waymo_real` (35) — EDA + ML sobre v2; camera_box y E2E a la vista | Parquet de Waymo | ✅ |
 
 Se registran en `pipeline_registry.py` sin tocar lo que ya existe. Cada experiencia **añade
 nodos, no reescribe el análisis anterior**. Que `supervisado` corra después de

@@ -13,9 +13,8 @@ Requisitos previos (una sola vez):
 Uso:
 
     python herramientas/descargar_waymo.py                 # primer segmento disponible
-    python herramientas/descargar_waymo.py --segmento NOMBRE
-    python herramientas/descargar_waymo.py --listar        # solo listar segmentos
-    python herramientas/descargar_waymo.py --muestra 40    # varios segmentos completos
+    python herramientas/descargar_waymo.py --lote 8        # recomendado: tabla de clase
+    python herramientas/descargar_waymo.py --muestra 40    # mismos livianos, para Kedro
     python herramientas/descargar_waymo.py --censo-stats   # stats de los 798 segmentos
 
 Los archivos quedan en ``datos/waymo_real/``, que está en .gitignore: la
@@ -34,6 +33,7 @@ RAIZ = Path(__file__).resolve().parents[1]
 DESTINO = RAIZ / "datos" / "waymo_real"
 BUCKET = "gs://waymo_open_dataset_v_2_0_1/training"
 COMPONENTES = ["lidar_box", "stats"]
+sys.path.insert(0, str(RAIZ / "src"))
 
 
 def _ejecutar(comando: list[str]) -> subprocess.CompletedProcess:
@@ -58,6 +58,12 @@ def _comprobar_requisitos() -> str:
             "  https://waymo.com/open/download/"
         )
     print(f"Cuenta activa: {cuentas.stdout.strip().splitlines()[0]}")
+    import waymo
+
+    try:
+        waymo.listar_objetos(waymo.BUCKET, "training/lidar_box/", limite=1)
+    except RuntimeError as error:
+        sys.exit(str(error))
     return gsutil
 
 
@@ -151,6 +157,12 @@ def descargar_censo_stats(gsutil: str) -> Path:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--lote",
+        type=int,
+        metavar="N",
+        help="baja N segmentos livianos, los traduce y deja detecciones_reales.parquet (recomendado en clase: 8)",
+    )
     parser.add_argument("--segmento", help="nombre del segmento (sin .parquet)")
     parser.add_argument("--listar", action="store_true", help="solo listar segmentos disponibles")
     parser.add_argument(
@@ -171,6 +183,55 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    if args.lote:
+        import waymo
+
+        print(f"\nLote de clase: hasta {args.lote} segmentos livianos (~1 MB cada uno).")
+        print("Si ya hay varios en muestra/, los ensambla (no pide GCS).")
+        ya_hay = (
+            len(waymo.segmentos_completos(DESTINO / "muestra")) >= 2
+            or (DESTINO / "detecciones_reales.parquet").exists()
+            or (
+                (DESTINO / "lidar_box.parquet").exists()
+                and (DESTINO / "stats.parquet").exists()
+            )
+        )
+        if not ya_hay:
+            _comprobar_requisitos()
+        tabla, informe, ruta = waymo.cargar_o_preparar(DESTINO, n=args.lote)
+        print(waymo.texto_informe(informe))
+        print(f"\nTabla única: {ruta.relative_to(RAIZ)}")
+        print("Siguiente: notebooks/14_opcional_waymo_buckets.ipynb")
+        return
+
+    if args.muestra:
+        import waymo
+
+        existentes = waymo.segmentos_completos(DESTINO / "muestra")
+        if len(existentes) >= args.muestra:
+            print(
+                f"\nYa hay {len(existentes)} segmentos completos en muestra/. "
+                "No baja de nuevo."
+            )
+            tabla, informe, ruta = waymo.cargar_o_preparar(DESTINO, n=args.muestra)
+            print(waymo.texto_informe(informe))
+            print(f"\nTabla única: {ruta.relative_to(RAIZ)}")
+            print("Pipeline: cd kedro_mly1101 && uv run kedro run --pipeline waymo_real")
+            return
+        gsutil = _comprobar_requisitos()
+        cantidad = args.muestra
+        disponibles = listar_segmentos(gsutil, cantidad=cantidad)
+        peso = "~23 KB" if args.solo_stats else "~1 MB"
+        print(f"\nDescargando {len(disponibles)} segmentos ({peso} cada uno)…")
+        muestra = descargar_muestra(gsutil, disponibles, solo_stats=args.solo_stats)
+        print(f"Datos en: {muestra.relative_to(RAIZ)}")
+        if not args.solo_stats:
+            tabla, informe, ruta = waymo.cargar_o_preparar(DESTINO, n=args.muestra)
+            print(waymo.texto_informe(informe))
+            print(f"\nTabla única: {ruta.relative_to(RAIZ)}")
+        print("\nListo. Pipeline: cd kedro_mly1101 && uv run kedro run --pipeline waymo_real")
+        return
+
     gsutil = _comprobar_requisitos()
 
     if args.censo_stats:
@@ -185,14 +246,6 @@ def main() -> None:
         print(f"\nSegmentos disponibles (primeros {len(disponibles)}):")
         for nombre in disponibles:
             print("  ", nombre)
-        return
-
-    if args.muestra:
-        peso = "~23 KB" if args.solo_stats else "~1 MB"
-        print(f"\nDescargando {len(disponibles)} segmentos ({peso} cada uno)…")
-        muestra = descargar_muestra(gsutil, disponibles, solo_stats=args.solo_stats)
-        print("\nListo. Ahora puedes ejecutar:  python herramientas/analizar_sesgo_waymo.py")
-        print(f"Datos en: {muestra.relative_to(RAIZ)}")
         return
 
     segmento = args.segmento or disponibles[0]

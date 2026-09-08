@@ -178,7 +178,7 @@ def test_comparar_particiones_reporta_los_segmentos_compartidos(limpias: pd.Data
     assert comparacion.loc[0, "clase_minoritaria"] == "LEVEL_2"
 
 
-def test_el_grafo_completo_encadena_las_cinco_pipelines() -> None:
+def test_el_grafo_completo_encadena_las_pipelines() -> None:
     """supervisado consume lo que produce preprocesamiento, sin decírselo a nadie."""
     from kedro_mly1101.pipeline_registry import register_pipelines
 
@@ -201,6 +201,8 @@ def test_el_grafo_completo_encadena_las_cinco_pipelines() -> None:
     externas = {e for e in completo.inputs() if not e.startswith("params:")}
     assert externas == {"detecciones_crudas"}       # solo el CSV crudo entra de fuera
     assert len(completo.nodes) == 30
+    assert len(pipelines["ingesta"].nodes) == 5
+    assert len(pipelines["waymo_real"].nodes) == 35
 
 
 def test_el_recorrido_real_reutiliza_los_mismos_nodos() -> None:
@@ -214,13 +216,44 @@ def test_el_recorrido_real_reutiliza_los_mismos_nodos() -> None:
 
     pipelines = register_pipelines()
     real = pipelines["waymo_real"]
+    ingesta = pipelines["ingesta"]
 
-    # 24 nodos de analisis + 2 de ingesta.
-    assert len(real.nodes) == len(pipelines["__default__"].nodes) + 2
+    assert {n.name for n in ingesta.nodes} == {
+        "inventariar_fuentes_waymo",
+        "traducir_esquema_de_waymo",
+        "ensamblar_cajas_camara",
+        "leer_metadatos_e2e",
+        "comparar_real_contra_sintetico",
+    }
+    assert len(real.nodes) == len(pipelines["__default__"].nodes) + len(ingesta.nodes)
 
     externas = {e for e in real.inputs() if not e.startswith("params:")}
     assert "waymo_muestra" in externas          # los Parquet reales
     assert "detecciones_reales" not in externas  # la produce la ingesta, no entra de fuera
+    assert "detecciones_crudas" in externas     # CSV de pauta, solo para comparar
+
+
+def test_el_modelo_no_consume_camera_box_ni_e2e() -> None:
+    """El RF / k-medias / RA3 solo ven Perception v2. Las otras fuentes se ven, no se mezclan."""
+    from kedro_mly1101.pipeline_registry import register_pipelines
+
+    pipelines = register_pipelines()
+    analisis = pipelines["__default__"]
+    real = pipelines["waymo_real"]
+    ingesta = pipelines["ingesta"]
+
+    entradas_analisis = {e for e in analisis.inputs() if not e.startswith("params:")}
+    assert entradas_analisis == {"detecciones_crudas"}
+
+    producidas_ingesta = {s for n in ingesta.nodes for s in n.outputs}
+    assert {"cajas_camara_2d", "metadatos_e2e", "inventario_fuentes_waymo"} <= producidas_ingesta
+
+    consumidores = [
+        n.name
+        for n in real.nodes
+        if set(n.inputs) & {"cajas_camara_2d", "metadatos_e2e", "inventario_fuentes_waymo"}
+    ]
+    assert consumidores == []
 
 
 def test_con_un_solo_segmento_el_error_explica_por_que(limpias: pd.DataFrame) -> None:

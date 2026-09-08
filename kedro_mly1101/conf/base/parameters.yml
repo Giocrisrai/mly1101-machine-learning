@@ -137,3 +137,8 @@ ajuste:
   max_depth: [4, 6, 8, 12, 16, null]
   min_samples_leaf: [1, 5, 20, 50]
   max_features: ["sqrt", "log2", 0.5]
+
+# Carpeta local de productos Waymo (gitignore). El pipeline de ingesta la recorre
+# para listar fuentes; no baja nada.
+fuentes_waymo:
+  raiz: ../datos/waymo_real

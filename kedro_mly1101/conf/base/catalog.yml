@@ -151,6 +151,7 @@ proyeccion_2d:
 # Varios segmentos, no uno: con un solo segmento no se puede partir en
 # entrenamiento y prueba sin fuga (todas las detecciones comparten contexto).
 #   python herramientas/descargar_waymo.py --muestra 40
+#   (si ya está la muestra, ` --lote 8` ensambla la tabla sin pedir GCS)
 waymo_muestra:
   type: partitions.PartitionedDataset
   path: ../datos/waymo_real/muestra
@@ -160,6 +161,22 @@ waymo_muestra:
 detecciones_reales:
   type: pandas.ParquetDataset
   filepath: data/01_raw/detecciones_reales.parquet
+
+inventario_fuentes_waymo:
+  type: pandas.CSVDataset
+  filepath: data/02_intermediate/inventario_fuentes_waymo.csv
+  save_args:
+    index: false
+
+cajas_camara_2d:
+  type: pandas.ParquetDataset
+  filepath: data/02_intermediate/cajas_camara_2d.parquet
+
+metadatos_e2e:
+  type: pandas.CSVDataset
+  filepath: data/02_intermediate/metadatos_e2e.csv
+  save_args:
+    index: false
 
 comparacion_real_vs_sintetico:
   type: pandas.CSVDataset

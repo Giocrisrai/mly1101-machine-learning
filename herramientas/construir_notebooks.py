@@ -20,6 +20,7 @@ Genera, para la Semana 1 completa:
 | transversal | ``10_proyecto_equipo_plantilla``           | ``contenido_proyecto``     |
 | opcional    | ``04_opcional_kedro_databricks``           | ``contenido_kedro``        |
 | opcional    | ``00_opcional_waymo_real``                 | ``contenido_waymo``        |
+| opcional    | ``14_opcional_waymo_buckets``              | ``contenido_waymo_buckets``|
 
 El número del archivo no coincide con el de la actividad por una razón histórica: el
 notebook de EDA se publicó primero como ``01`` y sus enlaces de Colab ya circulan. El
@@ -53,6 +54,7 @@ from contenido_kedro import CELDAS_KEDRO  # noqa: E402
 from contenido_proyecto import CELDAS_PROYECTO  # noqa: E402
 from contenido_semana01 import CELDAS, URL_REPO  # noqa: E402
 from contenido_waymo import CELDAS_WAYMO  # noqa: E402
+from contenido_waymo_buckets import CELDAS_WAYMO_BUCKETS  # noqa: E402
 
 DESTINO = RAIZ / "notebooks"
 
@@ -183,6 +185,7 @@ def main() -> None:
         construir(CELDAS_KEDRO, "04_opcional_kedro_databricks.ipynb", para_docente=False),
         # Opcional — datos reales de Waymo
         construir(CELDAS_WAYMO, "00_opcional_waymo_real.ipynb", para_docente=True),
+        construir(CELDAS_WAYMO_BUCKETS, "14_opcional_waymo_buckets.ipynb", para_docente=True),
     ]
     for ruta in construidos:
         celdas = json.loads(ruta.read_text(encoding="utf-8"))["cells"]

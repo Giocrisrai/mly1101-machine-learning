@@ -26,8 +26,8 @@ CELDAS_PROYECTO: list[dict] = [
 # MLY1101 · Plantilla de proyecto de equipo
 ## EA1 · Análisis y preprocesamiento de datos
 
-Esta es la plantilla que tu equipo rellena con **su propio dataset**. Recoge lo trabajado en las
-tres actividades de la Semana 1:
+Esta es la plantilla que tu equipo copia y rellena. Recoge lo de las Act. 1.1–1.3 y se
+aplica al **lote real de Waymo** (notebook 14) o al dataset que elijan.
 
 | Actividad | Qué aporta a este proyecto |
 |---|---|
@@ -46,23 +46,28 @@ tres actividades de la Semana 1:
 3. Rellena los campos marcados con `____` y ejecuta las celdas en orden.
 4. Trabaja en una rama, no en `main`, y entra a `main` por Pull Request.
 
-> **Funciona sin configurar nada.** Si aún no eligieron dataset, la plantilla usa el de la
-> asignatura y corre completa como ejemplo. Cuando tengan el suyo, cambian **una sola variable**
-> en la celda de configuración y todo lo demás se aplica solo.
+> **Funciona sin configurar nada.** Si existe `datos/waymo_real/detecciones_reales.parquet`
+> (lo arma el notebook 14), lo carga. Si no, usa el CSV de la asignatura para que el
+> notebook corra como ejemplo. Si eligen **otro** dataset, cambian **una sola variable**
+> (`RUTA_MI_DATASET`) y el resto se aplica solo.
 
 ---
 
-### El dataset que elijan debe cumplir cuatro condiciones
+### Qué dataset usar
+
+El hilo útil del curso es el **parquet real**. Las Act. 1.1–3.3 se califican sobre el CSV
+(pauta). Este proyecto no: aquí miden lo que sale de *sus* datos.
 
 | Condición | Por qué |
 |---|---|
 | **Al menos 1.000 filas y 8 columnas** | Con menos, no hay nada que diagnosticar |
 | **Mezcla de numéricas y categóricas** | Si es todo numérico, la mitad del análisis no aplica |
-| **Tener problemas de calidad reales** | Un dataset ya limpio no permite evidenciar el RA1 |
-| **Licencia que permita el uso académico** | Y saber cuál es, no suponerla |
+| **Algo que evidenciar** | En Waymo real: desbalance, partir por segmento, clima casi todo `sunny`. En un dataset propio: nulos, duplicados, tipos sucios |
+| **Licencia académica** | Waymo: [términos](https://waymo.com/open/terms/) (no comercial, no redistribuir). Otro: saber cuál es |
 
-Si el dataset elegido está impecable, es mala señal: normalmente significa que alguien ya hizo
-el trabajo que ustedes deben evidenciar. Busquen datos crudos, no una versión curada.
+Si el lote real sale con **0 % nulos**, no es un fallo ni un dataset “ya curado”: Waymo
+entrega cajas limpias. El trabajo está en la clase rara (`cyclist`, `LEVEL_2`), en no
+partir al azar por fila, y en no mezclar `camera_box` (píxeles) con el LiDAR (metros).
 """
     ),
     md(
@@ -70,7 +75,7 @@ el trabajo que ustedes deben evidenciar. Busquen datos crudos, no una versión c
 ---
 ## 0 · Configuración
 
-Ejecuta esta celda. Si aún no tienes dataset propio, déjala tal cual.
+Ejecuta esta celda. Si ya corriste el notebook 14, déjala tal cual: carga el parquet real.
 """
     ),
     code(
@@ -89,11 +94,12 @@ else:
     RAIZ = Path("..").resolve()
 
 sys.path.insert(0, str(RAIZ / "src"))
+import waymo
 
 # ---------------------------------------------------------------------------
 # ⬇️  LA ÚNICA LÍNEA QUE TIENEN QUE CAMBIAR
 #
-#     None                      -> usa el dataset de la asignatura (ejemplo trabajado)
+#     None                      -> lote real (notebook 14) o CSV de la asignatura
 #     "mis_datos.csv"           -> un archivo que subieron a Colab
 #     "https://.../datos.csv"   -> una URL pública
 # ---------------------------------------------------------------------------
@@ -102,14 +108,20 @@ RUTA_MI_DATASET = None
 SALIDAS = Path("salidas_proyecto")
 SALIDAS.mkdir(exist_ok=True)
 
-DATASET_DE_LA_ASIGNATURA = RAIZ / "datos" / "crudos" / "detecciones_waymo_like.csv"
 ES_EJEMPLO = RUTA_MI_DATASET is None
-ORIGEN = DATASET_DE_LA_ASIGNATURA if ES_EJEMPLO else RUTA_MI_DATASET
+if ES_EJEMPLO:
+    _, origen, ORIGEN = waymo.cargar_tabla_curso(RAIZ)
+else:
+    origen = "equipo"
+    ORIGEN = RUTA_MI_DATASET
 
 print("Colab:", EN_COLAB)
-if ES_EJEMPLO:
-    print("⚠️  Usando el dataset de la asignatura como EJEMPLO.")
-    print("    Cambien RUTA_MI_DATASET cuando tengan el suyo.")
+if ES_EJEMPLO and origen == "real":
+    print("✅ Lote real de Waymo (notebook 14):", ORIGEN)
+    print("    Parte train/test por segment_id (waymo.partir_por_grupo), no al azar.")
+elif ES_EJEMPLO:
+    print("⚠️  CSV de la asignatura (ejemplo). Para datos reales: notebook 14, luego reejecuta.")
+    print("    O cambia RUTA_MI_DATASET cuando tengan el suyo.")
 else:
     print("✅ Usando el dataset del equipo:", ORIGEN)
 """
@@ -263,7 +275,7 @@ print("Origen que se va a leer:", ORIGEN)
     ),
     code(
         """
-df = pd.read_csv(ORIGEN)
+df = waymo.leer_tabla(ORIGEN)
 
 print(f"Filas: {df.shape[0]:,}   Columnas: {df.shape[1]}")
 print(f"Memoria real: {df.memory_usage(deep=True).sum()/1024**2:.1f} MB")
@@ -348,8 +360,11 @@ print(faltantes[["n_nulos", "n_centinelas", "pct_faltante_total"]].sort_values(
     code(
         """
 # Duplicados: exactos y lógicos.
-# ⬇️ CAMBIEN esta lista por las columnas que identifican una fila en SU dataset.
-LLAVE = [c for c in df.columns[:2]]
+# En Waymo real la llave de una detección es segmento + id interno.
+if {"segment_id", "id_interno"}.issubset(df.columns):
+    LLAVE = ["segment_id", "id_interno"]
+else:
+    LLAVE = [c for c in df.columns[:2]]
 
 print("Llave usada:", LLAVE)
 eda.reporte_duplicados(df, llave=LLAVE)
@@ -548,6 +563,22 @@ entendida.)*
 **Qué haremos al respecto:** `____`
 """
     ),
+    md(
+        """
+### 6.2 · Si están en el lote real de Waymo
+
+No busquen nulos donde no los hay. Tres preguntas que sí tienen cifra en esta tabla:
+
+| Pregunta | Dónde medirlo |
+|---|---|
+| ¿Qué tan rara es la clase que importa (`LEVEL_2`, `cyclist`)? | `object_type` y `detection_difficulty` |
+| ¿El clima / la ciudad cubren el mundo o solo un recorte? | `weather`, `location`, `time_of_day` |
+| Si parten al azar por fila, ¿un `segment_id` queda en train **y** test? | `waymo.partir_por_grupo` (notebook 14, sección 4) |
+
+`camera_box` (si la bajaron) es **otra** fuente para la ficha 1.1, no una columna más de
+esta tabla: las cajas están en píxeles.
+"""
+    ),
     # ------------------------------------------------------------------
     md(
         """
@@ -667,11 +698,14 @@ print(f"Filas   : {len(df):,}   Columnas: {df.shape[1]}")
 print(f"Memoria : {mem_antes:.2f} MB -> {mem_despues:.2f} MB")
 print(f"Columnas con algo faltante: {len(faltantes)}")
 print()
-if ES_EJEMPLO:
-    print("⚠️  Esto sigue siendo el EJEMPLO con el dataset de la asignatura.")
-    print("    Cambien RUTA_MI_DATASET en la celda de configuración y vuelvan a ejecutar todo.")
-else:
+if not ES_EJEMPLO:
     print("✅ Notebook ejecutado completo sobre el dataset del equipo.")
+elif origen == "real":
+    print("✅ Lote real de Waymo. Completen los ____ con cifras de ESTA tabla.")
+    print("    Act. 1.1–3.3 siguen el CSV (pauta). Este proyecto no.")
+else:
+    print("⚠️  CSV de la asignatura (ejemplo).")
+    print("    Notebook 14 → parquet real, o cambien RUTA_MI_DATASET.")
 """
     ),
 ]

@@ -805,17 +805,20 @@ print("de las originales estaban diciendo casi lo mismo.")
 ---
 # Bloque 11 · Y ahora, con datos reales
 
-Todo lo anterior corrió sobre el dataset **sintético**. El pipeline `waymo_real` hace exactamente
-lo mismo sobre datos reales del Waymo Open Dataset:
+Todo lo anterior corrió sobre el dataset **sintético** (EDA + ML, 30 nodos). El pipeline
+`waymo_real` hace exactamente lo mismo sobre Perception v2 real. `camera_box` y el JSON E2E
+quedan en `ingesta` (se ven, no se modelan):
 
 ```bash
 python herramientas/descargar_waymo.py --muestra 40      # ~40 MB
-cd kedro_mly1101 && kedro run --pipeline waymo_real
+cd kedro_mly1101 && kedro run --pipeline ingesta         # 5 nodos: ve las fuentes
+cd kedro_mly1101 && kedro run --pipeline waymo_real      # 35 nodos: EDA + ML sobre v2
 ```
 
-**No duplica ni un solo nodo.** Reutiliza `calidad`, `preprocesamiento`, `supervisado` y
-`no_supervisado` remapeando su entrada: donde leían el CSV, leen la salida de la ingesta de Waymo.
-Es la demostración de por qué separar el catálogo del análisis valía la pena.
+**No duplica ni un solo nodo.** Reutiliza `calidad`, `preprocesamiento`, `supervisado`,
+`no_supervisado` y `optimizacion` remapeando su entrada: donde leían el CSV, leen la salida
+de la ingesta de Waymo. Es la demostración de por qué separar el catálogo del análisis valía
+la pena.
 
 ### Por qué 40 segmentos y no uno
 
@@ -853,41 +856,36 @@ else:
     ),
     md(
         """
-### Lo que cambia al pasar del mock a lo real
+### Lo que cambia al pasar del CSV de pauta a Waymo v2
 
-Cifras medidas el 2026-08-26 sobre 40 segmentos (530.396 detecciones):
+Cifras leídas el 2026-09-08 de `data/waymo/07_model_output/` y de
+`data/02_intermediate/comparacion_real_vs_sintetico.csv` (530.396 detecciones, 40 segmentos):
 
-| | Sintético | Real |
+| | CSV del repo | Waymo v2 |
 |---|---|---|
-| Filas · segmentos | 40.680 · 153 | **530.396** · 40 |
-| % `cyclist` | 1,94 % | **0,45 %** |
-| Mediana `speed_mps` | 5,35 | **0,01** — casi todo está detenido |
-| Clima | 3 categorías sucias | **100 % `sunny`** |
-| Defectos de calidad encontrados | 10 | **0** |
-| Act. 2.2 · exactitud | 0,897 | 0,781 |
-| Act. 2.2 · **F1 de la clase minoritaria** | **0,462** | **0,089** |
-| Act. 2.3 · silueta | máximo en k = 3 | **sin codo**: sube hasta k = 8 |
+| Filas · segmentos | 40.680 · 153 | **530.396 · 40** |
+| vehicle / sign / peatón / ciclista (%) | 61,73 / 8,12 / 26,22 / 1,94 | **48,43 / 26,46 / 24,67 / 0,45** |
+| Mediana `speed_mps` | 5,35 | **0,0133** |
+| Mediana `num_lidar_points` | 96 | 36 |
+| Clima | 3 categorías sucias | **530.396 `sunny`** |
+| Valores imposibles | 10 defectos inyectados | **0** |
+| Act. 2.2 · exactitud | 0,897 | **0,7805** |
+| Act. 2.2 · F1 LEVEL_2 | 0,462 | **0,0893** (recall 0,0588) |
+| Act. 2.3 · silueta | máximo en k = 3 | **0,5228 → 0,6103 (k=2…8), sin codo** |
+| Act. 3.1 · ganancia del ajuste | ~0 (pauta) | **+0,0789** (0,5104 → 0,5893) |
 
-**Las tres últimas filas son la clase entera.**
+En el mismo disco, **no** mezclados con el modelo: `camera_box` 407.267×11 (40 segmentos);
+JSON E2E 479 secuencias (`Interections` 116, grafía de Waymo); v1 / Motion / JPEG = 0 archivos.
 
-**La limpieza no encuentra nada.** El Waymo Open Dataset está curado: los 10 defectos son
-sintéticos y se inyectaron para que hubiera algo que descubrir. Lo que aprendiste a detectar
-existe en el mundo real; en *este* dataset publicado, no.
+**La limpieza no encuentra defectos en v2.** El Open Dataset está curado; los 10 defectos viven
+solo en el CSV de la pauta.
 
-**El modelo se desploma.** De 0,46 a **0,089** de F1 en la clase minoritaria: acierta el 5,9 % de
-las detecciones difíciles. El problema es mucho más duro de lo que el mock sugería.
+**El F1 de LEVEL_2 cae a 0,0893.** De 26.713 difíciles en prueba, acierta 1.572 (recall 5,88 %).
 
-> Es la lección más incómoda del curso y la más valiosa: **un buen resultado sobre datos de
-> juguete no predice nada.** El dataset sintético sirve para aprender el método; para saber si el
-> método funciona hay que salir a los datos de verdad.
+> Un número bueno sobre el CSV de práctica no predice el Open Dataset.
 
-**Y la silueta deja de tener máximo**, así que el criterio automático para elegir `k` falla. No
-existe "el k correcto": la decisión final es de dominio, no de métrica.
-
-Por último, ese **100 % `sunny`** no es casualidad: es el sesgo de muestreo del censo —793 de 798
-segmentos soleados— visible ahora en los datos con los que se entrena el modelo. El bloque de
-ética de la Actividad 1.1 deja de ser una advertencia y pasa a ser una propiedad medible del
-dataset que tienes delante.
+**La silueta no tiene máximo** en este lote. Y el **100 % `sunny`** es el sesgo del censo
+(793 de 798 soleados) metido en el entrenamiento.
 """
     ),
     md(
@@ -904,7 +902,7 @@ completo de Machine Learning**, declarado como dependencias y ejecutado con un c
 | **RA2** · Supervisado (Act. 2.2) | `supervisado` | 8 | `detecciones_limpias` | ✅ |
 | **RA2** · No supervisado (Act. 2.3) | `no_supervisado` | 7 | `detecciones_limpias` | ✅ |
 | **RA3** · Optimización | `optimizacion` | 6 | Salidas de `supervisado` | ✅ |
-| — · Datos reales | `ingesta` + `waymo_real` | 32 | Los Parquet de Waymo | ✅ |
+| — · Datos reales | `ingesta` + `waymo_real` | 35 | v2 al modelo (EDA+ML); camera_box y E2E a la vista | ✅ |
 | **EFT** | Integra las tres | — | Todo el grafo | ⏳ |
 
 Cada experiencia **añadió nodos, no reescribió el análisis previo**. Y el recorrido sobre datos

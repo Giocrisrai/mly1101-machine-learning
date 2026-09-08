@@ -59,6 +59,7 @@ estructural.
    | `contenido_proyecto.py` | `10_proyecto_equipo_plantilla` | transversal |
    | `contenido_kedro.py` | `04_opcional_kedro_databricks` | opcional |
    | `contenido_waymo.py` | `00_opcional_waymo_real` | opcional |
+   | `contenido_waymo_buckets.py` | `14_opcional_waymo_buckets` | opcional |
 
    El número del archivo **no** coincide con el de la actividad: el notebook de EDA se publicó
    primero como `01` y sus enlaces de Colab ya circulan.
@@ -112,9 +113,10 @@ estructural.
 
 ```bash
 uv sync                                        # entorno reproducible (pyproject.toml + uv.lock)
-uv run pytest                                  # 207 tests; algunos se saltan sin datos/extras
+uv run pytest                                  # 247 tests (esta máquina, extras + muestra)
 cd kedro_mly1101 && uv run kedro run && cd ..  # sintético: 30/30 nodos
-# Con datos reales descargados:  uv run kedro run --pipeline waymo_real   # 32/32 nodos
+# Con datos reales descargados:  uv run kedro run --pipeline ingesta     # fuentes
+#                                uv run kedro run --pipeline waymo_real  # 35 nodos
 uv run python herramientas/construir_notebooks.py   # regenera todos los notebooks
 
 # Los notebooks con código resuelto deben ejecutar completos:
@@ -126,6 +128,8 @@ for nb in 02_docente_fuentes 03_docente_estructuras 01_docente_solucionario \
   uv run python -m jupyter nbconvert --to notebook --execute --stdout \
       --output-dir=/tmp notebooks/$nb.ipynb > /dev/null && echo "$nb OK"
 done
+
+# 00_opcional_waymo_real y 14_opcional_waymo_buckets necesitan cuenta Waymo: no van en este bucle.
 
 # Ningún notebook de alumno puede filtrar la pauta (todos deben dar 0):
 grep -c "Pauta docente" notebooks/*alumno*.ipynb notebooks/10_proyecto*.ipynb
@@ -171,24 +175,84 @@ es sobre `google.cloud.storage`.
 | RA3 · Act. 3.1, 3.2 y 3.3 | ✅ completas y verificadas |
 | Evaluaciones formativas, parciales y EFT | ⏳ pendientes, sobre los casos oficiales |
 | Plantilla de proyecto de equipo | ✅ ejecuta de extremo a extremo |
-| Pipeline Kedro (`kedro_mly1101/`) | ✅ 30 nodos sintéticos + `waymo_real` (32), versionado |
+| Pipeline Kedro (`kedro_mly1101/`) | ✅ sintético 30/30 · `ingesta` 5/5 (2026-09-08 10:55) · `waymo_real` = 5+30 remapeados |
 | RA2 · Act. 2.2 y 2.3 (notebooks, pautas, pipeline) | ✅ completas y verificadas |
-| Datos reales de Waymo (`waymo_real`) | ✅ 32/32 nodos sobre 530.396 detecciones reales |
+| Datos reales de Waymo (`waymo_real`) | medido 2026-09-08: 530.396 detecciones v2 · 407.267 `camera_box` · 479 secuencias E2E. El RF **solo** ve v2. `kedro run --pipeline waymo_real` **35/35** en 1568,4 s (11:21). F1 `LEVEL_2` = 0,0893 (mismos números que 09:09) |
 | Notebook opcional de Kedro y Databricks | ✅ usa el pipeline real; Databricks queda conceptual |
+| Notebook opcional de buckets Waymo (Motion / E2E / v1) | ✅ `14_opcional_waymo_buckets`: lote liviano, partir por grupo, inventario (sin imágenes) |
 | EFT | ⏳ pendiente |
 
-Todo está verificado, incluido `notebooks/00_opcional_waymo_real.ipynb`: se ejecutó de extremo a
-extremo el 2026-08-13 contra el segmento real `10023947602400723454_1120_000_1140_000`
-(18.633 detecciones) y `tests/test_mapeo_waymo.py` pasó 10/10.
+### Cifras medidas (esta máquina, 2026-09-08) — no redondear de memoria
+
+Fuente: `kedro_mly1101/data/02_intermediate/inventario_fuentes_waymo.csv`,
+`comparacion_real_vs_sintetico.csv`, parquet de `datos/waymo_real/`,
+`data/waymo/07_model_output/metricas_por_clase.csv` (09:09) y `busqueda_de_k.csv` (10:55).
+
+| Fuente (disco) | Archivos | MB | EDA | ML (RF / k-medias / RA3) |
+|---|---|---|---|---|
+| Perception v2 `lidar_box`+`stats` | 40 segmentos | 34,943 | sí | **sí** (único que entra al modelo) |
+| `camera_box` | 40 · **407.267** filas × 11 cols | 7,181 | tabla 2D | no |
+| JSON E2E | 1 · **479** secuencias | 0,035 | clusters | no (no es video) |
+| `camera_image` | 0 | 0 | no se baja | no |
+| Perception v1 | 0 | 0 | no se baja | no |
+| Motion | 0 | 0 | no se baja | no |
+
+**Perception v2** (530.396 filas, 40 segmentos, 0 % nulos):
+
+| | n | % |
+|---|---|---|
+| vehicle | 256.855 | 48,43 |
+| sign | 140.319 | 26,46 |
+| pedestrian | 130.836 | 24,67 |
+| cyclist | 2.386 | 0,45 |
+| LEVEL_1 / LEVEL_2 | 465.002 / 65.394 | 87,67 / 12,33 |
+| weather | 530.396 `sunny` | 100 |
+| location | SF 398.065 · PHX 132.331 | |
+| time_of_day | Day 461.090 · Night 51.867 · Dawn/Dusk 17.439 | |
+| mediana `speed_mps` | 0,0133 | |
+
+**Supervisado v2** (`metricas_por_clase.csv`, soporte de prueba 146.116):
+
+| Clase | Precisión | Recall | F1 | Soporte |
+|---|---|---|---|---|
+| LEVEL_1 | 0,8173 | 0,9419 | 0,8752 | 119.403 |
+| LEVEL_2 | 0,1847 | 0,0588 | **0,0893** | 26.713 |
+| exactitud | | | 0,7805 | |
+| macro avg | 0,5010 | 0,5004 | 0,4822 | |
+
+Matriz: TN 112.466 · FP 6.937 · FN 25.141 · TP 1.572.
+
+**No supervisado v2** (`busqueda_de_k.csv`): silueta 0,5228 (k=2) → 0,6103 (k=8), sin codo.
+PCA: 2 componentes explican **0,7447**. Grupos vs tipo: tres ~100 % `vehicle`; el otro 47,24 % peatón / 50,59 % señalética.
+
+**RA3 v2** (`ganancia_del_ajuste.csv`, 09:09): default 0,5104 → búsqueda 0,5893, ganancia **0,0789** (supera ruido). Mejor: gradient boosting 0,594; ensamble 0,5938 (no distinguible, ruido 0,0282).
+
+**E2E JSON** (479, grafía de Waymo): Interections 116 · Foreign Object Debris 78 · Cyclist 71 · Pedestrian 52 · Multi-Lane Maneuvers 42 · Single-Lane Maneuvers 38 · Special Vehicles 25 · Others 22 · Cut_ins 20 · Construction 15.
+
+**`camera_box` tipos** (enteros Waymo): type 1 = 297.902 · type 2 = 107.507 · type 4 = 1.858.
+
+El CSV sintético (40.680 filas, 10 defectos) es **solo** pauta de las Act. 1.1–3.3. No es Waymo.
+Telco / House Prices / Spotify: evaluaciones, no este hilo.
+
+`notebooks/00_opcional_waymo_real.ipynb`: EDA de un segmento, 2026-08-13,
+`10023947602400723454_1120_000_1140_000` (18.633 detecciones). `test_mapeo_waymo.py` 10/10.
 
 Para reproducirlo en otra máquina:
 
 ```bash
 brew install --cask google-cloud-sdk
 gcloud auth login                        # interactivo: NO lo ejecutes tú, pídeselo al usuario
-python herramientas/descargar_waymo.py   # baja lidar_box (~1 MB) + stats (~23 KB)
+python herramientas/descargar_waymo.py --lote 8   # 8 segmentos livianos → una tabla
 pytest tests/test_mapeo_waymo.py -v
 ```
 
 Los tests de Waymo se **saltan** si no hay datos descargados, así que `pytest` sigue pasando en
 limpio sin credenciales.
+
+Para validar los cuatro buckets GCS y el tratamiento de un fragmento:
+
+```bash
+gcloud auth login                                          # interactivo: el usuario
+uv run python herramientas/validar_buckets_waymo.py        # lista + baja + abre
+uv run python herramientas/validar_buckets_waymo.py --local  # solo parquet ya en disco
+```

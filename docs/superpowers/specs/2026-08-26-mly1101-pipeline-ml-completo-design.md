@@ -2,7 +2,10 @@
 
 **Fecha:** 2026-08-26
 **Estado:** implementado y verificado. Actualizado 2026-09-02: el material docente de las
-Act. 2.2, 2.3 y 3.1–3.3 ya existe; el grafo sintético es 30 nodos y `waymo_real` 32.
+Act. 2.2, 2.3 y 3.1–3.3 ya existe; el grafo sintético es 30 nodos.
+**Actualizado 2026-09-08:** `ingesta` pasó de 2 a **5** nodos (inventario, v2, `camera_box`,
+E2E, comparar). `waymo_real` = **35** (5 + 30 remapeados). El RF sigue usando **solo**
+Perception v2; camera_box y E2E se ven, no se modelan.
 **Extiende:** [`2026-08-26-mly1101-actividades-11-12-design.md`](2026-08-26-mly1101-actividades-11-12-design.md)
 
 > **Nomenclatura:** no usar EA2 = supervisado ni EA3 = no supervisado. Ambos están en el **RA2**;
@@ -59,8 +62,8 @@ waymo_muestra ──► ingesta ──► detecciones_reales ──────�
 | `supervisado` (RA2 · Act. 2.2) | 8 | Partición sin fuga, entrenamiento, evaluación por clase, dos mediciones de fuga |
 | `no_supervisado` (RA2 · Act. 2.3) | 7 | Escalado, búsqueda de *k*, K-medias, perfilado, contraste con la etiqueta, PCA |
 | `optimizacion` (RA3) | 6 | Ajuste, ensamble y selección sustentada |
-| `ingesta` | 2 | Traduce Waymo real y lo compara con el sintético |
-| `waymo_real` | 32 | `ingesta` + los 30 anteriores **remapeados**, sin duplicar nodos |
+| `ingesta` | 5 | Inventario de fuentes, traduce v2, ensambla `camera_box`, lee JSON E2E, compara con el sintético |
+| `waymo_real` | 35 | `ingesta` + los 30 anteriores **remapeados**, sin duplicar nodos. El modelo solo ve v2 |
 
 ---
 
@@ -88,30 +91,32 @@ que dice `descargar_waymo.py --muestra 40`, en vez de apañarlo con una partici�
 
 ---
 
-## 5. Resultados medidos (2026-08-26)
+## 5. Resultados medidos (2026-09-08, leídos de `data/waymo/` y del parquet)
 
-Sobre 40 segmentos reales, 530.396 detecciones, frente al CSV sintético de 40.680.
+Sobre 40 segmentos reales, 530.396 detecciones. El CSV de la pauta (40.680) va en la columna
+de al lado **solo para contrastar**; no es Waymo.
 
-| | Sintético | Real |
+| | CSV del repo | Waymo v2 |
 |---|---|---|
 | Filas · segmentos | 40.680 · 153 | 530.396 · 40 |
-| % `cyclist` | 1,94 % | **0,45 %** |
-| % `LEVEL_2` | 11,1 % | 12,3 % |
-| Mediana `speed_mps` | 5,35 | **0,01** |
-| Clima | 3 categorías sucias | **100 % `sunny`** |
-| Defectos de calidad encontrados | 10 | **0** |
-| Act. 2.2 · exactitud | 0,897 | 0,781 |
-| Act. 2.2 · **F1 de la clase minoritaria** | **0,462** | **0,089** |
-| Act. 2.3 · silueta | máximo en k = 3 (0,473) | **sin codo**: sube a 0,610 en k = 8 |
-| Act. 2.3 · ¿los grupos recuperan el tipo? | Parcialmente | **No** |
+| vehicle / sign / peatón / ciclista (%) | 61,73 / 8,12 / 26,22 / 1,94 | 48,43 / 26,46 / 24,67 / 0,45 |
+| LEVEL_2 | 11,1 % | 12,33 % (65.394) |
+| Mediana `speed_mps` | 5,35 | 0,0133 |
+| Clima | 3 categorías sucias | 530.396 `sunny` |
+| Valores imposibles | 10 defectos inyectados | 0 |
+| Act. 2.2 · exactitud | 0,897 | 0,7805 |
+| Act. 2.2 · F1 LEVEL_2 | 0,462 | **0,0893** (recall 0,0588 · TP 1.572 / 26.713) |
+| Act. 2.3 · silueta | máximo k=3 (0,473) | 0,5228 (k=2) … 0,6103 (k=8), sin codo |
+| Act. 2.3 · ¿los grupos recuperan el tipo? | Parcialmente | No (tres ~100 % vehicle; uno 47,24/50,59 peatón/sign) |
+| Act. 3.1 · ganancia | ~0 (pauta) | +0,0789 |
 
 ### Tres conclusiones que el material declara en vez de esconder
 
 1. **La limpieza no encuentra nada en los datos reales.** El Waymo Open Dataset está curado; los
    10 defectos son sintéticos y existen para que haya algo que descubrir. Lo que se aprende a
    detectar existe en el mundo real, pero no en *este* dataset publicado.
-2. **El modelo cae de 0,46 a 0,089 de F1 en la clase minoritaria.** Acierta el 5,9 % de las
-   detecciones difíciles. *Un buen resultado sobre datos de juguete no predice nada.*
+2. **El modelo cae de 0,462 a 0,0893 de F1 en LEVEL_2.** Recall 0,0588 (1.572 de 26.713 en prueba).
+   El CSV de pauta no predice el Open Dataset.
 3. **El agrupamiento no descubre los tipos de objeto.** Descubre estructura de tamaño y densidad
    de puntos: tres grupos de `vehicle` y uno que mezcla peatones con señalética al 47/51. Y la
    silueta no tiene máximo, así que el criterio automático para elegir `k` falla.
@@ -122,23 +127,27 @@ Sobre 40 segmentos reales, 530.396 detecciones, frente al CSV sintético de 40.6
 
 ```bash
 uv sync --extra kedro
-uv run pytest        # 187 tests; los de datos reales se saltan si no están descargados
+uv run pytest        # 247 tests; los de datos reales se saltan si no están descargados
 uv run ruff check .
 
 cd kedro_mly1101
 uv run kedro run                          # 30/30 nodos, dataset sintético
-uv run kedro run --pipeline waymo_real    # 32/32 nodos, 530.396 detecciones reales
+uv run kedro run --pipeline ingesta       # 5/5, fuentes locales
+uv run kedro run --pipeline waymo_real    # 35 nodos, 530.396 detecciones v2
 ```
 
-### Resultado (cifras actuales a 2026-09-02)
+### Resultado (leído de disco el 2026-09-08)
 
-| Qué | Estado |
-|---|---|
-| Tests | ✅ 187 recolectados |
-| `ruff check` | ✅ limpio |
-| `kedro run` sobre el sintético | ✅ 30/30 |
-| `kedro run --pipeline waymo_real` | ✅ 32/32 sobre datos reales |
-| `pytest` sin datos de Waymo | ✅ los tests que los necesitan se saltan |
+| Qué | Evidencia | Estado |
+|---|---|---|
+| Tests | `uv run pytest` | 247 recolectados |
+| `kedro run` CSV pauta | 30 nodos | 30/30 |
+| `kedro run --pipeline ingesta` | `inventario_fuentes_waymo.csv` 10:55 | 5/5 · v2 40×34,943 MB · camera_box 40×7,181 MB · E2E 479×0,035 MB · v1/Motion/JPEG = 0 |
+| Clasificador v2 | `metricas_por_clase.csv` 09:09 | F1 LEVEL_2 = **0,0893** · exactitud 0,7805 · 530.396 filas |
+| k-medias / PCA | `busqueda_de_k.csv` / `varianza_pca.csv` 10:55 | silueta 0,5228→0,6103 · PCA 0,7447 |
+| RA3 v2 | `ganancia_del_ajuste.csv` 09:09 | +0,0789 (0,5104→0,5893) |
+| Corrida `waymo_real` 35 nodos | log 10:55–11:21 | **35/35** en 1568,4 s |
+| `pytest` sin Waymo | skips | los tests que piden muestra se saltan |
 
 ---
 
@@ -147,9 +156,9 @@ uv run kedro run --pipeline waymo_real    # 32/32 nodos, 530.396 detecciones rea
 | Limitación | Estado |
 |---|---|
 | **Ninguna** | El material docente de 2.1–2.4 y del RA3 ya existe |
-| El recorrido real tarda varios minutos | 530.396 filas con RandomForest y K-medias. Aceptable fuera de clase, no para ejecutar en vivo |
+| El recorrido real tarda ~15 min | 530.396 filas con RandomForest y K-medias. Aceptable fuera de clase, no para ejecutar en vivo |
 | Los 40 segmentos son todos `sunny` | No es un defecto del código: es el sesgo del propio dataset (793 de 798 soleados) |
-| Ningún notebook nuevo se ha ejecutado en Colab | El runtime no arranca por automatización; verificado con `nbconvert` en local |
+| v1 / Motion / JPEG no tienen EDA ni ML en el curso | Deliberado: tfrecord de GB. El notebook 14 los lista |
 
 ---
 

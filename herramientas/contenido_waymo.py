@@ -21,9 +21,11 @@ CELDAS_WAYMO: list[dict] = [
         f"""
 # Opcional · El mismo análisis con datos reales de Waymo
 
-El notebook `01_alumno_exploracion.ipynb` usa un dataset **sintético** con el esquema del
-componente `lidar_box` del Waymo Open Dataset v2. Aquí bajamos datos **reales** y corremos el
-mismo análisis, con las mismas funciones de `src/eda.py`.
+El camino corto (lote de 8 MB, una tabla, analítica) es `14_opcional_waymo_buckets.ipynb`.
+**Empieza por ahí.** Este notebook profundiza: un segmento verificado y el mismo EDA de
+`src/eda.py` que la Actividad 1.3, para comparar con el CSV de la asignatura. El Machine
+Learning completo (bosque aleatorio, k-medias, hiperparámetros) sobre **varios** segmentos
+es el pipeline Kedro `waymo_real`, no este notebook.
 
 > ### Estado de verificación
 >
@@ -76,12 +78,18 @@ gs://waymo_open_dataset_v_2_0_1/
 ├── training/
 │   ├── lidar_box/{context_name}.parquet     ← cajas 3D: ~1 MB      ✔ lo usamos
 │   ├── stats/{context_name}.parquet         ← clima y hora: ~23 KB ✔ lo usamos
-│   ├── camera_image/…                       ← imágenes: GB         ✘
+│   ├── camera_box/…                         ← cajas 2D: ~300 KB    ~ tabla, no foto
+│   ├── camera_image/…                       ← JPEG: ~330 MB c/u    ✘
 │   └── lidar/…                              ← nubes de puntos: GB  ✘
 └── validation/…
 ```
 
 Cada `context_name` es un segmento de conducción de unos 20 segundos.
+
+Hay **otros tres buckets** en la misma consola (Motion, End-to-End cámara, Perception v1.4.3).
+No los uses para el EDA de la asignatura: son tfrecord pesados y otro problema de ML. El
+tutorial para listarlos y bajar un archivo chico desde Colab está en
+`14_opcional_waymo_buckets.ipynb`.
 
 ## Paso 2 · Preparar el entorno y autenticarse
 

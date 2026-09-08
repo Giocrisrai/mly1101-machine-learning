@@ -86,17 +86,14 @@ Ese alguien eres tú, hoy.
 
 ### Sobre los datos
 
-El archivo `detecciones_waymo_like.csv` es un **dataset sintético** generado para esta clase.
-Usa **el mismo esquema** del componente `lidar_box` del
-[Waymo Open Dataset v2](https://waymo.com/open/), un conjunto de datos real de conducción
-autónoma. Es sintético por dos razones honestas:
+Esta actividad usa `detecciones_waymo_like.csv` (CSV del repo) **a propósito**: tiene 10
+defectos inyectados para que haya algo que descubrir, y las cifras coinciden con la pauta.
 
-1. Los datos reales de Waymo pesan varios GB y su licencia no permite redistribuirlos.
-2. Nos permite garantizar que los problemas de calidad que hay que descubrir **están ahí**.
-
-Si quieres repetir este mismo análisis sobre datos **reales** de Waymo, el notebook
-`00_opcional_waymo_real.ipynb` explica cómo hacerlo: el código de este notebook funciona igual,
-porque el esquema es el mismo.
+El flujo con **datos reales** no es este archivo. Es el notebook
+`14_opcional_waymo_buckets.ipynb`: segmentos livianos (`lidar_box` + `stats`), una tabla parquet,
+partir train/test por `segment_id`. No bajes imágenes ni el bucket de Google (terabytes). El EDA
+profundo sobre un segmento real está en `00_opcional_waymo_real.ipynb`. El esquema es el mismo:
+lo que aprendes aquí se traslada.
 
 ---
 
@@ -1458,8 +1455,11 @@ Completa la celda siguiente. Es lo que entregas al final de la sesión.
 ### ¿Quieres hacerlo con datos reales?
 
 El notebook `00_opcional_waymo_real.ipynb` explica cómo bajar un fragmento del Waymo Open
-Dataset real y correr **este mismo análisis** sobre él. El esquema es el mismo; el código, casi
-idéntico.
+Dataset real y correr **este mismo EDA** sobre él. El esquema es el mismo; el código, casi
+idéntico. El ML completo (supervisado, agrupamiento, hiperparámetros) sobre varios segmentos
+es `kedro run --pipeline waymo_real`. Los otros buckets de la consola (Motion, E2E cámara,
+Perception v1) se **listan** en `14_opcional_waymo_buckets.ipynb`: un archivo chico, nunca el
+dataset entero; no tienen modelo en este curso.
 """
     ),
     md_docente(
