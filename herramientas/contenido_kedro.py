@@ -22,7 +22,14 @@ Regenerar tras editar:
 
 from __future__ import annotations
 
-from contenido_semana01 import URL_REPO, code, md
+from contenido_semana01 import (
+    URL_AWS_ACADEMY,
+    URL_AWS_ACADEMY_LAB,
+    URL_DATABRICKS_FREE,
+    URL_REPO,
+    code,
+    md,
+)
 
 CELDAS_KEDRO: list[dict] = [
     md(
@@ -569,31 +576,58 @@ detecciones_limpias:
     mode: overwrite
 ```
 
+```python
+try:
+    df_spark = spark.read.parquet("/Volumes/workspace/default/mly1101/detecciones_reales.parquet")
+    n = df_spark.count()  # evaluación perezosa: aquí recorre el archivo
+    print("filas Spark:", n)
+except NameError:
+    print("No hay sesión Spark en este runtime (Colab/local). En Databricks Free Edition, sí.")
+```
+
 **Los nodos no se enteran.** Lo que sí habría que revisar es el cuerpo de las funciones: nuestros
 nodos usan la API de pandas, y sobre un DataFrame de Spark hay que usar la de PySpark. Kedro
 resuelve el *dónde*; el *cómo* sigue siendo tuyo.
 
 > Ese matiz importa y conviene no vendértelo de más: separar el catálogo **no** hace tu código
 > mágicamente distribuido. Lo que hace es que la migración sea un trabajo acotado y localizado
-> en los nodos, en vez de una reescritura del proyecto entero.
+> en los nodos, en vez de una reescritura del proyecto entero. Guía: `docs/databricks_free.md`.
 """
     ),
     md(
+        f"""
+### Si quieres probarlo por tu cuenta (gratis)
+
+**Databricks Free Edition** sustituyó a Community Edition (retirada en 2025):
+<{URL_DATABRICKS_FREE}>. Paso a paso (cuenta, Git Folder, Volume, qué corre Kedro y qué no):
+`docs/databricks_free.md`. No es evaluación.
+
+1. Crea la cuenta. Entra al workspace. Compute **serverless / el más chico**.
+2. **Git Folder** con `{URL_REPO}.git` (rama `main`). Si no deja: *Import* del `.ipynb`.
+3. **Create volume** privado `mly1101` y sube el CSV del repo o **tu** parquet (licencia Waymo:
+   no lo hagas público).
+4. El notebook corre **con pandas en el driver**: 40.680 filas (~20 MB RAM) y hasta 530 k
+   (~257 MB) caben. No necesitas Spark para eso.
+5. Para ver la diferencia: `spark.read.parquet("/Volumes/…/detecciones_reales.parquet").count()`.
+   Ahí sí recorre el archivo. En Colab/CloudShell esa celda se salta (no hay `spark`).
+6. `kedro run` **no** es el entregable de Free Edition. El grafo (30 / 35 nodos) se corre en
+   Colab, local o CloudShell. Aquí solo cambia *en papel* el `catalog.yml` (bloque de arriba).
+
+> Colab cubre el lote de clase. Si la RAM no alcanza: [AWS Academy]({URL_AWS_ACADEMY})
+> ([módulo]({URL_AWS_ACADEMY_LAB})) — **CloudShell**, no EC2. SageMaker `large` si lanzas
+> `waymo_real` + RA3. Guía: `docs/aws_academy_laboratorio.md` y `docs/recorrido_waymo.md`.
+> Databricks es para **probar Spark**, no EMR ni contenedores.
+"""
+    ),
+    code(
         """
-### Si quieres probarlo por tu cuenta
-
-**Databricks Free Edition** permite crear una cuenta gratuita con un clúster pequeño en
-<https://databricks.com/learn/free-edition>. Alcanza de sobra para este dataset.
-
-1. **Workspace → Import**: sube `01_alumno_exploracion.ipynb`. Databricks lee `.ipynb`.
-2. Crea un clúster (el más pequeño) y espera a que arranque, unos 5 minutos.
-3. Sube el CSV en **Catalog → Add data**, o léelo desde la URL raw de GitHub.
-4. El notebook corre **tal cual con pandas** en el nodo maestro: 40.000 filas no necesitan Spark.
-5. Para ver la diferencia, reescribe un bloque con PySpark y compara.
-
-> **No es parte de la evaluación** y no hace falta para el proyecto. Está aquí para que sepas que
-> existe y, sobre todo, para que sepas **cuándo no lo necesitas**: que es casi siempre, en un
-> proyecto de esta asignatura.
+# En Databricks hay un objeto `spark`. En Colab, CloudShell y este notebook local, no.
+try:
+    spark  # noqa: F821
+    print("Sesión Spark activa. Puedes hacer spark.read.parquet('/Volumes/…').count()")
+except NameError:
+    print("Runtime sin Spark (esperado). pandas basta: CSV 20 MB RAM, parquet real 257 MB.")
+    print("kedro run se queda aquí o en CloudShell; ver docs/databricks_free.md")
 """
     ),
     # ------------------------------------------------------------------

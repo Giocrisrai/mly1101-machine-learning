@@ -17,14 +17,36 @@ tabla** y partir train/test **por segmento**. Las fotos (JPEG) y las nubes LiDAR
 | **1** | Acepta los términos con tu cuenta Google en [waymo.com/open/download](https://waymo.com/open/download/) | Ahí ves Perception v2/v1, Motion y E2E. **No** descargues el bucket: el curso solo usa v2 liviano. |
 | **2** | Abre el notebook, *guardar copia en Drive*, misma cuenta | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/14_opcional_waymo_buckets.ipynb) `14_opcional_waymo_buckets.ipynb` |
 | **3** | Una celda arma el lote (o en local: `uv run python herramientas/descargar_waymo.py --lote 8`) | Sale `datos/waymo_real/detecciones_reales.parquet`. Si ya hay `muestra/` con varios segmentos, **no pide GCS**: los junta. |
-| **4** | Analítica, **partir por grupo**, un RF chico (sección 4b: ustedes lo mejoran) | Mismas celdas del notebook 14 |
+| **4** | Analítica, **partir por grupo**, transformaciones (mismos nodos de Kedro), volúmenes | Mismas celdas del notebook 14 |
 | **5** | Actividades 1.1–3.3 del aula | El CSV del repo (mismas cifras que la pauta) |
 | **6** | Proyecto de equipo · pipeline real | Esa tabla; `cd kedro_mly1101 && uv run kedro run --pipeline waymo_real` |
+| **7** | RAM / disco / S3 / Databricks | [`docs/recorrido_waymo.md`](docs/recorrido_waymo.md) · [lab AWS](docs/aws_academy_laboratorio.md) · [Databricks Free](docs/databricks_free.md) |
 
 En local, si ya bajaste segmentos, el paso 3 **no pide GCS de nuevo**.
 
 No abras la consola de Google “a ver qué hay”: ahí hay terabytes de video y LiDAR. El curso
 usa solo `lidar_box` + `stats`. `camera_box` es otra tabla (cajas 2D), no una foto.
+
+### Dónde computar (la RAM no es una excusa)
+
+El lote de clase (~8 MB) cabe en Colab. **Es el mismo parquet** el que leen el notebook 10,
+Kedro `waymo_real`, CloudShell y un Volume de Databricks. Si el pipeline de 40 segmentos, un
+RF más grande o el proyecto se quedan sin memoria, hay espacio de la asignatura:
+
+| Dónde | Para qué | Enlace |
+|---|---|---|
+| **Google Colab** | Actividades y lote de 8 | Los badges de cada notebook |
+| **AWS Academy** (curso Duoc) | Laboratorio con más RAM/disco (**USD 50**). Guía: qué servicios sí/no | [Paso a paso](docs/aws_academy_laboratorio.md) · [Curso](https://awsacademy.instructure.com/courses/183052) · [Iniciar lab](https://awsacademy.instructure.com/courses/183052/modules/items/18057525) |
+| **Databricks Free Edition** | Explorar Spark / escala (gratis; no es Community Edition) | [Guía](docs/databricks_free.md) · [alta](https://www.databricks.com/learn/free-edition) |
+
+En Academy o Databricks: clona este repo y corre el mismo notebook. El parquet de Waymo es de
+**tu** cuenta — no lo publiques. Ninguno de los dos es evaluación.
+
+En AWS usa **CloudShell** (no EC2). SageMaker `medium`/`large` solo si el RA3 sobre 530 k
+filas pide más RAM. Bucket S3 **privado** solo para no perder el parquet. Contenedores: no.
+Databricks Free Edition: Spark sobre el **mismo** parquet, Kedro no se mueve ahí. Detalle en
+[`docs/aws_academy_laboratorio.md`](docs/aws_academy_laboratorio.md) y
+[`docs/databricks_free.md`](docs/databricks_free.md).
 
 ---
 

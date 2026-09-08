@@ -21,6 +21,17 @@ from __future__ import annotations
 
 URL_REPO = "https://github.com/Giocrisrai/mly1101-machine-learning"
 
+# Cómputo extra: no es evaluación. Colab cubre el lote de clase; si la RAM no alcanza,
+# AWS Academy (curso de la asignatura) y Databricks Free Edition.
+URL_AWS_ACADEMY = "https://awsacademy.instructure.com/courses/183052"
+URL_AWS_ACADEMY_LAB = (
+    "https://awsacademy.instructure.com/courses/183052/modules/items/18057525"
+)
+URL_AWS_CONSOLA = (
+    "https://us-east-1.console.aws.amazon.com/console/home?region=us-east-1"
+)
+URL_DATABRICKS_FREE = "https://www.databricks.com/learn/free-edition"
+
 
 def md(texto: str) -> dict:
     return {"tipo": "md", "fuente": texto.strip("\n")}

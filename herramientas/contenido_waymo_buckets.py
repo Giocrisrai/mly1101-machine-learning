@@ -13,7 +13,15 @@ Regenerar tras editar:
 
 from __future__ import annotations
 
-from contenido_semana01 import URL_REPO, code, md
+from contenido_semana01 import (
+    URL_AWS_ACADEMY,
+    URL_AWS_ACADEMY_LAB,
+    URL_AWS_CONSOLA,
+    URL_DATABRICKS_FREE,
+    URL_REPO,
+    code,
+    md,
+)
 
 CELDAS_WAYMO_BUCKETS: list[dict] = [
     md(
@@ -48,8 +56,9 @@ actividades calificadas siguen el CSV del repo (mismas cifras que la pauta).
 | 5–12 | Celda 2: lote de 8, o ensambla `muestra/` si ya está |
 | 12–20 | Sección 3: tipos, dificultad, clima. Pregunta al curso: ¿qué clase va a costar? |
 | 20–28 | Sección 4: partir por `segment_id`. La pregunta de oro: ¿algún segmento en los dos lados? |
-| 28–40 | Sección 4b: EDA con `eda.py` + un Random Forest chico. Cada equipo **extiende** una celda |
-| 40–45 | Cierre: el notebook 10 toma este parquet solo. Kedro `waymo_real` es el mismo grafo |
+| 28–38 | Sección 4b: EDA + RF chico. Cada equipo **extiende** una celda |
+| 38–48 | Sección 4c: volúmenes, transformaciones (mismos nodos de Kedro) y estrategias |
+| 48–55 | Cierre: el notebook 10 toma este parquet. Kedro `waymo_real` es el mismo grafo |
 """
     ),
     md(
@@ -93,6 +102,7 @@ else:
     print("Local. Si falla la descarga:  gcloud auth login")
 
 sys.path.insert(0, str(RAIZ / "src"))
+sys.path.insert(0, str(RAIZ / "kedro_mly1101" / "src"))
 DESTINO = RAIZ / "datos" / "waymo_real"
 DESTINO.mkdir(parents=True, exist_ok=True)
 print("Destino:", DESTINO)
@@ -258,6 +268,124 @@ print(pd.Series(modelo.feature_importances_, index=PREDICTORAS).sort_values(asce
 
 **Lo que no haríamos:** mezclar `camera_box` con esta tabla · partir al azar por fila ·
 hacer `dropna` de la dificultad en `camera_box` (el NaN es LEVEL_1).
+"""
+    ),
+    md(
+        """
+## 4c · Volúmenes, transformaciones y estrategias
+
+Las Act. 1.2 y 1.3 practican esto sobre el CSV de la pauta (10 defectos). **Aquí** se aplica
+al lote real, con los **mismos nodos** que Kedro (`parameters.yml` + `preprocesamiento`).
+No se reescribe la limpieza: si cambia una regla, cambia en un solo sitio.
+
+| Estrategia | Qué es | Qué no es |
+|---|---|---|
+| **Volumen de clase** | lote 8 (~8 MB) o `muestra/` ya bajada | `gsutil -m cp -r` del bucket (terabytes) |
+| **Volumen de pipeline** | 40 segmentos, ~35 MB de `lidar_box` | JPEG / nubes LiDAR (~330 MB **por** segmento) |
+| **Marcar, no borrar** | `np.nan` en lo imposible; el resto de la fila sigue | `dropna()` global o `pd.NA` (rompe scikit-learn) |
+| **Un producto, un modelo** | RF solo ve v2 (metros) | pegar `camera_box` (píxeles) a estas columnas |
+| **Partir por grupo** | un `segment_id` entero a un solo lado | `train_test_split` al azar por fila |
+| **Explorar vs citar** | muestra de 30.000 para el demo | el número del informe sale del pipeline completo |
+| **Guardar** | Parquet (conserva dtypes) | CSV de ida y vuelta (el tipo se pierde) |
+| **RAM de Colab corta** | AWS Academy (curso de la asignatura) o [Databricks Free Edition](https://www.databricks.com/learn/free-edition) | abandonar el análisis o bajar el bucket |
+
+En datos reales la tabla **ya viene limpia** (0 % nulos, categorías en inglés). Eso no anula
+el pipeline: el informe de limpieza debe mostrar *casi ceros*. Si saliera un agujero grande,
+habría un bug en la traducción, no "datos sucios".
+"""
+    ),
+    code(
+        """
+import yaml
+
+import eda
+import formatos
+from kedro_mly1101.pipelines.preprocesamiento import nodes as limpieza
+
+PARAMETROS = yaml.safe_load(
+    (RAIZ / "kedro_mly1101" / "conf" / "base" / "parameters.yml").read_text(encoding="utf-8")
+)
+
+# Las mismas 4 transformaciones, en el mismo orden que Kedro.
+paso = limpieza.normalizar_categorias(tabla, PARAMETROS["mapas_categorias"])
+paso = limpieza.descubrir_faltantes(paso, PARAMETROS["centinelas"])
+paso = limpieza.marcar_imposibles(paso, PARAMETROS["reglas_dominio"])
+limpia = limpieza.quitar_duplicados_y_constantes(paso, PARAMETROS["columnas_a_descartar"])
+informe_limpieza = limpieza.resumir_limpieza(tabla, limpia)
+
+print("Transformaciones (crudo → limpio). En Waymo real la diferencia debe ser chica:")
+print(informe_limpieza.to_string(index=False))
+
+print("\\nReglas de dominio (filas IMPOSIBLES, no atípicos legítimos):")
+print(eda.valores_imposibles(
+    tabla, {n: r["condicion"] for n, r in PARAMETROS["reglas_dominio"].items()}
+).to_string(index=False))
+
+print("\\nMemoria de esta tabla:")
+print(f"  RAM: {tabla.memory_usage(deep=True).sum() / 1024**2:.1f} MB")
+print(f"  disco ({ruta.name}): {ruta.stat().st_size / 1024**2:.1f} MB")
+print(f"  filas: {len(tabla):,}  ·  segmentos: {tabla['segment_id'].nunique()}")
+"""
+    ),
+    code(
+        """
+# Volumen: el mismo recorte en CSV vs Parquet. Excel no entra (límite 1.048.576 filas
+# y es lento). En 40 millones de detecciones esta decisión es la que aguanta.
+muestra = limpia.head(min(5_000, len(limpia)))
+carpeta = DESTINO / "_tmp_formatos"
+comparativa = formatos.medir_formatos(muestra, carpeta, formatos=("csv", "parquet"))
+print(comparativa.to_string(index=False))
+
+csv_fila = comparativa.set_index("formato")
+print("\\n¿El CSV conservó los dtypes?", bool(csv_fila.loc["csv", "conserva_dtypes"]))
+print("¿El Parquet conservó los dtypes?", bool(csv_fila.loc["parquet", "conserva_dtypes"]))
+
+# Categorías después de limpiar: cabe más en RAM y el modelo no ve 4 grafías de peatón.
+mem_obj = limpia.memory_usage(deep=True).sum() / 1024**2
+opt = limpia.copy()
+for columna in opt.select_dtypes(include="object").columns:
+    if opt[columna].nunique(dropna=True) < len(opt) * 0.5:
+        opt[columna] = opt[columna].astype("category")
+mem_cat = opt.memory_usage(deep=True).sum() / 1024**2
+print(f"\\nobject → category: {mem_obj:.1f} MB → {mem_cat:.1f} MB "
+      f"(ahorro {100 * (1 - mem_cat / mem_obj):.0f} %)")
+print("Orden: limpiar PRIMERO, convertir a category DESPUÉS.")
+"""
+    ),
+    md(
+        """
+**Qué deben poder explicar después de esta celda**
+
+1. Por qué el informe de limpieza en datos reales da diferencia ~0, y en el CSV de la pauta no.
+2. Por qué un `speed_mps` de 15 m/s no se marca (legítimo) y un `box_height <= 0` sí.
+3. Qué estrategia usarían si el lote fueran 40 millones de filas: Parquet, tipos, partir por
+   grupo, no bajar imágenes, muestrear para explorar y reservar el pipeline para el número
+   que se cita.
+"""
+    ),
+    md(
+        f"""
+### Si Colab o el portátil se quedan sin memoria
+
+Eso no recorta el trabajo. Hay dos espacios de la asignatura, **gratis**, para seguir:
+
+| Dónde | Para qué | Enlace |
+|---|---|---|
+| **AWS Academy** (curso Duoc) | Laboratorio con más RAM/disco; misma consola `us-east-1` | [curso]({URL_AWS_ACADEMY}) · [módulo de lab]({URL_AWS_ACADEMY_LAB}) · [consola]({URL_AWS_CONSOLA}) |
+| **Databricks Free Edition** | Explorar Spark / escala con un clúster chico (no es Community Edition: esa se retiró) | [{URL_DATABRICKS_FREE}]({URL_DATABRICKS_FREE}) |
+
+En ambos: clonas **este** repo. En Academy corres el notebook 14 o `kedro run --pipeline waymo_real`.
+En Databricks subes el parquet a un Volume y pruebas Spark; el grafo Kedro se queda en
+Colab/CloudShell (`docs/databricks_free.md`).
+Sigue sin bajarse JPEG. El parquet de Waymo es de **tu** cuenta: no lo hagas público
+([términos](https://waymo.com/open/terms/)).
+
+Ninguno de los dos es evaluación. Colab alcanza para el lote de 8. Academy y Databricks son
+para cuando el volumen o el pipeline completo piden más máquina, y para **probar** la
+herramienta.
+
+Paso a paso del lab (clone, sin EC2, S3 opcional, RAM medida): `docs/aws_academy_laboratorio.md`
+y `docs/recorrido_waymo.md`. No EMR, no Bedrock, no GPU, no Docker.
 """
     ),
     md(

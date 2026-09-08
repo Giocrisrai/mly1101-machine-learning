@@ -18,11 +18,19 @@ Regenerar tras editar:
 
 from __future__ import annotations
 
-from contenido_semana01 import URL_REPO, code, md
+from contenido_semana01 import (
+    URL_AWS_ACADEMY,
+    URL_AWS_ACADEMY_LAB,
+    URL_AWS_CONSOLA,
+    URL_DATABRICKS_FREE,
+    URL_REPO,
+    code,
+    md,
+)
 
 CELDAS_PROYECTO: list[dict] = [
     md(
-        """
+        f"""
 # MLY1101 · Plantilla de proyecto de equipo
 ## EA1 · Análisis y preprocesamiento de datos
 
@@ -68,6 +76,14 @@ El hilo útil del curso es el **parquet real**. Las Act. 1.1–3.3 se califican 
 Si el lote real sale con **0 % nulos**, no es un fallo ni un dataset “ya curado”: Waymo
 entrega cajas limpias. El trabajo está en la clase rara (`cyclist`, `LEVEL_2`), en no
 partir al azar por fila, y en no mezclar `camera_box` (píxeles) con el LiDAR (metros).
+
+Si Colab se queda sin RAM: el curso de [AWS Academy]({URL_AWS_ACADEMY}) (módulo de
+[laboratorio]({URL_AWS_ACADEMY_LAB}), [consola us-east-1]({URL_AWS_CONSOLA})) y
+[Databricks Free Edition]({URL_DATABRICKS_FREE}) son el espacio extra. Mismo repo, mismo
+parquet. En AWS: **CloudShell** (no EC2); SageMaker `large` solo para `waymo_real` + RA3.
+S3 privado opcional. No EMR, no contenedores, no S3 público. Guías:
+`docs/aws_academy_laboratorio.md`, `docs/recorrido_waymo.md`, `docs/databricks_free.md`.
+No es evaluación.
 """
     ),
     md(
@@ -94,6 +110,7 @@ else:
     RAIZ = Path("..").resolve()
 
 sys.path.insert(0, str(RAIZ / "src"))
+sys.path.insert(0, str(RAIZ / "kedro_mly1101" / "src"))
 import waymo
 
 # ---------------------------------------------------------------------------
@@ -132,10 +149,12 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import yaml
 
 import eda        # diagnóstico de calidad      (Actividad 1.3)
 import formatos   # comparación de formatos     (Actividad 1.2)
 import fuentes    # lectura de fuentes varias   (Actividad 1.1)
+from kedro_mly1101.pipelines.preprocesamiento import nodes as limpieza
 
 pd.set_option("display.max_columns", 60)
 pd.set_option("display.width", 160)
@@ -436,6 +455,43 @@ else:
     print("Definan al menos una regla de dominio para su dataset.")
 """
     ),
+    md(
+        """
+### 4.2 · Las mismas transformaciones del pipeline
+
+No reescriban la limpieza. Si el dataset es el hilo Waymo, corren los nodos de
+`preprocesamiento` con `parameters.yml`. Marcar lo imposible (`np.nan`), no borrar la fila.
+En el lote real el informe debe salir casi en cero: eso **es** el resultado correcto.
+"""
+    ),
+    code(
+        """
+ES_WAYMO = {"object_type", "box_height", "segment_id"}.issubset(df.columns)
+if ES_WAYMO:
+    PARAMETROS = yaml.safe_load(
+        (RAIZ / "kedro_mly1101" / "conf" / "base" / "parameters.yml").read_text(
+            encoding="utf-8"
+        )
+    )
+    paso = limpieza.normalizar_categorias(df, PARAMETROS["mapas_categorias"])
+    paso = limpieza.descubrir_faltantes(paso, PARAMETROS["centinelas"])
+    paso = limpieza.marcar_imposibles(paso, PARAMETROS["reglas_dominio"])
+    df_limpio = limpieza.quitar_duplicados_y_constantes(
+        paso, PARAMETROS["columnas_a_descartar"]
+    )
+    print(limpieza.resumir_limpieza(df, df_limpio).to_string(index=False))
+    if "segment_id" in df.columns:
+        marcada = waymo.partir_por_grupo(df_limpio, test_size=0.25, semilla=42)
+        tr = set(marcada.loc[marcada["particion"] == "entrenamiento", "segment_id"])
+        te = set(marcada.loc[marcada["particion"] == "prueba", "segment_id"])
+        print(f"\\nPartición por grupo: train {len(tr)} · test {len(te)} · "
+              f"¿fuga de segmento? {bool(tr & te)}")
+else:
+    df_limpio = df.copy()
+    print("Dataset del equipo: copien arriba las reglas de SU dominio y aplíquenlas aquí.")
+    print("No usen las de Waymo (altura en metros, centinela -1) si las columnas son otras.")
+"""
+    ),
     # ------------------------------------------------------------------
     md(
         """
@@ -448,9 +504,9 @@ cuando crezca.
     ),
     code(
         """
-mem_antes = df.memory_usage(deep=True).sum() / 1024**2
+mem_antes = df_limpio.memory_usage(deep=True).sum() / 1024**2
 
-df_optimizado = df.copy()
+df_optimizado = df_limpio.copy()
 
 # Categóricas: columnas de texto con pocos valores distintos (menos del 50 % de cardinalidad).
 for columna in df.select_dtypes(include="object").columns:
@@ -466,7 +522,7 @@ mem_despues = df_optimizado.memory_usage(deep=True).sum() / 1024**2
 print(f"Antes   : {mem_antes:7.2f} MB")
 print(f"Después : {mem_despues:7.2f} MB")
 print(f"Ahorro  : {100*(1 - mem_despues/mem_antes):6.1f} %")
-assert len(df_optimizado) == len(df), "optimizar memoria no puede perder filas"
+assert len(df_optimizado) == len(df_limpio), "optimizar memoria no puede perder filas"
 """
     ),
     md(

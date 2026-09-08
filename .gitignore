@@ -34,5 +34,9 @@ kedro_mly1101/.viz/
 kedro_mly1101/uv.lock
 kedro_mly1101/.telemetry
 
+# Credenciales locales (AWS Academy, GCS). Nunca versionar.
+.env
+.env.local
+
 # macOS
 .DS_Store

@@ -1,8 +1,9 @@
 # Catálogo de datos — el ÚNICO lugar del proyecto donde hay rutas.
 #
 # Los nodos conocen los datos por su nombre; dónde viven y en qué formato se
-# declara aquí. Por eso cambiar de CSV local a Delta Lake en Databricks es editar
-# este archivo y ni una línea del análisis (ver el bloque 6 del notebook 04).
+# declara aquí. Por eso cambiar de CSV local a un Volume de Databricks (Delta) es editar
+# este archivo y ni una línea del análisis (ver docs/databricks_free.md y el bloque 7 del
+# notebook 04). Los nodos siguen en pandas: el catálogo no los vuelve Spark solos.
 #
 # Las capas siguen la convención de Kedro:
 #   01_raw          lo que llegó, no se toca
