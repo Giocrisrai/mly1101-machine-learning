@@ -609,6 +609,7 @@ resuelve el *dónde*; el *cómo* sigue siendo tuyo.
 4. El notebook corre **con pandas en el driver**: 530 k filas (~257 MB) caben. No necesitas Spark para eso.
 5. Para ver la diferencia: `spark.read.parquet("/Volumes/…/detecciones_reales.parquet").count()`.
    Ahí sí recorre el archivo. En Colab/CloudShell esa celda se salta (no hay `spark`).
+   **No** hagas `spark.read` de un tfrecord Motion ni montes `gs://waymo_…`.
 6. `kedro run` **no** es el entregable de Free Edition. El grafo (34 nodos) se corre en
    Colab, local o CloudShell. Aquí solo cambia *en papel* el `catalog.yml` (bloque de arriba).
 
@@ -839,7 +840,9 @@ print("de las originales estaban diciendo casi lo mismo.")
 # Bloque 11 · Qué acaba de correr (Perception v2)
 
 `kedro run` **es** el recorrido real: ingesta de la muestra + EDA + ML (34 nodos).
-`camera_box` y el JSON E2E quedan en `ingesta` (se ven, no se modelan).
+`camera_box` y el JSON E2E quedan en `ingesta` (se ven, no se modelan). Un fotograma
+**sin JPEG** se dibuja en el notebook 14 etapa F; aquí solo comprobamos que Kedro dejó
+la tabla 2D traducida. Databricks Spark, si lo pruebas, lee el parquet **v2**, no Motion.
 
 ```bash
 python herramientas/descargar_waymo.py --muestra 40      # ~40 MB
@@ -877,6 +880,30 @@ else:
     print("No hay métricas todavía. Corre: cd kedro_mly1101 && kedro run")
 """
     ),
+    code(
+        """
+# camera_box traducido por Kedro (no entra al RF). El dibujo del cuadro es el notebook 14.
+import sys
+
+sys.path.insert(0, str(RAIZ / "src"))
+import waymo
+
+ruta_cam = PROYECTO / "data" / "02_intermediate" / "cajas_camara_2d.parquet"
+ruta_e2e = PROYECTO / "data" / "02_intermediate" / "metadatos_e2e.csv"
+if ruta_cam.exists():
+    camara_k = pd.read_parquet(ruta_cam)
+    print("cajas_camara_2d:", camara_k.shape, list(camara_k.columns)[:8], "...")
+    frame = waymo.recorte_de_un_frame(camara_k)
+    print("Un instante FRONT:", len(frame), "cajas. Tipos:")
+    print(frame["object_type"].value_counts().to_string() if not frame.empty else "(vacío)")
+    print("Para verlas dibujadas: notebook 14, etapa F. Aquí Kedro no pinta JPEG.")
+else:
+    print("Aún no hay cajas_camara_2d.parquet. kedro run --pipeline ingesta las arma si hay camera_box en muestra/.")
+if ruta_e2e.exists():
+    e2e_k = pd.read_csv(ruta_e2e)
+    print("E2E JSON (clusters, no video):", e2e_k.shape)
+"""
+    ),
     md(
         """
 ### Cifras medidas el 2026-09-08 (40 segmentos, 530.396 filas)
@@ -893,8 +920,9 @@ else:
 | Act. 2.3 · silueta | **0,5228 → 0,6103 (k=2…8), sin codo** |
 | Act. 3.1 · ganancia del ajuste | **+0,0789** (0,5104 → 0,5893) |
 
-En el mismo disco, **no** mezclados con el modelo: `camera_box` 407.267×11; JSON E2E 479
-secuencias; v1 / Motion / JPEG = 0 archivos.
+En el mismo disco, **no** mezclados con el modelo: `camera_box` 407.267×11 (píxeles); JSON E2E
+479 secuencias; v1 / Motion / JPEG = 0 archivos. Databricks no cambia eso: el Volume es este
+parquet v2.
 
 **El F1 de LEVEL_2 es 0,0893.** De 26.713 difíciles en prueba, acierta 1.572 (recall 5,88 %).
 El Open Dataset llega curado; el problema es el desbalance y el 100 % `sunny`, no la suciedad.

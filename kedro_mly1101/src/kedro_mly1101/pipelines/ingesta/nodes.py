@@ -68,6 +68,8 @@ def ensamblar_cajas_camara(particiones: dict) -> pd.DataFrame:
     """Junta los ``camera_box`` y los traduce al esquema de clase (píxeles).
 
     Vacío si nadie los bajó. No entran al clasificador: son otra tabla 2D.
+    El alumno dibuja un instante con ``waymo.recorte_de_un_frame`` en el
+    notebook 14 (etapa F), no en este nodo.
     """
     trozos = []
     for identificador, cargar in sorted(particiones.items()):

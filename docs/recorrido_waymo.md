@@ -40,9 +40,11 @@ datos/waymo_real/muestra/<segmento>/*.parquet
 ```
 
 Si el parquet no está, el código **falla** y dice cómo bajarlo. No hay CSV de pauta.
-`camera_box` y el JSON E2E se inventarian; **no** entran al RF. Motion / v1 / video E2E
-ni siquiera se bajan: un shard pesa más que CloudShell
-([`productos_waymo.md`](productos_waymo.md)).
+`camera_box` y el JSON E2E se inventarian; **no** entran al RF. El fotograma sin JPEG se
+dibuja en el notebook **14** (etapa F) sobre esas cajas. Motion / v1 / video E2E ni siquiera
+se bajan: un shard pesa más que CloudShell
+([`productos_waymo.md`](productos_waymo.md)). Databricks Spark lee **este** parquet v2, no
+un tfrecord.
 
 ---
 
@@ -54,7 +56,9 @@ ni siquiera se bajan: un shard pesa más que CloudShell
 | ¿Tengo que crear un **bucket S3**? | **No** para trabajar. Es **opcional**: guardar *tu* parquet entre sesiones. Privado, `us-east-1`, Block public access ON. |
 | ¿El `git clone` trae Waymo? | **No.** Trae código y notebooks. `datos/waymo_real/` está en `.gitignore` (licencia: no redistribuir). |
 | ¿AWS resuelve Motion / v1 / E2E video? | **No.** Más RAM sirve para el parquet **v2**. Un tfrecord de 1 GB no es pandas. |
-| ¿Y las otras tablas v2 (cajas 2D, pose)? | **Sí, en KB.** `descargar_waymo.py --tablas-chicas` y notebook 14 sección 5. No van al RF. |
+| ¿Puedo **ver el video** de las cámaras? | **No el clip.** JPEG v2 ~320 MB/segmento; E2E ≥ 1,56 GB. En clase: notebook 14 etapa F (cajas en el lienzo) + [Colab oficial de 2 frames](https://colab.research.google.com/github/waymo-research/waymo-open-dataset/blob/master/tutorial/tutorial.ipynb). |
+| ¿Y las otras tablas v2 (cajas 2D, pose)? | **Sí, en KB.** `descargar_waymo.py --tablas-chicas` y notebook 14 sección 5. Kedro las traduce; no van al RF. |
+| ¿Databricks abre Motion? | **No.** Volume = el mismo parquet v2. Spark es un `count()` sobre esa tabla. |
 | ¿Qué problema resuelve el hilo Waymo? | **Clasificación** binaria: `detection_difficulty` (`LEVEL_1` / `LEVEL_2`). |
 | ¿Y la **regresión** del IL2.2? | En las evaluaciones (*House Prices*), no en este parquet. |
 | ¿Supervisado vs no supervisado? | Los **dos** están en el **RA2**. El RA3 es ajuste, ensamble y validación cruzada. |
@@ -423,7 +427,9 @@ aws s3 cp datos/waymo_real/detecciones_reales.parquet s3://…/detecciones_reale
 ### Motion, Perception v1 y video E2E
 
 No entran al grafo Kedro. AWS no los vuelve tabla: CloudShell tiene ~1 GB de `$HOME` y un
-shard de Motion mide **1,17–1,32 GB**. Guía con tamaños medidos:
+shard de Motion mide **1,17–1,32 GB**. Lo que **sí** se ve: `camera_box` (Kedro `ingesta`) y
+un fotograma sin JPEG (notebook 14). Para el formato con foto: Colab oficial de Waymo (2
+frames), no SageMaker. Tamaños:
 [`productos_waymo.md`](productos_waymo.md).
 
 ### Otros servicios

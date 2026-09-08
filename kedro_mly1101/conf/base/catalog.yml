@@ -25,6 +25,13 @@ detecciones_reales:
   type: pandas.ParquetDataset
   filepath: ../datos/waymo_real/detecciones_reales.parquet
 
+# --------------------------------------------------------------------------
+# 02_intermediate — otras fuentes locales (se ven; el RF no las usa)
+#   camera_box: cajas 2D en píxeles (traducidas). Un fotograma se dibuja
+#   en el notebook 14 etapa F, no aquí: Kedro no pinta JPEG.
+#   E2E: JSON de 479 clusters, no el video de 1,6 GB.
+#   Databricks / Spark: solo detecciones_reales (v2). No montes el bucket GCS.
+# --------------------------------------------------------------------------
 inventario_fuentes_waymo:
   type: pandas.CSVDataset
   filepath: data/02_intermediate/inventario_fuentes_waymo.csv

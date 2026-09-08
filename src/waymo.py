@@ -37,6 +37,60 @@ TAMANO_MAXIMO_MB = 50.0
 TAMANO_MAXIMO_CLASE_MB = 250.0
 LOTE_CLASE = 8
 PAGINA_DESCARGA = "https://waymo.com/open/download/"
+FAQ_WAYMO = "https://waymo.com/open/faq/"
+
+# Lo que hace Waymo en sus propios tutoriales: 2 frames de muestra, no el bucket.
+# No copiamos esos binarios (licencia). El alumno abre el Colab oficial.
+TUTORIALES_OFICIALES: dict[str, dict[str, str]] = {
+    "percepcion_dos_frames": {
+        "colab": (
+            "https://colab.research.google.com/github/waymo-research/"
+            "waymo-open-dataset/blob/master/tutorial/tutorial.ipynb"
+        ),
+        "que": (
+            "FAQ de Waymo: el tutorial usa frames de muestra, no el dataset. "
+            "Ahí sí se ven JPEG y cajas. Son 2 fotogramas, no 1,5 GB."
+        ),
+    },
+    "percepcion_v2": {
+        "colab": (
+            "https://colab.research.google.com/github/waymo-research/"
+            "waymo-open-dataset/blob/master/tutorial/tutorial_v2.ipynb"
+        ),
+        "que": "Parquet modular (el mismo formato que el lote de clase).",
+    },
+    "motion": {
+        "colab": (
+            "https://colab.research.google.com/github/waymo-research/"
+            "waymo-open-dataset/blob/master/tutorial/tutorial_motion.ipynb"
+        ),
+        "que": "Hay un ejemplo en el tutorial. Un shard real de Motion sigue siendo ~1 GB.",
+    },
+    "e2e": {
+        "colab": (
+            "https://colab.research.google.com/github/waymo-research/"
+            "waymo-open-dataset/blob/master/tutorial/"
+            "tutorial_vision_based_e2e_driving.ipynb"
+        ),
+        "que": "Pide un tfrecord E2E (~1,6 GB). En clase usamos el JSON de 479 clusters.",
+    },
+}
+
+# FAQ oficial (2026-09-08): "the tutorial currently uses some sample frames —
+# it does not access the actual dataset files." No copiamos esos binarios.
+MUESTRAS_OFICIALES_GITHUB = (
+    "https://github.com/waymo-research/waymo-open-dataset/tree/master/tutorial"
+)
+VIEWER_PARQUET_V2 = {
+    "url": "https://egolens.org",
+    "repo": "https://github.com/egolens/egolens",
+    "que": (
+        "EgoLens (curso OMSCS CS 7638; antes waymo-perception-studio): "
+        "arrastras parquet v2 en el navegador. Para ver JPEG hace falta "
+        "camera_image (~320 MB). En clase dibujamos un frame con camera_box "
+        "sobre el lienzo de calibración."
+    ),
+}
 
 # Qué hay en un segmento de Perception v2 y qué baja el curso.
 # Pesos: un segmento GCS (10017090168044687777_…), 2026-09-08. camera_box es tabla 2D.
@@ -99,6 +153,7 @@ CATALOGO_BUCKETS: dict[str, dict[str, str]] = {
         ),
         "en_clase": "tabla",
         "tamano_medido": "lidar_box 0,25–0,95 MB · stats 0,02 MB (GCS 2026-09-08)",
+        "sustituto": "Esta SÍ es la tabla del curso. No hace falta otra.",
     },
     "percepcion_v1": {
         "bucket": "waymo_open_dataset_v_1_4_3",
@@ -112,6 +167,10 @@ CATALOGO_BUCKETS: dict[str, dict[str, str]] = {
         ),
         "en_clase": "listar",
         "tamano_medido": "tfrecord 894–1.062 MB por segmento (GCS 2026-09-08)",
+        "sustituto": (
+            "No se abre el video ni el Frame protobuf. Perception v2 ya trae las "
+            "cajas 3D en parquet (~1 MB)."
+        ),
     },
     "motion": {
         "bucket": "waymo_open_dataset_motion_v_1_3_1",
@@ -125,6 +184,10 @@ CATALOGO_BUCKETS: dict[str, dict[str, str]] = {
         ),
         "en_clase": "listar",
         "tamano_medido": "tf_example 1,17–1,32 GB · scenario 434–480 MB (GCS 2026-09-08)",
+        "sustituto": (
+            "No hay trayectorias a 9 s en este curso. Lo más parecido que cabe: "
+            "vehicle_pose (x/y del auto, ~40 KB) y speed_mps en la tabla v2."
+        ),
     },
     "e2e_camara": {
         "bucket": "waymo_open_dataset_end_to_end_camera_v_1_0_0",
@@ -141,6 +204,10 @@ CATALOGO_BUCKETS: dict[str, dict[str, str]] = {
         ),
         "en_clase": "json",
         "tamano_medido": "JSON 0,03 MB · tfrecord 1,59–1,68 GB (GCS 2026-09-08)",
+        "sustituto": (
+            "El video no se baja (el más chico mide 1,56 GB). En su lugar: JSON de "
+            "479 clusters + camera_box (qué hay en el cuadro, sin JPEG)."
+        ),
     },
 }
 
@@ -294,6 +361,15 @@ def producto(clave: str) -> dict[str, str]:
         raise KeyError(
             f"No hay un producto '{clave}'. Claves: {disponibles}."
         ) from error
+
+
+def que_hacer_con_el_producto(clave: str) -> str:
+    """Una frase para clase: ¿se baja, se lista, o se sustituye?"""
+    info = producto(clave)
+    return (
+        f"{clave}: en_clase={info['en_clase']} · {info['tamano_medido']}. "
+        f"{info['sustituto']}"
+    )
 
 
 def listar_objetos(bucket: str, prefijo: str = "", limite: int = 8) -> list[dict]:
@@ -820,6 +896,85 @@ def comparar_conteos_por_tipo(
     juntos["camara_n"] = juntos["camara_n"].astype(int)
     juntos.index.name = "object_type"
     return juntos.reset_index()
+
+
+def recorte_de_un_frame(
+    camara: pd.DataFrame,
+    *,
+    segmento: str | None = None,
+    timestamp_micros: int | None = None,
+    nombre_camara: str = "FRONT",
+) -> pd.DataFrame:
+    """Cajas 2D de **un** instante y **una** cámara. Es el “fotograma” sin JPEG.
+
+    Waymo, en su Colab oficial, muestra 2 frames de muestra embebidos. Aquí el
+    alumno usa las tablas que ya bajó: mismo gesto (ver el cuadro), sin el video
+    de 1,6 GB.
+    """
+    if camara.empty:
+        return camara.copy()
+    trabajo = camara
+    if "camara" in trabajo.columns:
+        trabajo = trabajo.loc[trabajo["camara"] == nombre_camara]
+    if trabajo.empty:
+        return trabajo.copy()
+    if segmento is None:
+        segmento = str(trabajo["segment_id"].iloc[0])
+    trabajo = trabajo.loc[trabajo["segment_id"] == segmento]
+    if trabajo.empty:
+        return trabajo.copy()
+    if timestamp_micros is None:
+        timestamp_micros = int(trabajo["timestamp_micros"].iloc[0])
+    return trabajo.loc[trabajo["timestamp_micros"] == timestamp_micros].reset_index(
+        drop=True
+    )
+
+
+def tamano_del_lienzo(
+    calibracion: pd.DataFrame, nombre_camara: str = "FRONT"
+) -> tuple[int, int]:
+    """Ancho × alto en píxeles de esa cámara. 1920×1280 si no hay calibración (v2)."""
+    if calibracion.empty or "camara" not in calibracion.columns:
+        return 1920, 1280
+    fila = calibracion.loc[calibracion["camara"] == nombre_camara]
+    if fila.empty:
+        return 1920, 1280
+    return int(fila["ancho_px"].iloc[0]), int(fila["alto_px"].iloc[0])
+
+
+def rectangulos_del_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    """Esquina superior-izquierda + tamaño, listos para ``matplotlib.patches.Rectangle``.
+
+    Waymo da el centro y el tamaño en píxeles. Sin JPEG igual se puede ver el
+    cuadro: es el mismo gesto que el Colab oficial de 2 frames.
+    """
+    vacio = pd.DataFrame(columns=["object_type", "x0", "y0", "ancho", "alto"])
+    necesarias = {
+        "box_center_x_px",
+        "box_center_y_px",
+        "box_width_px",
+        "box_height_px",
+    }
+    if frame.empty or not necesarias <= set(frame.columns):
+        return vacio
+    x = frame["box_center_x_px"].astype(float)
+    y = frame["box_center_y_px"].astype(float)
+    ancho = frame["box_width_px"].astype(float)
+    alto = frame["box_height_px"].astype(float)
+    tipos = (
+        frame["object_type"]
+        if "object_type" in frame.columns
+        else pd.Series(["desconocido"] * len(frame), index=frame.index)
+    )
+    return pd.DataFrame(
+        {
+            "object_type": tipos.to_numpy(),
+            "x0": (x - ancho / 2).to_numpy(),
+            "y0": (y - alto / 2).to_numpy(),
+            "ancho": ancho.to_numpy(),
+            "alto": alto.to_numpy(),
+        }
+    ).reset_index(drop=True)
 
 
 def informe_analitica(tabla: pd.DataFrame) -> dict:

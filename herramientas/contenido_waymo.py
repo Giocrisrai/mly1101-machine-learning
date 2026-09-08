@@ -82,8 +82,10 @@ Cada `context_name` es un segmento de conducción de unos 20 segundos.
 
 Hay **otros tres buckets** en la misma consola (Motion, End-to-End cámara, Perception v1.4.3).
 No los uses para el EDA de la asignatura: son tfrecord pesados y otro problema de ML. El
-tutorial para listarlos y bajar un archivo chico desde Colab está en
-`14_opcional_waymo_buckets.ipynb`.
+notebook `14_opcional_waymo_buckets.ipynb` lista esos buckets, baja las tablas chicas
+(`camera_box`, pose) y **dibuja un fotograma sin JPEG**. Para ver dos fotos de verdad: el
+[Colab oficial de Waymo](https://colab.research.google.com/github/waymo-research/waymo-open-dataset/blob/master/tutorial/tutorial.ipynb)
+(2 frames de muestra; la FAQ dice que **no** accede al dataset).
 
 ## Paso 2 · Preparar el entorno y autenticarse
 

@@ -1117,7 +1117,9 @@ específico. No vale "podría haber sesgo".)*
 > 2. Copiar la URL de la página web en vez de la URL *raw* del archivo. `pd.read_csv` sobre la
 >    página de GitHub descarga HTML, no datos.
 > 3. Anotar "licencia: Kaggle". Kaggle no es una licencia; cada dataset tiene la suya y hay que
->    ir a buscarla.
+>    buscarla.
+> 4. Poner “video de Waymo” como fuente del proyecto. En este curso la cámara es `camera_box`
+>    (tabla 2D). El JPEG no se baja; el fotograma se dibuja en el notebook 14.
 >
 > **Enlace con el resto de la EA1:** la ficha de fuentes es el insumo del proyecto de equipo. Sin
 > ella, en la Actividad 1.2 no tienen sobre qué trabajar.

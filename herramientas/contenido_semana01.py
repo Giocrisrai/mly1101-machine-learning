@@ -1473,8 +1473,9 @@ El notebook `00_opcional_waymo_real.ipynb` explica cómo bajar un fragmento del 
 Dataset real y correr **este mismo EDA** sobre él. El esquema es el mismo; el código, casi
 idéntico. El ML completo (supervisado, agrupamiento, hiperparámetros) sobre varios segmentos
 es `kedro run --pipeline waymo_real`. Los otros buckets de la consola (Motion, E2E cámara,
-Perception v1) se **listan** en `14_opcional_waymo_buckets.ipynb`: un archivo chico, nunca el
-dataset entero; no tienen modelo en este curso.
+Perception v1) se **listan** en `14_opcional_waymo_buckets.ipynb`: tablas chicas y un
+fotograma sin JPEG; un archivo de video/Motion **nunca** el dataset entero. Kedro traduce
+`camera_box` y no lo mete al modelo. Databricks Spark lee el mismo parquet v2.
 """
     ),
     md_docente(

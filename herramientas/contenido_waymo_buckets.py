@@ -4,7 +4,9 @@ Genera ``notebooks/14_opcional_waymo_buckets.ipynb``.
 
 El alumno no abre la consola GCS ni copia terabytes. Baja segmentos livianos
 (``lidar_box`` + ``stats``, ~1 MB cada uno), obtiene UNA tabla, parte por grupo
-y ve que las imágenes no se cargan. Los otros buckets quedan en un apéndice.
+y ve las cámaras como **cajas 2D** (un fotograma sin JPEG). Los tfrecord de
+Motion / v1 / video se listan; el formato con foto está en el Colab oficial de
+Waymo (2 frames), no en este repo.
 
 Regenerar tras editar:
 
@@ -37,7 +39,7 @@ pandas. Esa tabla es la que usan el proyecto y el pipeline Kedro.
 | `lidar_box` + `stats` (tabla, ~1 MB por segmento) | `camera_image` (JPEG, GB) y nubes `lidar` |
 | Varios `segment_id` → partir train/test **por grupo** | Un solo segmento (fuga: misma calle en los dos lados) |
 | Un parquet: `datos/waymo_real/detecciones_reales.parquet` | `gsutil -m cp -r` de un bucket |
-| Contar, agrupar, describir, un Random Forest pequeño | Entrenar una red sobre video |
+| Un fotograma: cajas 2D en el lienzo de la cámara | El video E2E (~1,6 GB) y JPEG (~320 MB) |
 
 Si ya hay una carpeta `muestra/` con varios segmentos (p. ej. los 40 del pipeline), **no
 vuelve a bajar**: ensambla esa tabla. En clase, con 8 alcanza.
@@ -58,7 +60,8 @@ misma tabla es la de las actividades 1.1–3.3.
 | 20–28 | Sección 4: partir por `segment_id`. La pregunta de oro: ¿algún segmento en los dos lados? |
 | 28–38 | Sección 4b: EDA + RF chico. Cada equipo **extiende** una celda |
 | 38–48 | Sección 5: las otras tablas que **sí caben** (cajas 2D, pose, JSON E2E) |
-| 48–55 | Cierre: el notebook 10 toma este parquet. Kedro `waymo_real` es el mismo grafo |
+| 48–54 | Un fotograma sin JPEG (cajas en el lienzo) + Colabs oficiales de Waymo |
+| 54–58 | Cierre: el notebook 10 toma este parquet. Kedro `waymo_real` es el mismo grafo |
 """
     ),
     md(
@@ -403,6 +406,7 @@ clase es 250 MB y un shard de esos pesa ~1 GB.
 | **C** Traducir | nombres de clase, cajas en **píxeles** | pegar esas columnas al RF de LiDAR |
 | **D** Comparar tipos | conteos LiDAR vs cámara | `merge` fila a fila (metros ≠ píxeles) |
 | **E** Pose / E2E | trayectoria x/y y clusters del JSON | video E2E ni Motion |
+| **F** Un fotograma | cajas 2D sobre el lienzo de la cámara | JPEG (~320 MB) ni el video E2E |
 
 En local, si el lote ya está:
 
@@ -494,6 +498,75 @@ if not e2e.empty:
     ),
     md(
         """
+### F · Un fotograma sin JPEG (lo que hace Waymo en su tutorial)
+
+La [FAQ de Waymo](https://waymo.com/open/faq/) lo dice: *el tutorial usa frames de muestra,
+no el dataset*. En su Colab hay **2 fotogramas**. Aquí hacemos el mismo gesto con las tablas
+que ya bajaste: un instante, una cámara, las cajas en píxeles. **No hay foto**; hay el mapa
+de objetos sobre el lienzo `ancho×alto` de la calibración.
+
+No copiamos esos binarios (licencia: no redistribuir). Si quieres ver JPEG de verdad, abre
+**su** Colab, no el bucket de 1,5 GB.
+
+| Recurso | Qué ves |
+|---|---|
+| Esta celda | Cajas 2D del lote, sin JPEG |
+| [Colab percepción · 2 frames](https://colab.research.google.com/github/waymo-research/waymo-open-dataset/blob/master/tutorial/tutorial.ipynb) | Foto + cajas, dos instantes, TensorFlow |
+| [Colab Perception v2](https://colab.research.google.com/github/waymo-research/waymo-open-dataset/blob/master/tutorial/tutorial_v2.ipynb) | El mismo parquet modular |
+| [EgoLens](https://egolens.org) | Arrastras parquet **local**. JPEG solo si bajaste `camera_image` |
+"""
+    ),
+    code(
+        """
+# F · Un instante FRONT, dibujado sobre el lienzo (sin matplotlib en src/waymo.py)
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+
+if camara.empty:
+    print("Sin camera_box no hay fotograma. Corre la etapa B si hay GCS.")
+else:
+    calib_crudo = waymo.ensamblar_componente(DESTINO / "muestra", "camera_calibration")
+    calib = (
+        waymo.traducir_calibracion_camara(calib_crudo)
+        if not calib_crudo.empty
+        else pd.DataFrame()
+    )
+    frame = waymo.recorte_de_un_frame(camara)
+    rects = waymo.rectangulos_del_frame(frame)
+    ancho, alto = waymo.tamano_del_lienzo(calib)
+    colores = {
+        "vehicle": "tab:blue",
+        "pedestrian": "tab:orange",
+        "cyclist": "tab:green",
+        "sign": "tab:red",
+    }
+    fig, ax = plt.subplots(figsize=(10, max(3.5, 10 * alto / max(ancho, 1))))
+    ax.set_xlim(0, ancho)
+    ax.set_ylim(alto, 0)
+    ax.set_aspect("equal")
+    ax.set_facecolor("#1a1a1a")
+    for _, caja in rects.iterrows():
+        ax.add_patch(
+            Rectangle(
+                (caja["x0"], caja["y0"]),
+                caja["ancho"],
+                caja["alto"],
+                fill=False,
+                linewidth=1.2,
+                edgecolor=colores.get(str(caja["object_type"]), "white"),
+            )
+        )
+    ax.set_title(f"FRONT · {len(frame)} cajas · {ancho}×{alto} px (sin JPEG)")
+    ax.set_xlabel("píxeles")
+    plt.show()
+    print(frame["object_type"].value_counts().to_string())
+    print("FAQ Waymo: el tutorial oficial no baja el dataset; usa 2 frames de muestra.")
+    print("Colab:", waymo.TUTORIALES_OFICIALES["percepcion_dos_frames"]["colab"])
+    print("Viewer (parquet local):", waymo.VIEWER_PARQUET_V2["url"])
+"""
+    ),
+    md(
+        """
 ## 6 · Pipeline Kedro (el mismo grafo, datos reales)
 
 Con ≥2 segmentos en `muestra/` el pipeline `ingesta` **ve** las fuentes locales
@@ -551,21 +624,24 @@ la celda 2. Si solo borras el parquet y `muestra/` tiene varios segmentos, los v
 
 ---
 
-### Apéndice · Los otros productos (ni AWS los vuelve pandas)
+### Apéndice · ¿Y el video? (ni AWS lo abre)
 
-Los cuatro de <https://waymo.com/open/download/>. El curso trabaja Perception v2.
-Los demás se **listan**. Un shard de Motion mide **1,17–1,32 GB**; CloudShell tiene ~1 GB.
-Guía: `docs/productos_waymo.md`.
+**No hay clip chico en GCS.** Lo medimos: E2E **1,56 GB**, Motion **1,17 GB**, v1 **825 MB**.
+Waymo enseña el formato con **2 frames** en su Colab, no con el bucket
+([FAQ](https://waymo.com/open/faq/)). En clase: etapa F (cajas en el lienzo) + JSON de 479
+clusters + `vehicle_pose`. Guía: `docs/productos_waymo.md`.
 """
     ),
     code(
         """
 print("Página:", waymo.PAGINA_DESCARGA)
 print("Tope de clase:", waymo.TAMANO_MAXIMO_CLASE_MB, "MB")
+print("\\n¿Qué hacer con cada producto? (no es un video)")
+for clave in waymo.CATALOGO_BUCKETS:
+    print("-", waymo.que_hacer_con_el_producto(clave))
 for clave, meta in waymo.CATALOGO_BUCKETS.items():
     print(f"\\n{clave}  [{meta['formato']}]  en_clase={meta['en_clase']}")
     print(" ", meta["tamano_medido"])
-    print(" ", meta["para_que"])
     try:
         objetos = waymo.listar_objetos(meta["bucket"], meta["prefijo_muestra"], limite=3)
         for objeto in objetos[:2]:

@@ -1,16 +1,24 @@
 # Los cuatro productos Waymo · qué queda resuelto (y qué no, ni en AWS)
 
-**Para el docente y el alumno.** Respuesta corta a “¿podemos tener Motion / Perception v1 /
-Driving E2E resueltos, aunque sea en AWS?”.
+**Respuesta corta a “¿y los videos / Motion / Perception v1?”**
 
-**No.** AWS Academy da más RAM y disco para **el mismo parquet v2**. No convierte un
-`tfrecord` de 1 GB en una tabla de pandas, ni mete esos productos en `kedro run`.
+**No se ven ni se entrenan.** Lo comprobamos en GCS el 2026-09-08: el archivo de
+video E2E más chico mide **1,56 GB**; un shard de Motion **1,17 GB**; un segmento v1
+**825 MB**. El tope de clase es **250 MB**. CloudShell tiene ~1 GB. No hay un
+tfrecord “de muestra” más chico: buscamos JSON, tutorial y metadata en esos
+buckets y **no hay** nada bajo 250 MB salvo el JSON E2E (0,03 MB), que ya usamos.
 
-Cifras de GCS **en vivo el 2026-09-08** (cuenta que aceptó
-[waymo.com/open/download](https://waymo.com/open/download/)). No redondear de memoria.
+Lo que **sí** se hace con esa información, sin el video:
 
-El lote de clase y las Act. 1.1–3.3 siguen siendo Perception **v2** (`lidar_box` + `stats`).
-Telco / House Prices / Spotify son **evaluaciones**, otro hilo.
+| Lo que el alumno pide | Lo que cabe y ya está resuelto |
+|---|---|
+| “Ver las cámaras / el video E2E” | `camera_box`: qué hay **en el cuadro** (píxeles, sin JPEG). JSON E2E: **de qué tipo** es la escena (479 clusters). |
+| “Motion, las trayectorias” | `vehicle_pose` (x/y del auto, ~40 KB) + `speed_mps` en v2. No hay predicción a 9 s. |
+| “Perception v1, con fotos pegadas” | Perception **v2** `lidar_box` (~1 MB): las mismas cajas 3D, en parquet. |
+| “Bajar un JPEG para el informe” | No. Un `camera_image` pesa **~320 MB por segmento**. La ficha de fuentes cita `camera_box`. |
+
+Act. 1.1–3.3 y `kedro run` siguen siendo **solo** v2. Telco / House Prices / Spotify
+son evaluaciones, otro hilo.
 
 ---
 
@@ -25,19 +33,55 @@ No hace falta el 100 % de Waymo. Cada etapa del curso usa **lo que cabe**:
 | **C** Traducir | nombres de clase, cajas en píxeles | `traducir_camera_box` (Kedro `ingesta` también) |
 | **D** Comparar | conteos 3D vs 2D | `comparar_conteos_por_tipo` — **sin** merge de filas |
 | **E** Pose / E2E | trayectoria x/y · JSON 479 clusters | explorar; no es video |
-| **F** Modelar | parquet v2 (`lidar_box`+`stats`) | Act. 1.1–3.3 y `kedro run` (34 nodos) |
+| **F** Un fotograma | `recorte_de_un_frame` + lienzo de calibración | cajas 2D **sin** JPEG (mismo gesto que el Colab oficial) |
+| **G** Modelar | parquet v2 (`lidar_box`+`stats`) | Act. 1.1–3.3 y `kedro run` (34 nodos) |
 
 | Pregunta del alumno | Dónde está la pauta |
 |---|---|
 | ¿Qué hay en la página de descarga? | Esta guía + apéndice del notebook **14** |
 | ¿Bajo el bucket? | **No.** `TAMANO_MAXIMO_CLASE_MB = 250`. Un objeto de v1/Motion/E2E video **no pasa**. |
 | ¿Cómo armo la tabla del curso? | Notebook 14 · `descargar_waymo.py --lote 8` · `kedro run --pipeline ingesta` |
-| ¿Y `camera_box` / pose / el JSON E2E? | Etapas A–E del notebook 14. **No** entran al Random Forest. |
+| ¿Y `camera_box` / pose / el JSON E2E? | Etapas A–F del notebook 14. Kedro `ingesta` traduce las cajas. **No** entran al Random Forest. |
 | ¿Y si Colab se queda sin RAM? | CloudShell o SageMaker `large`/`xlarge` sobre **el mismo parquet v2** |
-| ¿Motion en SageMaker? | Se **lista**. No se baja. No hay pipeline de trayectorias en este repo. |
+| ¿Motion en SageMaker / Databricks? | Se **lista**. No se baja. Spark lee v2. No hay pipeline de trayectorias en este repo. |
+
+### Dónde se ve cada cosa (mismo dato, distinta superficie)
+
+| Superficie | Tabla v2 (RF) | Cajas 2D | Un fotograma | Motion / v1 / video |
+|---|---|---|---|---|
+| Notebook **14** | arma `detecciones_reales` | traduce y compara | **etapa F** (lienzo, sin JPEG) | lista + Colab oficial |
+| Kedro (`ingesta` + `waymo_real`) | 30 nodos de ML | `cajas_camara_2d.parquet` | no pinta (34 nodos, sin matplotlib) | 0 datasets en el catálogo |
+| Notebook **04** | lee salidas de `kedro run` | recorta un frame si el parquet existe | el dibujo está en el 14 | — |
+| Databricks Volume | **este** parquet v2 + `count()` | no hace falta subirla | no | no `spark.read` de un tfrecord |
+| AWS CloudShell | `kedro run` sobre v2 | las mismas tablas chicas | no | un shard **no cabe** en `$HOME` |
 
 El “solucionario” de los otros productos **es este mapa + listar + las tablas chicas**.
 No hay (ni va a haber) un `kedro run --pipeline motion`.
+
+---
+
+## Qué hacen otros (y nosotros, sin redistribuir)
+
+Waymo **tampoco** baja el bucket para enseñar el formato. Lo dice la
+[FAQ](https://waymo.com/open/faq/): *“the tutorial currently uses some sample
+frames — it does not access the actual dataset files.”* En su Colab hay **2
+fotogramas** embebidos (`tutorial/frames` en el repo oficial). No los copiamos:
+la licencia **prohíbe redistribuir**. El alumno abre el Colab de ellos.
+
+| Recurso | Para qué | En MLY1101 |
+|---|---|---|
+| [Colab percepción · 2 frames](https://colab.research.google.com/github/waymo-research/waymo-open-dataset/blob/master/tutorial/tutorial.ipynb) | Ver JPEG + cajas de **dos** instantes (TensorFlow + protobuf) | Enlace. No entra al RF. |
+| [Colab Perception v2](https://colab.research.google.com/github/waymo-research/waymo-open-dataset/blob/master/tutorial/tutorial_v2.ipynb) | Parquet modular (Dask), el mismo formato del lote | Enlace. El curso usa pandas. |
+| [Colab Motion](https://colab.research.google.com/github/waymo-research/waymo-open-dataset/blob/master/tutorial/tutorial_motion.ipynb) | Un ejemplo del tutorial; un shard real sigue siendo ~1 GB | Enlace. En clase: `vehicle_pose`. |
+| [Colab E2E](https://colab.research.google.com/github/waymo-research/waymo-open-dataset/blob/master/tutorial/tutorial_vision_based_e2e_driving.ipynb) | Un frame si ya tienes el tfrecord (~1,6 GB) | Enlace. En clase: JSON 479. |
+| [Muestras en GitHub](https://github.com/waymo-research/waymo-open-dataset/tree/master/tutorial) | `frames`, `frames_with_maps.tfrecord` (los del Colab) | Enlace. **No** al repo del curso. |
+| [EgoLens](https://egolens.org) ([código](https://github.com/egolens/egolens)) | Viewer OMSCS: arrastras parquet v2 **local** | Útil si alguien ya bajó `camera_image`. No resuelve los 320 MB. |
+
+Lo que **aplicamos aquí** (notebook 14, etapa F): el mismo gesto —ver **un**
+cuadro— con las tablas que sí caben. `recorte_de_un_frame` +
+`rectangulos_del_frame` dibujan las cajas 2D sobre un lienzo `ancho×alto` de
+calibración. No hay foto; hay el mapa de objetos en píxeles. Eso evita la
+frustración de “no puedo ver nada de las cámaras” sin pedir 1,5 GB.
 
 ---
 
@@ -109,9 +153,12 @@ El lote (`COMPONENTES_LIVIANOS`) sigue siendo **solo** `lidar_box` + `stats`. El
    tarjetas. “Las cuatro existen; el curso usa la v2 liviana.”
 2. Notebook 14, apéndice: `CATALOGO_BUCKETS` lista los cuatro. Si hay GCS, imprime MB reales.
 3. Si pide Motion: “un shard pesa más que CloudShell; el problema no es AWS, es el formato y
-   el RA.” Mostrar esta tabla.
-4. Si Colab revienta con 40 segmentos: SageMaker `large` sobre **v2**, no un tfrecord.
-5. Nunca `gsutil -m cp -r`. Nunca pegar `camera_box` al RF. Nunca un CSV de pauta: si falta el
+   el RA.” Mostrar esta tabla. Si quiere **ver** el formato: Colab oficial de Motion (un
+   ejemplo), no el bucket.
+4. Si pide video: notebook 14 etapa F (cajas en el lienzo) + Colab oficial de 2 frames.
+   No hay clip chico en GCS.
+5. Si Colab revienta con 40 segmentos: SageMaker `large` sobre **v2**, no un tfrecord.
+6. Nunca `gsutil -m cp -r`. Nunca pegar `camera_box` al RF. Nunca un CSV de pauta: si falta el
    parquet, el código **falla** y dice cómo bajarlo.
 
 Código que lista (no descarga el bucket):

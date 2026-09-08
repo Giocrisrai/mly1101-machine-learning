@@ -187,12 +187,13 @@ redistribuirlos. Sin ellos, `kedro run` **no arranca**.
 | Fuente | Nodos | EDA | Supervisado / k-medias / RA3 |
 |---|---|---|---|
 | Perception v2 (`lidar_box` + `stats`) | 30 de análisis | 530.396 filas, 0 nulos | F1 LEVEL_2 = 0,0893; k sin codo |
-| `camera_box` | 1 (`ensamblar_cajas_camara`) | tabla 2D **traducida** (píxeles, nombres de clase) | no entra al RF |
-| JSON E2E | 1 (`leer_metadatos_e2e`) | **479** clusters | no |
-| v1 / Motion / `camera_image` | 0 | 0 archivos en disco | no |
+| `camera_box` | 1 (`ensamblar_cajas_camara`) | tabla 2D **traducida** (píxeles, nombres de clase) | no entra al RF. El fotograma se dibuja en el notebook **14**, etapa F |
+| JSON E2E | 1 (`leer_metadatos_e2e`) | **479** clusters | no (no es video) |
+| v1 / Motion / `camera_image` | 0 | 0 archivos en disco | no. Formato: Colab oficial de Waymo, no este grafo |
 
 `ingesta` = 4 nodos. El modelo no mezcla productos: una fila de `camera_box` no se concatena
-con `lidar_box`.
+con `lidar_box`. Databricks lee el **mismo** parquet v2 (`docs/databricks_free.md`); no montes
+el bucket GCS ni un tfrecord.
 
 ### Por qué varios segmentos y no uno
 
@@ -240,7 +241,7 @@ Otras fuentes en el mismo `datos/waymo_real/` (no entran al RF):
 |---|---|
 | `camera_box` | 407.267 × 11 · 40 segmentos · 7,181 MB · tipos 1/2/4 = 297.902 / 107.507 / 1.858 |
 | JSON E2E | 479 secuencias · 36.235 bytes · cluster más frecuente: `Interections` (116, grafía de Waymo) |
-| `camera_image`, v1, Motion | **0 archivos** |
+| `camera_image`, v1, Motion | **0 archivos** (el más chico mide 825 MB–1,56 GB) |
 
 **Las filas de F1 y de clima son las que hay que discutir en clase.** Waymo publicado está
 curado (0 imposibles). El modelo pierde casi todas las detecciones difíciles (recall 5,88 %).

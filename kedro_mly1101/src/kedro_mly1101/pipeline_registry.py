@@ -7,7 +7,9 @@ este archivo: lo decide el grafo.
 paralelo. ``__default__`` y ``waymo_real`` son el mismo grafo: ingesta de la
 muestra local más calidad, preprocesamiento, supervisado, no supervisado y
 optimización. ``camera_box`` y el JSON E2E salen de ``ingesta`` y **no** entran
-al clasificador (lo fija ``tests/test_pipeline_supervisado.py``).
+al clasificador (lo fija ``tests/test_pipeline_supervisado.py``). El fotograma
+sin JPEG se dibuja en el notebook 14, no en este grafo (34 nodos, sin matplotlib).
+Motion / v1 / video E2E no tienen dataset en el catálogo.
 
 Conteos que los tests bloquean: ``ingesta`` = 4, ``__default__`` = ``waymo_real``
 = 34 (esas 4 + 30 de análisis).

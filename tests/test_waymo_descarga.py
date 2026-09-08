@@ -166,6 +166,7 @@ CAMPOS_OBLIGATORIOS = (
     "pagina",
     "en_clase",
     "tamano_medido",
+    "sustituto",
 )
 
 
@@ -190,6 +191,44 @@ def test_solo_v2_y_el_json_e2e_entran_al_lote_de_clase() -> None:
     assert waymo.TAMANO_MAXIMO_CLASE_MB == 250.0
 
 
+def test_recorte_de_un_frame_deja_un_instante_y_una_camara() -> None:
+    camara = pd.DataFrame(
+        {
+            "segment_id": ["s1", "s1", "s1", "s1"],
+            "timestamp_micros": [10, 10, 10, 20],
+            "camara": ["FRONT", "FRONT", "SIDE_LEFT", "FRONT"],
+            "object_type": ["vehicle", "pedestrian", "sign", "cyclist"],
+            "box_center_x_px": [100.0, 200.0, 50.0, 3.0],
+            "box_center_y_px": [80.0, 90.0, 40.0, 1.0],
+            "box_width_px": [40.0, 20.0, 10.0, 4.0],
+            "box_height_px": [20.0, 40.0, 10.0, 4.0],
+        }
+    )
+    frame = waymo.recorte_de_un_frame(camara, timestamp_micros=10)
+    assert len(frame) == 2
+    assert set(frame["object_type"]) == {"vehicle", "pedestrian"}
+    assert set(frame["camara"]) == {"FRONT"}
+    assert waymo.tamano_del_lienzo(pd.DataFrame()) == (1920, 1280)
+    rects = waymo.rectangulos_del_frame(frame)
+    vehiculo = rects.loc[rects["object_type"] == "vehicle"].iloc[0]
+    assert vehiculo["x0"] == 80.0
+    assert vehiculo["y0"] == 70.0
+    assert vehiculo["ancho"] == 40.0
+    assert vehiculo["alto"] == 20.0
+
+
+def test_v1_motion_y_video_e2e_declaran_sustituto_no_el_tfrecord() -> None:
+    """Los videos no se resuelven: cada producto dice qué usar en su lugar."""
+    v1 = waymo.que_hacer_con_el_producto("percepcion_v1")
+    motion = waymo.que_hacer_con_el_producto("motion")
+    e2e = waymo.que_hacer_con_el_producto("e2e_camara")
+    assert "parquet" in v1
+    assert "vehicle_pose" in motion
+    assert "1,56 GB" in e2e
+    assert "479" in e2e
+    assert waymo.CATALOGO_BUCKETS["percepcion_v2"]["en_clase"] == "tabla"
+
+
 def test_e2e_muestra_es_el_json_liviano_no_una_carpeta() -> None:
     """En la página de descarga el E2E son tfrecord de ~1,6 GB; el JSON sí cabe."""
     prefijo = waymo.CATALOGO_BUCKETS["e2e_camara"]["prefijo_muestra"]
@@ -198,7 +237,16 @@ def test_e2e_muestra_es_el_json_liviano_no_una_carpeta() -> None:
     assert prefijo != "val_sequence"
 
 
-def test_el_catalogo_apunta_a_la_pagina_oficial_de_descarga() -> None:
+def test_los_tutoriales_oficiales_apuntan_a_colab_de_waymo() -> None:
+    for clave, meta in waymo.TUTORIALES_OFICIALES.items():
+        assert meta["colab"].startswith(
+            "https://colab.research.google.com/github/waymo-research/"
+        )
+        assert meta["que"]
+    assert "faq" in waymo.FAQ_WAYMO
+    assert "tutorial" in waymo.MUESTRAS_OFICIALES_GITHUB
+    assert waymo.VIEWER_PARQUET_V2["url"] == "https://egolens.org"
+    assert "egolens" in waymo.VIEWER_PARQUET_V2["repo"]
     assert waymo.PAGINA_DESCARGA.startswith("https://waymo.com/open/download")
     for producto in waymo.CATALOGO_BUCKETS.values():
         assert producto["pagina"] == waymo.PAGINA_DESCARGA

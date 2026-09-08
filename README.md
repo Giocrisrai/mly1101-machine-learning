@@ -10,7 +10,11 @@ Docente: Giocrisrai Godoy Bonillo · `gi.godoy@profesor.duoc.cl`
 ## Empieza aquí · el flujo (sin terabytes)
 
 No vas a bajar el Waymo Open Dataset. Vas a bajar **unos pocos archivos de ~1 MB**, armar **una
-tabla** y partir train/test **por segmento**. Las fotos (JPEG) y las nubes LiDAR no entran.
+tabla** y partir train/test **por segmento**. **No hay video en clase:** un JPEG v2 pesa ~320 MB
+por segmento y un tfrecord E2E/Motion/v1 pesa **0,8–1,7 GB**. En su lugar: cajas 2D, un fotograma
+dibujado sin JPEG (notebook 14), pose y un JSON de 479 escenas
+([mapa](docs/productos_waymo.md)). Waymo enseña el formato con **2 frames** en su Colab, no con
+el bucket ([FAQ](https://waymo.com/open/faq/)).
 
 | Paso | Qué haces | Dónde |
 |---|---|---|
@@ -25,7 +29,9 @@ tabla** y partir train/test **por segmento**. Las fotos (JPEG) y las nubes LiDAR
 En local, si ya bajaste segmentos, el paso 3 **no pide GCS de nuevo**.
 
 No abras la consola de Google “a ver qué hay”: ahí hay terabytes de video y LiDAR. El curso
-usa solo `lidar_box` + `stats`. `camera_box` es otra tabla (cajas 2D), no una foto.
+usa `lidar_box` + `stats`. `camera_box` es otra tabla (cajas 2D), **no** una foto: el notebook
+14 dibuja un instante sobre el lienzo de la cámara. Motion, v1 y el video E2E se **listan**;
+para *ver el formato* está el Colab oficial de Waymo, no SageMaker ni Databricks.
 
 ### Dónde computar (la RAM no es una excusa)
 
@@ -93,7 +99,7 @@ datos → cómo se almacenan y manipulan → qué tan sucios están → a quién
 
 | Notebook transversal | Para quién | Abrir |
 |---|---|---|
-| `14_opcional_waymo_buckets.ipynb` | **Empieza por aquí** si vas a usar datos reales: lote liviano, grupos, sin imágenes | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/14_opcional_waymo_buckets.ipynb) |
+| `14_opcional_waymo_buckets.ipynb` | **Empieza por aquí**: lote liviano, grupos, cajas 2D y un fotograma **sin** JPEG | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/14_opcional_waymo_buckets.ipynb) |
 | `00_opcional_waymo_real.ipynb` | EDA profundo sobre un segmento real (un segmento no alcanza para train/test) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/00_opcional_waymo_real.ipynb) |
 | `10_proyecto_equipo_plantilla.ipynb` | El equipo la copia; si ya corriste el 14, usa el parquet real | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/10_proyecto_equipo_plantilla.ipynb) |
 | `04_opcional_kedro_databricks.ipynb` | Quien quiera ver el análisis como pipeline ([`kedro_mly1101/`](kedro_mly1101/)) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/04_opcional_kedro_databricks.ipynb) |

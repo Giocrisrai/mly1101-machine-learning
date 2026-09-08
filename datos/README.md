@@ -14,9 +14,9 @@ uv run python herramientas/descargar_waymo.py --muestra 40
 
 | Archivo | Qué es |
 |---|---|
-| `detecciones_reales.parquet` | **530.396** filas, **40** `segment_id`. Ensamblado desde `muestra/` (`lidar_box` + `stats`). **Esta es la tabla de trabajo.** |
-| `muestra/` | 40 `lidar_box` + 40 `stats` (entran al modelo) y 40 `camera_box` (407.267 filas, **no** entran). |
-| `val_sequence_name_to_scenario_cluster.json` | 479 secuencias E2E. Se inventarian; no se modelan. |
+| `detecciones_reales.parquet` | **530.396** filas, **40** `segment_id`. Ensamblado desde `muestra/` (`lidar_box` + `stats`). **Esta es la tabla de trabajo.** Kedro, Colab, CloudShell y el Volume de Databricks leen **este** archivo. |
+| `muestra/` | 40 `lidar_box` + 40 `stats` (entran al modelo) y 40 `camera_box` (407.267 filas, **no** entran). Pose y calibración si corriste `--tablas-chicas`. |
+| `val_sequence_name_to_scenario_cluster.json` | 479 secuencias E2E. Se inventarian; no se modelan. **No es video.** |
 | `lidar_box.parquet` + `stats.parquet` | Un segmento suelto (notebook 00). Un solo segmento **no** alcanza para train/test. |
 
 ### Diccionario (tabla de trabajo)
@@ -51,8 +51,9 @@ uv run python herramientas/descargar_waymo.py --muestra 40
 | Fuente local | En disco | Modelo |
 |---|---|---|
 | Perception v2 | 40 segmentos, 530.396 filas | **sí** |
-| `camera_box` | 407.267 filas | no |
-| JSON E2E | 479 filas | no |
-| v1 / Motion / JPEG | 0 archivos | no |
+| `camera_box` | 407.267 filas | no (tabla 2D; un fotograma se dibuja en el notebook 14) |
+| JSON E2E | 479 filas | no (clusters; **no es video**) |
+| v1 / Motion / JPEG | 0 archivos | no: el más chico mide 825 MB–1,56 GB. Formato: Colab oficial de Waymo |
 
 Pipelines: `cd kedro_mly1101 && uv run kedro run` (34 nodos; `__default__` = `waymo_real`).
+`ingesta` deja `cajas_camara_2d.parquet` traducido; el RF no lo lee.

@@ -1,9 +1,10 @@
 """Pipeline de ingesta de datos reales de Waymo.
 
 Produce ``detecciones_reales`` (Perception v2) y deja a la vista las otras
-fuentes locales: inventario, ``camera_box`` (tabla 2D) y metadatos E2E.
-El resto del grafo consume ``detecciones_reales``; no se mezclan productos
-(ver ``pipeline_registry.py``).
+fuentes locales: inventario, ``camera_box`` (tabla 2D traducida a píxeles) y
+metadatos E2E (479 clusters, no video). El resto del grafo consume
+``detecciones_reales``; no se mezclan productos (ver ``pipeline_registry.py``).
+Para *ver* un cuadro: notebook 14 etapa F sobre ``cajas_camara_2d``.
 """
 
 from __future__ import annotations

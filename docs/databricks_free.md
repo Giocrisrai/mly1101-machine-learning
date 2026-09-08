@@ -20,10 +20,10 @@ Notebook que lo enseña: `04_opcional_kedro_databricks.ipynb`.
 
 | Sí | No |
 |---|---|
-| Importar los `.ipynb` del curso (14, 10, 04, 01) | Bajar el bucket Waymo (JPEG / nubes) |
-| Subir **tu** parquet a un Volume **privado** | Hacer público el parquet (licencia Waymo) |
+| Importar los `.ipynb` del curso (14, 10, 04, 01) | Bajar el bucket Waymo (JPEG / nubes / tfrecord de Motion) |
+| Subir **tu** parquet v2 a un Volume **privado** | Hacer público el parquet (licencia Waymo) |
 | Correr pandas en el driver (530 k filas caben) | Cluster EMR en Academy “porque es Spark” |
-| Una celda PySpark con `count()` (evaluación perezosa) | Reescribir `src/eda.py` a Spark para la nota |
+| Una celda PySpark con `count()` sobre **ese** parquet | `spark.read` de un shard Motion (~1 GB) o de `gs://waymo_…` |
 | Git Folder del repo (código) | `kedro run --pipeline waymo_real` **dentro** de Free Edition como entregable |
 | Editar `catalog.yml` *en papel* (pandas → Spark/Delta) | Unity Catalog de producción, Jobs de pago, DLT |
 
@@ -100,9 +100,11 @@ print(origen, tabla.shape)
 
 Sin parquet, **falla**: no hay CSV de pauta. `waymo.cargar_tabla_curso` es el mismo contrato.
 **El Volume guarda la copia de trabajo, no un dataset distinto.** Colab, Kedro y Databricks
-leen la misma tabla.
+leen la misma tabla v2. `camera_box` y el fotograma viven en el notebook **14** y en
+`kedro run --pipeline ingesta` (local/CloudShell), no en Spark.
 
-**No** montes `gs://waymo_open_dataset_v_2_0_1`. **No** ACL pública del Volume.
+**No** montes `gs://waymo_open_dataset_v_2_0_1`. **No** subas un tfrecord de Motion/v1/E2E.
+**No** ACL pública del Volume.
 
 ---
 
@@ -150,6 +152,9 @@ df = spark.read.parquet("/Volumes/workspace/default/mly1101/detecciones_reales.p
 print("plan:", df.filter("speed_mps > 1").count())  # aquí recorre el parquet
 df.groupBy("object_type").count().show()
 ```
+
+Eso es Perception **v2** (la tabla del RF). No hay `spark.read` de Motion ni de JPEG: esos
+archivos no están en el Volume y no caben en el curso.
 
 Si `spark` no existe (Colab, CloudShell): esa celda se salta. No instales un clúster Spark
 en la EC2 del lab.

@@ -20,6 +20,9 @@ Uso:
 
 Los archivos quedan en ``datos/waymo_real/``, que está en .gitignore: la
 licencia de Waymo es de uso no comercial y no permite redistribuirlos.
+
+``--tablas-chicas`` no baja JPEG. El fotograma (cajas en el lienzo) se dibuja
+en el notebook 14; Kedro traduce ``camera_box`` y no lo mete al RF.
 """
 
 from __future__ import annotations

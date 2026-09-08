@@ -261,13 +261,15 @@ tenerlos “resueltos”:
 | Producto | Objeto típico (GCS 2026-09-08) | En Academy |
 |---|---|---|
 | Perception v2 (`lidar_box`+`stats`) | 0,25–0,95 MB | **Sí.** Es el parquet del curso |
-| Perception v1 | tfrecord 894–1.062 MB | Listar. No cabe en CloudShell; no es pandas |
-| Motion `tf_example` | shard 1,17–1,32 GB | Listar. Un shard **ya** supera el `$HOME` de CloudShell |
+| `camera_box` / pose / calib (v2) | KB | **Sí.** `--tablas-chicas`. Kedro las traduce; el fotograma se dibuja en el notebook 14 |
+| Perception v1 | tfrecord 894–1.062 MB | Listar. No cabe en CloudShell; no es pandas. Formato: Colab oficial de 2 frames |
+| Motion `tf_example` | shard 1,17–1,32 GB | Listar. Un shard **ya** supera el `$HOME` de CloudShell. Formato: Colab Motion |
 | E2E JSON | 0,03 MB | **Sí**, inventario (479 clusters). El video ~1,6 GB **no** |
 
 SageMaker `xlarge` puede *almacenar* un tfrecord. Sigue haciendo falta TensorFlow y una
 pregunta de ML que **no** está en los RA (trayectorias / video). No copies esos shards a S3
-para repartirlos: la licencia Waymo lo prohíbe.
+para repartirlos: la licencia Waymo lo prohíbe. Databricks tampoco: el Volume es el parquet
+**v2**, no Motion.
 
 ---
 
