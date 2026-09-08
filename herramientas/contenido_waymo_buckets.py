@@ -47,8 +47,8 @@ redistribuir**. Cada uno baja lo suyo. La carpeta está en `.gitignore`.
 
 ### Guion de clase (paso a paso)
 
-Hoy no corremos las Act. 1.1–3.3. Hoy armamos **la tabla real** y hacemos analítica. Las
-actividades calificadas siguen el CSV del repo (mismas cifras que la pauta).
+Hoy no corremos las Act. 1.1–3.3. Hoy armamos **la tabla real** y hacemos analítica. Esa
+misma tabla es la de las actividades 1.1–3.3.
 
 | Min | Qué |
 |---|---|
@@ -274,7 +274,7 @@ hacer `dropna` de la dificultad en `camera_box` (el NaN es LEVEL_1).
         """
 ## 4c · Volúmenes, transformaciones y estrategias
 
-Las Act. 1.2 y 1.3 practican esto sobre el CSV de la pauta (10 defectos). **Aquí** se aplica
+Las Act. 1.2 y 1.3 practican esto sobre el **mismo parquet** (Perception v2). **Aquí** se aplica
 al lote real, con los **mismos nodos** que Kedro (`parameters.yml` + `preprocesamiento`).
 No se reescribe la limpieza: si cambia una regla, cambia en un solo sitio.
 
@@ -449,8 +449,7 @@ responde. Cifras de una máquina con 40 segmentos (2026-09-08).
 
 | Fuente | Forma | Dtypes que importan | Flujo | Análisis en este curso |
 |---|---|---|---|---|
-| CSV de la pauta | 40.680 × 16 | `object` sucio (`PEATON`, `soleado`) | Act. 1.1–3.3 + Kedro 30 nodos | EDA, RF, k-medias, RA3 |
-| Perception v2 | 530.396 × 16 | `object` limpio; `speed_mps` float | `muestra/` → traducir → `waymo_real` | el mismo grafo, F1 LEVEL_2 = 0,0893 |
+| Perception v2 | 530.396 × 16 | `object` limpio; `speed_mps` float | `muestra/` → traducir → `kedro run` | EDA, RF, k-medias, RA3 |
 | `camera_box` | 407.267 × 11 | `type` int8; cajas en **píxeles**; dificultad con NaN | `ensamblar_cajas_camara` y se **detiene** | EDA de tabla 2D; no entra al RF |
 | JSON E2E | 479 × 2 | dos `object` | `leer_metadatos_e2e` y se **detiene** | conteo de clusters; no es video |
 | Censo `stats` | 798 parquet | clima / hora / ciudad | `analizar_sesgo_waymo.py` | sesgo (793/798 `sunny`) |
@@ -499,8 +498,8 @@ supervisado → optimización. **No mezcla** productos: el Random Forest solo us
 
 ```bash
 cd kedro_mly1101
-uv run kedro run --pipeline ingesta       # 5 nodos, segundos
-uv run kedro run --pipeline waymo_real    # 35 nodos: fuentes + EDA + ML
+uv run kedro run --pipeline ingesta       # 4 nodos, segundos
+uv run kedro run                          # 34 nodos: fuentes + EDA + ML
 ```
 
 | Fuente | EDA | ML (RF / k-medias / RA3) |
@@ -530,7 +529,7 @@ En una máquina con los 40 segmentos del curso, el inventario Kedro (2026-09-08 
 | Ya tienes | Lo usas en |
 |---|---|
 | Esta tabla (`detecciones_reales.parquet`) | **Proyecto de equipo** (notebook 10): lo carga solo |
-| El método (calidad, modelos, métricas) | Actividades 1.1–3.3: CSV del repo, para que coincida la pauta |
+| El método (calidad, modelos, métricas) | Actividades 1.1–3.3: el mismo parquet |
 | Hallazgos de la 4b | Mini-informe del proyecto: desbalance, grupos, clima |
 | Varios `segment_id` + `partir_por_grupo` | Train/test **sin fuga**; Kedro hace lo mismo |
 

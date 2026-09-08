@@ -36,14 +36,14 @@ técnicas a conocimientos para la organización.*
 
 | Nivel | Criterio observable |
 |---|---|
-| **4** | Frase canónica **y** nombra las 385 falsas alarmas, que `por_cada_cien` no incluye |
-| **3** | TP 456, FN 676 → 40 y 60; explica por qué la exactitud ~90 % no entra al memo |
-| **2** | Lee la matriz pero deja el resultado en "recall = 0,40" |
+| **4** | Frase canónica **y** nombra las 6.937 falsas alarmas, que `por_cada_cien` no incluye |
+| **3** | TP 1.572, FN 25.141 → 6 y 94; explica por qué la exactitud 0,7805 no entra al memo |
+| **2** | Lee la matriz pero deja el resultado en "recall = 0,0588" |
 | **1** | Reporta solo la exactitud, o no identifica `LEVEL_2` |
 
-Cifras (semilla 42, mismas de [`rubrica_act_2_2.md`](rubrica_act_2_2.md)): TP **456**,
-FN **676**, FP **385**. De cada 100 difíciles: **40** / **60**. Dummy `most_frequent`:
-exactitud **0,8896**.
+Cifras (Perception v2, mismas de [`rubrica_act_2_2.md`](rubrica_act_2_2.md)): TP **1.572**,
+FN **25.141**, FP **6.937**. De cada 100 difíciles: **6** / **94**. Dummy `most_frequent`:
+exactitud **0,8172**.
 
 ## D2 · Costo y decisión de uso (25 %)
 
@@ -54,7 +54,7 @@ exactitud **0,8896**.
 | **2** | Calcula el costo pero recomienda "usar el modelo" sin condición |
 | **1** | Trata FN y FP como intercambiables |
 
-Referencia con 10:1: **7.145** unidades; los FN son el **94,6 %** del costo.
+Referencia con 10:1: **258.347** unidades (25.141×10 + 6.937); los FN son el **97,3 %** del costo.
 
 ## D3 · Agrupamiento en lenguaje de negocio (15 %)
 

@@ -52,8 +52,8 @@ desarrollo del modelo.*
 | **2** | Mapea a medias: mezcla preparación con modelado |
 | **1** | No conecta las actividades 1.1–1.4 con ninguna fase |
 
-Cifras de referencia (CSV sucio, semilla 42): **40.680** filas, **153** segmentos,
-`CYCLIST` **1,94 %** (antes de unificar `object_type`).
+Cifras de referencia (Perception v2, 40 segmentos): **530.396** filas, **40** segmentos,
+`cyclist` **0,45 %**.
 
 ## D3 · Pregunta y criterio medible (25 %)
 

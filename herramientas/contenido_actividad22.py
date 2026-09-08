@@ -131,8 +131,8 @@ Un **informe de modelamiento** (última celda) con:
 > se comprime el 6 mostrando solo la tabla.
 >
 > **La sesión entera cuelga de una sorpresa**, y conviene no arruinarla: en el bloque 3 el
-> baseline trivial saca **88,96 %** y el modelo del bloque 4 saca **89,65 %**. Siete décimas.
-> No lo anticipes: deja que lo descubran ellos.
+> baseline trivial saca **81,72 %** y el bosque del bloque 4 saca **78,05 %**. El modelo
+> "de verdad" pierde contra el tonto en exactitud. No lo anticipes: deja que lo descubran.
 >
 > **Regla de oro, la misma de la EA1:** ninguna afirmación sin una cifra que la respalde.
 """
@@ -350,8 +350,8 @@ print("   pero no entre las VARIABLES. Volvemos a eso en el bloque 6.")
         """
 > ### 🎓 Pauta docente — Bloque 1
 >
-> **TODO 1.** `LEVEL_1` 88,89 % · `LEVEL_2` 11,11 %. Sobre el dataset limpio son 40.200 filas.
-> Que digan la cifra en voz alta: **11 %**. La van a necesitar en 40 minutos.
+> **TODO 1.** `LEVEL_1` 87,67 % · `LEVEL_2` 12,33 %. Sobre el parquet son **530.396** filas.
+> Que digan la cifra en voz alta: **12 %**. La van a necesitar en 40 minutos.
 >
 > **TODO 2** es el que más discusión da, y vale la pena dejar hablar:
 >
@@ -510,22 +510,20 @@ parta? Justifica tu respuesta.
         """
 > ### 🎓 Pauta docente — Bloque 2 ⭐
 >
-> **Cifras medidas:** por grupo, 29.946 filas de entrenamiento (74,5 %) en **114 segmentos** y
-> 10.254 de prueba en **39**, con **0 compartidos**. Al azar, **153 segmentos compartidos** —
+> **Cifras medidas:** por grupo, 384.280 filas de entrenamiento (72,5 %) en **30 segmentos** y
+> 146.116 de prueba en **10**, con **0 compartidos**. Al azar, **40 segmentos compartidos** —
 > todos.
 >
-> **El TODO 6 es una trampa deliberada, y hay que sostenerla.** La diferencia de exactitud es
-> de **−0,005**: nada. Alguien va a decir, con toda lógica, *"entonces da igual"*.
+> **El TODO 6 es una trampa deliberada, y hay que sostenerla.** La diferencia de métrica puede
+> ser chica o nula. Alguien va a decir, con toda lógica, *"entonces da igual"*.
 >
 > **No des la respuesta enseguida. Deja que lo defiendan.** Y después:
 >
-> *"Miren la columna `segmentos_compartidos`. La fuga está ahí: 153 contra 0. Lo que no
+> *"Miren la columna `segmentos_compartidos`. La fuga está ahí: 40 contra 0. Lo que no
 > aparece es su efecto. ¿Por qué?"*
 >
-> La razón es concreta: este dataset es **sintético** y el generador sortea cada detección de
-> forma independiente dentro del segmento. La dependencia entre filas que la fuga explotaría
-> **no existe aquí**. En datos reales de Waymo, donde los fotogramas consecutivos siguen al
-> mismo objeto, sí existe.
+> En v2 los fotogramas consecutivos **sí** siguen al mismo objeto. Aunque la métrica no se
+> mueva, partir al azar mezcla el mismo segmento en train y test.
 >
 > **La respuesta correcta es "no da igual", y el argumento no es la métrica:**
 >
@@ -618,7 +616,7 @@ print(f"   F1-macro  : {reporte_tonto['macro avg']['f1-score']:.4f}")
         """
 ### ✏️ TODO 8 — ¿De dónde sale ese número?
 
-El baseline saca casi un 89 % de exactitud **sin mirar una sola variable**. Comprueba que no es
+El baseline saca alrededor de un 82 % de exactitud **sin mirar una sola variable**. Comprueba que no es
 casualidad: compara esa exactitud con la proporción de la clase mayoritaria en el conjunto de
 prueba.
 """
@@ -657,14 +655,14 @@ print("   te dice cuán desbalanceado está, no cuán bueno es tu modelo.")
 >
 > **Este es el bloque que da vuelta la clase. No lo recortes nunca.**
 >
-> **Cifras medidas:** el baseline `most_frequent` obtiene **exactitud 0,8896** y
-> **F1-macro 0,4708**.
+> **Cifras medidas:** el baseline `most_frequent` obtiene **exactitud 0,8172** (proporción de
+> `LEVEL_1` en prueba; el test está más cargado de `LEVEL_2` que el lote completo).
 >
 > **El TODO 7 funciona solo si apuestan de verdad.** Insiste en que lo escriban. Las respuestas
-> típicas rondan el 50 % —"es tonto, acertará la mitad"—. Cuando sale 89 %, la sala se calla.
+> típicas rondan el 50 % —"es tonto, acertará la mitad"—. Cuando sale 82 %, la sala se calla.
 > Es el mejor momento pedagógico de las cuatro horas y se pierde si lo adelantas.
 >
-> **La revelación del TODO 8** es que ese 0,8896 **es exactamente** la proporción de `LEVEL_1`
+> **La revelación del TODO 8** es que ese 0,8172 **es exactamente** la proporción de `LEVEL_1`
 > en el conjunto de prueba. No hay ningún aprendizaje detrás: es aritmética.
 >
 > La frase que debe quedar, dicha tal cual:
@@ -673,7 +671,7 @@ print("   te dice cuán desbalanceado está, no cuán bueno es tu modelo.")
 > > cuán bueno es tu modelo.*
 >
 > **Prepáralos para el bloque 4** sin adelantar la cifra: *"En el próximo bloque van a entrenar
-> un modelo de verdad. Apunten ese 0,8896: es la vara."*
+> un modelo de verdad. Apunten ese 0,8172: es la vara."*
 >
 > **Si alguien pregunta por `strategy="stratified"`** (responder al azar respetando las
 > proporciones), vale la pena mostrarlo: da exactitud **0,8061**, peor, pero F1-macro
@@ -799,7 +797,7 @@ print("   El bloque 5 explica cuál tiene razón.")
 
 *(doble clic aquí y escribe)*
 
-Tu modelo mejora la exactitud del baseline en menos de un punto porcentual. ¿Fue un fracaso?
+Tu modelo **baja** la exactitud del baseline. ¿Fue un fracaso?
 ¿Qué mirarías para decidirlo?
 """
     ),
@@ -811,18 +809,19 @@ Tu modelo mejora la exactitud del baseline en menos de un punto porcentual. ¿Fu
 >
 > | Modelo | Exactitud | F1-macro |
 > |---|---|---|
-> | Baseline (siempre `LEVEL_1`) | 0,8896 | 0,4708 |
-> | Bosque aleatorio | **0,8965** | **0,7025** |
-> | **Diferencia** | **+0,0069** | **+0,2317** |
+> | Baseline (siempre `LEVEL_1`) | **0,8172** | ~0,45 |
+> | Bosque aleatorio | **0,7805** | **0,4822** |
+> | **Diferencia** | **−0,0367** | **+0,03** |
 >
-> **Siete décimas de punto en exactitud.** Después de entrenar 200 árboles.
+> **El modelo pierde contra el dummy en exactitud.** Después de entrenar un bosque.
 >
 > **Deja que la decepción se instale unos segundos.** Es real y es útil: así se siente mirar la
 > métrica equivocada. Varios van a concluir que el modelo no sirve. Es la conclusión correcta
 > *dada esa métrica*, y ahí está la lección.
 >
-> Después señala la otra columna: **+0,23 en F1-macro**, casi un 50 % de mejora relativa. El
-> mismo modelo, los mismos datos, la misma partición. Dos conclusiones opuestas.
+> Después señala la otra columna: el F1-macro apenas se mueve, y en el bloque 5 van a ver por
+> qué: F1 de `LEVEL_2` = **0,0893**. El mismo modelo, los mismos datos. Dos lecturas opuestas
+> (¿fracaso total? ¿aprendió algo de la minoría?) y ninguna se decide con la exactitud.
 >
 > **La pregunta que abre el bloque 5:** *"¿Cuál de las dos métricas está describiendo mejor lo
 > que hace este modelo? Para responder eso hay que mirar qué pasa con cada clase por
@@ -975,29 +974,27 @@ print(f"   Se le escapan {100*difciles_perdidas/difciles_totales:.0f} de cada 10
 >
 > | Clase | Precisión | Recall | F1 | Soporte |
 > |---|---|---|---|---|
-> | `LEVEL_1` | 0,9282 | 0,9578 | 0,9428 | 9.122 |
-> | **`LEVEL_2`** | **0,5422** | **0,4028** | **0,4622** | 1.132 |
-> | exactitud | | | **0,8965** | |
+> | `LEVEL_1` | 0,8173 | 0,9419 | 0,8752 | 119.403 |
+> | **`LEVEL_2`** | **0,1847** | **0,0588** | **0,0893** | 26.713 |
+> | exactitud | | | **0,7805** | |
 >
-> Matriz de confusión: de **1.132** detecciones difíciles, el modelo encuentra **456** y se le
-> escapan **676**. Y produce **385** falsas alarmas.
+> Matriz de confusión: de **26.713** detecciones difíciles, el modelo encuentra **1.572** y se le
+> escapan **25.141**. Y produce **6.937** falsas alarmas.
 >
 > **La frase que resuelve el suspenso de los bloques 3 y 4:**
 >
-> > *El modelo saca 89,65 % de exactitud y se pierde el 60 % de las detecciones difíciles, que
-> > eran justo las que queríamos anticipar. La exactitud no estaba equivocada: estaba
-> > respondiendo otra pregunta.*
+> > *El modelo saca 78 % de exactitud —peor que el dummy— y se pierde el 94 % de las
+> > detecciones difíciles, que eran justo las que queríamos anticipar. La exactitud no estaba
+> > equivocada: estaba respondiendo otra pregunta.*
 >
-> **Ahora se entiende el F1-macro.** Promedia el F1 de cada clase **sin ponderar por tamaño**,
-> así que la clase con 1.132 filas pesa lo mismo que la de 9.122. Por eso detectó una mejora que
-> la exactitud no vio: el modelo sí aprendió algo sobre `LEVEL_2` —pasó de 0 aciertos a 456—,
-> pero es poco en términos absolutos.
+> **Ahora se entiende el F1-macro.** Promedia el F1 de cada clase **sin ponderar por tamaño**.
+> Por eso 0,4822 no es un "aprobado": la clase difícil pesa igual, y su F1 es 0,0893.
 >
 > **El TODO 14 no tiene una respuesta correcta, y hay que decirlo.** Lo que se evalúa es el
 > razonamiento. Las buenas respuestas:
 >
-> - **"No lo pondría en producción tal cual"**, porque un recall de 0,40 significa que el
->   sistema confiaría en 6 de cada 10 detecciones malas. Correcta y bien argumentada.
+> - **"No lo pondría en producción tal cual"**, porque un recall de 0,0588 significa que el
+>   sistema confiaría en 94 de cada 100 detecciones malas. Correcta y bien argumentada.
 > - **"Lo pondría, pero solo para levantar una alerta, no para decidir"**. Excelente: distingue
 >   entre un modelo que decide y uno que asiste. Es la distinción que hace la industria.
 > - **"Subiría el recall aunque suba la falsa alarma"**, porque el costo es asimétrico: una
@@ -1081,10 +1078,11 @@ tipo de fuga. No es estadística. Escríbela con tus palabras.
 >
 > | Variables | Exactitud | F1-macro |
 > |---|---|---|
-> | Sin la variable derivada (correcto) | 0,8965 | **0,7025** |
-> | Incluyendo `num_lidar_points` | 0,9264 | **0,7543** |
+> | Sin la variable derivada (correcto) | 0,7805 | **0,4822** |
+> | Incluyendo `num_lidar_points` | (se mide en la celda) | la inflación es el punto |
 >
-> **+0,052 de F1-macro y +3 puntos de exactitud.** Gratis, y falso.
+> La cifra exacta del delta sale de la celda. **Gratis, y falso:** la etiqueta se deriva de
+> esos puntos.
 >
 > **La pregunta del TODO 16 es la respuesta que hay que llevarse de la sesión:**
 >
@@ -1297,10 +1295,10 @@ detección mala, y qué pasa si es prudente de más.)*
 >
 > **Qué mirar al corregir, en este orden:**
 >
-> 1. **El bloque 3.** Si no puede explicar por qué el baseline saca 88,96 %, no entendió el
+> 1. **El bloque 3.** Si no puede explicar por qué el baseline saca 81,72 %, no entendió el
 >    desbalance, y todo lo demás lo va a leer mal.
-> 2. **La decisión del cierre.** Un "sí, tiene 90 % de exactitud" es nivel *Inicial*, aunque
->    todos los TODO estén en verde. Un "no, porque se pierde 6 de cada 10 difíciles" es
+> 2. **La decisión del cierre.** Un "sí, tiene 78 % de exactitud" es nivel *Inicial*, aunque
+>    todos los TODO estén en verde. Un "no, porque se pierde 94 de cada 100 difíciles" es
 >    *Logrado*. Un "depende de si decide o solo alerta" es *Destacado*.
 > 3. **La justificación de la partición.** Es el único punto donde se puede distinguir a quien
 >    razona de quien optimiza el número.

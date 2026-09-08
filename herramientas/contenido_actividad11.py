@@ -65,7 +65,7 @@ con qué herramientas trabaja un equipo sobre eso, y por qué la recolección nu
 Seguimos en el equipo de percepción de una empresa de conducción autónoma, con el mismo dataset
 de detecciones LiDAR de la Actividad 1.3. La diferencia es de dónde lo sacamos.
 
-En una empresa real, esas 40.680 detecciones no están en un archivo: están en una tabla de una
+En una empresa real, esas 530.396 detecciones no están en un archivo: están en una tabla de una
 base de datos, el contexto de cada segmento llega por una API en JSON anidado, y los incidentes
 del turno los escribe una persona en prosa. Alguien tiene que juntar las tres cosas.
 
@@ -256,8 +256,8 @@ print("✅ Los cinco problemas están bien clasificados.")
 > anomalías). Si alguien hubiera revisado y marcado 5.000 detecciones como raras, pasaría a ser
 > supervisado. **El tipo de problema no lo define la pregunta, lo definen los datos que tienes.**
 >
-> **Pregunta para el curso:** ¿cuánto costaría etiquetar a mano las 40.680 detecciones de este
-> dataset? A 5 segundos cada una, son 56 horas de trabajo humano. Por eso el aprendizaje no
+> **Pregunta para el curso:** ¿cuánto costaría etiquetar a mano las 530.396 detecciones de este
+> dataset? A 5 segundos cada una, son unas **737 horas** de trabajo humano. Por eso el aprendizaje no
 > supervisado no es el hermano pobre: muchas veces es lo único que el presupuesto permite.
 >
 > **Criterio de logro:** clasifica correctamente al menos 4 de 5 y justifica el criterio usado
@@ -594,7 +594,7 @@ print(f"✅ {len(objetos)} filas que suman exactamente las {len(df):,} deteccion
 > `condiciones.time_of_day` como columnas de verdad.
 >
 > **Respuesta del TODO 6:** `record_path="objetos"`, `meta=["segment_id"]`. El `assert`
-> comprueba que la suma de `n` da 40.680, es decir que no se perdió ninguna detección al
+> comprueba que la suma de `n` da **530.396**, es decir que no se perdió ninguna detección al
 > expandir.
 >
 > **El error más frecuente** es aceptar la vía ingenua porque "el DataFrame se creó sin error".
@@ -640,17 +640,18 @@ for i, parte in enumerate(partes[:4], start=1):
         """
 ### ✏️ TODO 7 — Extraer la estructura escondida
 
-Los identificadores de segmento tienen la forma `seg_` seguida de cuatro dígitos. Escribe la
-expresión regular que los encuentre y aplícala a todos los partes.
+Los identificadores de segmento en Perception v2 son un entero largo y cuatro
+tramos separados por `_` (por ejemplo `10023947602400723454_1120_000_1140_000`).
+Escribe la expresión regular que los encuentre y aplícala a todos los partes.
 
-*Pista: `\\d` es un dígito y `{4}` significa "exactamente cuatro". Usa `re.findall`.*
+*Pista: `\\d+` es "uno o más dígitos". Hay **cinco** grupos separados por `_`.*
 """
     ),
     code(
         """
 import re
 
-PATRON = r"seg_\\d{4}"
+PATRON = r"\\d+_\\d+_\\d+_\\d+_\\d+"
 
 mencionados = []
 for parte in partes:
@@ -736,16 +737,17 @@ con una columna nueva, o las dejarías tal cual? Justifica.
         """
 > ### 🎓 Pauta docente — TODO 7 y 8
 >
-> **Respuesta:** `PATRON = r"seg_\\d{4}"`. Con `n=12` y `semilla=42` se encuentran 12 menciones
-> en 12 segmentos distintos, y el cruce marca del orden del 8 % de las detecciones (la cifra
-> exacta depende de cuántas detecciones tenga cada segmento sorteado; que **no** sea 12/153 =
-> 7,8 % exacto es en sí un hallazgo: los segmentos no tienen todos el mismo tamaño).
+> **Respuesta:** `PATRON = r"\\d+_\\d+_\\d+_\\d+_\\d+"`. Con `n=12` y `semilla=42` se encuentran
+> 12 menciones en 12 segmentos distintos (hay 40 en el lote). El cruce marca del orden del
+> 30 % de las detecciones: 12 de 40 segmentos, y **no** es 12/40 exacto en filas porque los
+> segmentos no tienen todos el mismo tamaño.
 >
 > **La respuesta esperada al TODO 8 es "marcarlas, no eliminarlas".** Se agrega una columna
-> booleana `incidente_reportado` y se decide más tarde, con el modelo en la mano. Eliminar 3.000
-> detecciones porque un operador escribió una nota es una decisión enorme tomada con evidencia
-> mínima. Además, **el parte puede ser justamente la señal interesante**: si el LiDAR falla con
-> lluvia, esas filas son las que hay que estudiar, no las que hay que botar.
+> booleana `incidente_reportado` y se decide más tarde, con el modelo en la mano. Eliminar
+> decenas de miles de detecciones porque un operador escribió una nota es una decisión enorme
+> tomada con evidencia mínima. Además, **el parte puede ser justamente la señal interesante**:
+> si el LiDAR falla con lluvia, esas filas son las que hay que estudiar, no las que hay que
+> botar.
 >
 > **Lo que hay que dejar claro del bloque:** el texto libre no se "analiza" mágicamente. Se le
 > extrae una estructura (aquí, con una expresión regular; en otros casos con NLP) y **recién

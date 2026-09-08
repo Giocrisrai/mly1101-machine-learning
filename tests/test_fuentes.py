@@ -19,7 +19,13 @@ def df() -> pd.DataFrame:
     """Mini-dataset con la misma forma que las detecciones reales."""
     return pd.DataFrame(
         {
-            "segment_id": ["seg_0001", "seg_0001", "seg_0002", "seg_0002", "seg_0003"],
+            "segment_id": [
+                "10017090168044687777_6380_000_6400_000",
+                "10017090168044687777_6380_000_6400_000",
+                "10023947602400723454_1120_000_1140_000",
+                "10023947602400723454_1120_000_1140_000",
+                "1005081002024129653_5313_150_5333_150",
+            ],
             "object_type": ["VEHICLE", "PEDESTRIAN", "VEHICLE", "VEHICLE", "CYCLIST"],
             "weather": [None, "sunny", "rain", "rain", "fog"],
             "time_of_day": ["Day", "Day", "Night", "Night", "Dawn"],
@@ -82,9 +88,9 @@ def test_contexto_por_segmento_esta_realmente_anidado(df: pd.DataFrame) -> None:
 
 
 def test_contexto_ignora_los_nulos_al_elegir_el_clima(df: pd.DataFrame) -> None:
-    """seg_0001 tiene weather None en su primera fila y 'sunny' en la segunda."""
+    """El primer segmento tiene weather None en su primera fila y 'sunny' en la segunda."""
     registros = {r["segment_id"]: r for r in fuentes.contexto_por_segmento(df)}
-    assert registros["seg_0001"]["condiciones"]["weather"] == "sunny"
+    assert registros["10017090168044687777_6380_000_6400_000"]["condiciones"]["weather"] == "sunny"
 
 
 def test_aplanar_contexto_crea_columnas_con_notacion_de_punto(df: pd.DataFrame) -> None:
@@ -105,8 +111,15 @@ def test_aplanar_objetos_expande_la_lista_a_filas(df: pd.DataFrame) -> None:
 # --- Fuente no estructurada: texto libre -------------------------------------
 
 def test_extraer_segmentos_encuentra_el_patron() -> None:
-    texto = "Incidente en seg_0042 y luego en seg_0007; se repite seg_0042."
-    assert fuentes.extraer_segmentos(texto) == ["seg_0042", "seg_0007"]
+    texto = (
+        "Incidente en 10017090168044687777_6380_000_6400_000 y luego en "
+        "10023947602400723454_1120_000_1140_000; se repite "
+        "10017090168044687777_6380_000_6400_000."
+    )
+    assert fuentes.extraer_segmentos(texto) == [
+        "10017090168044687777_6380_000_6400_000",
+        "10023947602400723454_1120_000_1140_000",
+    ]
 
 
 def test_extraer_segmentos_sin_menciones_devuelve_lista_vacia() -> None:
@@ -130,12 +143,16 @@ def test_los_partes_mencionan_segmentos_que_existen_en_el_dataset(df: pd.DataFra
 
 def test_segmentos_comprometidos_cuenta_y_ordena() -> None:
     partes = [
-        "Falla en seg_0002.",
-        "Otra vez seg_0002 y además seg_0001.",
+        "Falla en 10023947602400723454_1120_000_1140_000.",
+        "Otra vez 10023947602400723454_1120_000_1140_000 y además "
+        "10017090168044687777_6380_000_6400_000.",
         "Sin novedad.",
     ]
     tabla = fuentes.segmentos_comprometidos(partes)
-    assert tabla["segment_id"].tolist() == ["seg_0002", "seg_0001"]
+    assert tabla["segment_id"].tolist() == [
+        "10023947602400723454_1120_000_1140_000",
+        "10017090168044687777_6380_000_6400_000",
+    ]
     assert tabla["n_menciones"].tolist() == [2, 1]
 
 

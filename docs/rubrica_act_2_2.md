@@ -48,7 +48,7 @@ clasificación según la naturaleza del caso.*
 | **2** | Arma la tabla pero justifica las exclusiones con "no aporta" sin distinguir motivos |
 | **1** | Incluye el identificador o la etiqueta entre las variables |
 
-**Cifra de referencia:** `LEVEL_1` 88,89 % · `LEVEL_2` 11,11 %, sobre 40.200 filas limpias.
+**Cifra de referencia:** `LEVEL_1` 87,67 % · `LEVEL_2` 12,33 %, sobre **530.396** filas (0 nulos).
 
 ---
 
@@ -61,9 +61,8 @@ clasificación según la naturaleza del caso.*
 | **2** | Parte por grupo porque se lo pidieron, sin poder explicar qué problema resuelve |
 | **1** | Parte al azar, o no verifica los segmentos compartidos |
 
-**Cifras de referencia:** 29.946 filas de entrenamiento (74,5 %) en **114 segmentos**, 10.254 de
-prueba en **39**, **0 compartidos**. Al azar: **153 compartidos**. Diferencia de exactitud entre
-ambas: **−0,005**.
+**Cifras de referencia:** 384.280 filas de entrenamiento (72,5 %) en **30 segmentos**, 146.116 de
+prueba en **10**, **0 compartidos**. Al azar: **40 compartidos**.
 
 > ⚠️ **El discriminador de esta dimensión.** Si el argumento del alumno es *"partí por grupo
 > porque da mejor resultado"*, no llega a **3**: la medición dice lo contrario. La respuesta
@@ -85,12 +84,11 @@ ambas: **−0,005**.
 
 | Modelo | Exactitud | F1-macro |
 |---|---|---|
-| Baseline `most_frequent` | **0,8896** | 0,4708 |
-| Baseline `stratified` | 0,8061 | 0,5007 |
-| Bosque aleatorio | **0,8965** | **0,7025** |
+| Baseline `most_frequent` | **0,8172** | (clase mayoritaria en prueba) |
+| Bosque aleatorio | **0,7805** | **0,4822** |
 
-Por clase: `LEVEL_2` precisión **0,5422**, recall **0,4028**, F1 **0,4622** sobre 1.132 casos.
-Matriz de confusión: **456** difíciles encontradas, **676** perdidas, **385** falsas alarmas.
+Por clase: `LEVEL_2` precisión **0,1847**, recall **0,0588**, F1 **0,0893** sobre 26.713 casos.
+Matriz: **1.572** difíciles encontradas, **25.141** perdidas, **6.937** falsas alarmas.
 
 ---
 
@@ -103,8 +101,8 @@ Matriz de confusión: **456** difíciles encontradas, **676** perdidas, **385** 
 | **2** | Reproduce la medición sin poder explicar por qué esa variable es problemática |
 | **1** | Llama "fuga" a cualquier variable muy predictiva |
 
-**Cifra de referencia:** incluir `num_lidar_points` sube el F1-macro de **0,7025 a 0,7543**
-(+0,052) y la exactitud a 0,9264.
+**Cifra de referencia:** incluir `num_lidar_points` es fuga (la etiqueta se deriva de ahí).
+Se mide en el bloque 6 de la actividad; no recites de memoria un delta del hilo viejo.
 
 **La pregunta que se busca:** *¿voy a tener esta variable, con este valor, en el momento en que
 necesite hacer la predicción?*
@@ -120,18 +118,18 @@ necesite hacer la predicción?*
 | **2** | Interpreta la importancia pero la decisión final es "el modelo es bueno/malo" sin referirse al uso |
 | **1** | No interpreta, o justifica la decisión solo con la exactitud |
 
-**Cifras de referencia:** `box_center_x` **0,5202** y `speed_mps` **0,2613** concentran el 78 %
-de la importancia. Mecanismo esperado: a mayor distancia, menos puntos láser; en movimiento, el
-objeto se difumina entre barridos.
+**Cifras de referencia:** salen del bosque de la corrida; no recites un ranking del hilo viejo.
+Mecanismo esperado: a mayor distancia, menos puntos láser; en movimiento, el objeto se difumina
+entre barridos.
 
 ---
 
 ## Qué mirar al corregir, en este orden
 
-1. **El bloque 3.** Si no puede explicar por qué el baseline saca 88,96 %, no entendió el
-   desbalance y todo lo demás lo va a leer mal.
-2. **La decisión del informe.** *"Sí, tiene 90 % de exactitud"* es **Inicial** aunque todos los
-   TODO estén en verde. *"No, se pierde 6 de cada 10 difíciles"* es **Logrado**. *"Depende de si
+1. **El bloque 3.** Si no puede explicar por qué el baseline saca ~81,7 % (proporción de
+   `LEVEL_1` en prueba), no entendió el desbalance y todo lo demás lo va a leer mal.
+2. **La decisión del informe.** *"Sí, tiene 78 % de exactitud"* es **Inicial** aunque todos los
+   TODO estén en verde. *"No, se pierde 94 de cada 100 difíciles"* es **Logrado**. *"Depende de si
    decide o solo alerta"* es **Destacado**.
 3. **La justificación de la partición.** Es el único punto que distingue a quien razona de quien
    optimiza el número.

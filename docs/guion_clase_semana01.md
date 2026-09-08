@@ -12,7 +12,7 @@ Material: `notebooks/01_alumno_exploracion.ipynb` (alumnos) y
 - [ ] Abrir el solucionario y ejecutarlo completo una vez (Kernel → Restart & Run All).
 - [ ] Tener el enlace de Colab del notebook del alumno listo para pegar en el chat/pizarra.
 - [ ] Verificar que el repositorio esté publicado y accesible sin cuenta.
-- [ ] Tener a mano el número clave del día: **34 %** (nulos de velocidad en LEVEL_2 nocturno).
+- [ ] Tener a mano las cifras del lote: **530.396** filas, `cyclist` **0,45 %**, `weather` **100 % sunny**.
 - [ ] Avisar al curso que Colab mostrará *"Advertencia: Este cuaderno no lo ha creado Google"* al
       ejecutar la primera celda, y que hay que pulsar **"Ejecutar de todos modos"**. Es el aviso
       estándar de cualquier notebook abierto desde GitHub. Si no se advierte, medio curso se
@@ -42,8 +42,8 @@ decisión, no la primera.
 Cerrar con la frase: *un modelo entrenado con datos que nadie revisó no es un modelo, es una
 opinión con decimales*.
 
-**Advertir explícitamente** que el dataset es sintético y por qué (licencia de Waymo + garantía
-pedagógica). La honestidad sobre el origen de los datos es parte de lo que se enseña.
+**Dejar claro** que los datos son Perception v2 real (licencia Waymo: no van en el clone).
+Sin parquet local el notebook falla y dice cómo bajarlos.
 
 ---
 
@@ -52,8 +52,8 @@ pedagógica). La honestidad sobre el origen de los datos es parte de lo que se e
 **Objetivo:** que `.info()` deje de ser un trámite.
 
 - TODO 1–3.
-- **Momento clave:** el dtype `object` de `timestamp_micros`. 60 filas de 40.680 (0,15 %)
-  arruinan una columna entera.
+- **Momento clave:** el parquet conserva `timestamp_micros` como `int64`. Un CSV habría
+  podido ensuciar toda la columna con un solo texto.
 - Demostración recomendada en vivo: intentar `df["timestamp_micros"].mean()` y mostrar el error.
   Luego `df["timestamp_micros"].sort_values().head()` para mostrar el orden alfabético.
 - Error frecuente: creer que `dropna()` limpia el `"N/D"`. No lo hace.
@@ -148,24 +148,23 @@ Regla práctica que deben anotar:
 **Objetivo:** conectar el RA1 con una consecuencia concreta.
 
 - TODO 18.
-- Cifras del dataset de clase: ~20 % nocturnas, ~21 % con lluvia, ~2 % ciclistas.
+- Cifras del lote: `cyclist` **0,45 %**, `weather` **100 % sunny**, `LEVEL_2` **12,33 %**.
 - Las tres preguntas: qué está sub-representado, quién corre riesgo, qué medida concreta propones.
 
-**El remate con datos reales.** Cuando el curso ya discutió el sesgo del dataset sintético,
-muestra lo que pasa en el Waymo Open Dataset real. No es una muestra: es el **censo de los 798
-segmentos** de entrenamiento (`herramientas/analizar_sesgo_waymo.py`, agosto 2026):
+**El remate con el censo.** El lote de clase (40 segmentos) es **100 % `sunny`**. El censo de
+los **798** segmentos de entrenamiento (`herramientas/analizar_sesgo_waymo.py`) es peor:
 
-| | Dataset de clase | Waymo real (censo de 798) |
+| | Lote de clase (40) | Waymo real (censo de 798) |
 |---|---|---|
-| Segmentos con lluvia | 21 % | **0,6 %** (5 de 798) |
-| Segmentos nocturnos | 20 % | **9,9 %** (79 de 798) |
-| Concentración geográfica | — | **87 %** en San Francisco y Phoenix |
+| Segmentos con lluvia | **0 %** (0 de 40; 530.396 `sunny`) | **0,6 %** (5 de 798) |
+| Segmentos nocturnos | Night 51.867 de 530.396 (9,8 %) | **9,9 %** (79 de 798) |
+| Concentración geográfica | SF + Phoenix = 100 % | **87 %** en San Francisco y Phoenix |
 | Peatones + ciclistas de día | — | **27,05 %** |
 | Peatones + ciclistas de noche | — | **14,11 %** |
 
-La frase para lanzarlo: *"Yo inventé el dataset de la clase y le puse 21 % de lluvia. ¿Cuánta
-lluvia creen que tiene el dataset real de una de las empresas de conducción autónoma más
-grandes del mundo?"* La respuesta —**5 grabaciones de 798**— suele producir silencio.
+La frase para lanzarlo: *"Este parquet de 530 mil filas es 100 % soleado. ¿Cuánta lluvia
+creen que tiene el dataset real de una de las empresas de conducción autónoma más grandes
+del mundo?"* La respuesta —**5 grabaciones de 798**— suele producir silencio.
 
 Y el remate del remate: el 87 % de los datos viene de San Francisco y Phoenix, dos ciudades de
 clima seco. *"La falta de lluvia no es mala suerte: es consecuencia de dónde decidieron grabar.

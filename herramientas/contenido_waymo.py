@@ -22,10 +22,9 @@ CELDAS_WAYMO: list[dict] = [
 # Opcional · El mismo análisis con datos reales de Waymo
 
 El camino corto (lote de 8 MB, una tabla, analítica) es `14_opcional_waymo_buckets.ipynb`.
-**Empieza por ahí.** Este notebook profundiza: un segmento verificado y el mismo EDA de
-`src/eda.py` que la Actividad 1.3, para comparar con el CSV de la asignatura. El Machine
-Learning completo (bosque aleatorio, k-medias, hiperparámetros) sobre **varios** segmentos
-es el pipeline Kedro `waymo_real`, no este notebook.
+**Este notebook** profundiza un segmento verificado y el mismo EDA de `src/eda.py` que la
+Actividad 1.3. El Machine Learning completo (bosque aleatorio, k-medias, hiperparámetros)
+sobre **varios** segmentos es `kedro run`, no este notebook.
 
 > ### Estado de verificación
 >
@@ -51,17 +50,12 @@ puntos**. Los dos componentes que necesita este análisis son livianos:
 
 O sea: esto se puede hacer en clase. Lo único que cuesta es el registro y la autenticación.
 
-### Entonces, ¿por qué el dataset de la clase es sintético?
+### Por qué los datos no viajan con el clone
 
 1. **Licencia:** el [Waymo Open Dataset License Agreement](https://waymo.com/open/terms/) es de
-   uso no comercial y **no permite redistribuir** los datos. No podemos dejar un archivo de Waymo
-   en el repositorio: cada persona debe registrarse y descargarlo.
-2. **Pedagogía:** los datos publicados por Waymo ya pasaron por curación y validación. Como
-   verás al final de este notebook, **casi no tienen los defectos que queremos enseñar**: cero
-   duplicados, categorías consistentes, nada de valores imposibles. Aprender a limpiar con datos
-   ya limpios no funciona.
-
-Lo que **no** es sintético es el esquema ni la física. Este notebook lo demuestra.
+   uso no comercial y **no permite redistribuir** los datos. Cada persona se registra y los baja.
+2. **Pedagogía:** v2 llega curado (0 nulos, 0 duplicados, 0 imposibles). El trabajo de clase es
+   el desbalance (`cyclist` 0,45 %), el clima 100 % `sunny` y partir por `segment_id`.
 """
     ),
     md(
@@ -366,46 +360,35 @@ plt.show()
     md(
         """
 ---
-## Comparación: sintético vs. real
+## Lo que se ve en este segmento
 
-Esta tabla se generó con las cifras medidas en el segmento
-`10023947602400723454_1120_000_1140_000`. Las tuyas pueden variar si eliges otro segmento.
+Cifras del segmento `10023947602400723454_1120_000_1140_000`. Otro segmento cambia los conteos,
+no el esquema.
 
-| | Dataset de clase (sintético) | Waymo real (este segmento) |
-|---|---|---|
-| Filas | 40.680 | 18.633 |
-| Altura mediana del peatón | 1,72 m | **1,74 m** |
-| Largo mediano del vehículo | 4,61 m | **4,42 m** |
-| Correlación distancia ↔ puntos láser | −0,93 | **−0,64** |
-| Ciclistas | 1,9 % | **0,8 %** |
-| Duplicados | 480 exactos + 200 lógicos | **0** |
-| Categorías inconsistentes | 11 variantes de clima | **0** |
-| Valores imposibles | 157 velocidades absurdas, altos 0, largos < 0 | **0** |
-| Nulos | 5 tipos distintos, incluidos 2 ocultos | 1 tipo, **con significado semántico** |
+| | Este segmento |
+|---|---|
+| Filas | 18.633 |
+| Altura mediana del peatón | **1,74 m** |
+| Largo mediano del vehículo | **4,42 m** |
+| Correlación distancia ↔ puntos láser | **−0,64** |
+| Ciclistas | **0,8 %** |
+| Duplicados | **0** |
+| Categorías inconsistentes | **0** |
+| Valores imposibles | **0** |
+| `detection_difficulty` vacío | **82 %** — significa `LEVEL_1`, no nulo |
 
 ### Para discutir
 
-1. **La física coincide, pero el sintético es demasiado prolijo.** La altura del peatón (1,72 vs.
-   1,74 m) y el largo del vehículo (4,61 vs. 4,42 m) son casi idénticos. En cambio la correlación
-   distancia ↔ puntos láser es **−0,93 en el sintético y −0,64 en el real**: la relación existe en
-   ambos, pero en el mundo real es mucho más ruidosa. ¿Por qué? Porque ahí intervienen cosas que
-   el generador no modela: oclusiones (un auto tapa a otro), el tamaño del objeto, el ángulo de
-   incidencia del láser y la reflectancia del material. **Un dato simulado casi siempre es más
-   limpio que la realidad**, y conviene desconfiar de un modelo que se ve perfecto en simulación.
-2. **El desbalance es peor en la realidad.** 0,8 % de ciclistas, no 1,9 %. El problema que
-   discutimos en clase es más grave, no menos.
-3. **La suciedad no está.** Cero duplicados, cero categorías inconsistentes, cero valores
-   imposibles. Waymo publicó un dataset curado.
-4. **Pero apareció un problema que no anticipamos:** el 82 % de nulos en `detection_difficulty`,
-   que resultó ser una convención de codificación y no un dato faltante.
+1. **La física es ruidosa.** Distancia ↔ puntos láser es −0,64, no una recta: oclusiones, ángulo
+   del láser, reflectancia. Un modelo “perfecto” en simulación suele estar mintiendo.
+2. **El desbalance es peor que “un poco de ciclistas”.** 0,8 % en este segmento; 0,45 % en el lote
+   de 40.
+3. **La suciedad no está.** Waymo publicó un dataset curado. El trabajo es sesgo y rareza, no
+   `dropna()`.
+4. **Un nulo que no es nulo:** el 82 % vacío en dificultad es convención de codificación.
 
-La moraleja incómoda: **un dataset publicado y curado es un lujo.** En un proyecto real los datos
-llegan como el CSV de la clase, no como el Parquet de Waymo. Buena parte del trabajo de un equipo
-de datos consiste, precisamente, en convertir lo primero en lo segundo.
-
-Y la moraleja técnica: los problemas de calidad **no se repiten** entre proyectos. Este segmento
-no tenía ninguno de los diez defectos de la clase, y tenía uno que la clase no cubría. Lo que se
-transfiere no es la lista de defectos: es el hábito de mirar antes de modelar.
+Lo que se transfiere entre proyectos no es una lista de defectos: es el hábito de mirar antes de
+modelar.
 
 ### Una limitación de esta comparación
 

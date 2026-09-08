@@ -635,10 +635,9 @@ def informe_analitica(tabla: pd.DataFrame) -> dict:
         "tipos": tipos,
         "cajas_sin_puntos": sin_puntos,
         "siguiente": (
-            "Esta tabla alimenta el proyecto (notebook 10) y el pipeline Kedro "
-            "(kedro run --pipeline waymo_real). Parte train/test por segment_id, "
-            "no al azar. Las actividades 1.1–3.3 del aula usan el CSV del repo, "
-            "para que coincida la pauta."
+            "Esta tabla alimenta las Act. 1.1–3.3, el proyecto (notebook 10) y "
+            "el pipeline Kedro (`kedro run`). Parte train/test por segment_id, "
+            "no al azar."
         ),
     }
 

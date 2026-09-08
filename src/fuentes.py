@@ -75,7 +75,7 @@ def contexto_por_segmento(df: pd.DataFrame) -> list[dict]:
         Lista de diccionarios con la forma::
 
             {
-              "segment_id": "seg_0063",
+              "segment_id": "10023947602400723454_1120_000_1140_000",
               "condiciones": {"weather": "sunny", "time_of_day": "Day"},
               "n_detecciones": 512,
               "objetos": [{"tipo": "VEHICLE", "n": 380}, ...]
@@ -138,7 +138,7 @@ def aplanar_objetos(registros: list[dict]) -> pd.DataFrame:
 # Fuente no estructurada: texto libre
 # ---------------------------------------------------------------------------
 
-PATRON_SEGMENTO = re.compile(r"seg_\d{4}")
+PATRON_SEGMENTO = re.compile(r"\d+_\d+_\d+_\d+_\d+")
 
 PLANTILLAS_PARTE = [
     "Turno {turno}. El operador reporta lluvia intensa durante {segmento}; "
@@ -184,8 +184,9 @@ def generar_partes_incidente(
 def extraer_segmentos(texto: str) -> list[str]:
     """Extrae los identificadores de segmento mencionados en un texto libre.
 
-    Busca el patrón ``seg_`` seguido de cuatro dígitos. Devuelve las
-    apariciones en orden y sin repetir, para que el resultado sea determinista
+    Busca el patrón de Perception v2: un entero largo y cuatro tramos separados
+    por guión bajo (p. ej. ``10023947602400723454_1120_000_1140_000``). Devuelve
+    las apariciones en orden y sin repetir, para que el resultado sea determinista
     y se pueda cruzar con el DataFrame.
     """
     vistos: list[str] = []

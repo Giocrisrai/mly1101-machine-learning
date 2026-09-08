@@ -31,18 +31,16 @@ Las tres sesiones producen el **mismo resultado incómodo**, y esa repetición e
 
 | Actividad | Lo que se intenta | Lo que se mide | Conclusión |
 |---|---|---|---|
-| 3.1 | Ajustar 12 configuraciones | **−0,0006** de F1-macro | El ajuste no mejora nada |
-| 3.2 | Combinar tres modelos | **−0,0040**, y más lento | El ensamble tampoco |
-| 3.3 | Distinguir cuál es mejor | Diferencias **< ruido (0,0079)** | No se puede distinguir |
+| 3.1 | Ajustar hiperparámetros | **+0,0789** de F1-macro (0,5104 → 0,5893) | La búsqueda **sí** supera el ruido (0,0282) |
+| 3.2 | Combinar modelos | GB **0,594** · ensamble **0,5938** | No distinguible: el ensamble no suma |
+| 3.3 | Elegir el mejor | F1 `LEVEL_2` sigue en **0,0893** | Subir el macro no salva a la clase difícil |
 
-**La conclusión del RA3 no es "estas técnicas no sirven".** Es:
+**La conclusión del RA3 no es "el ajuste no sirve".** Es:
 
-> Estas técnicas atacan la **varianza**, y aquí el cuello de botella es el **sesgo**: la
-> información necesaria no está en las variables. Saberlo **con evidencia** vale más que
-> sospecharlo, y es lo que permite dejar de gastar tiempo por la vía equivocada.
+> El F1-macro se puede mover y aun así el modelo se pierde el 94 % de las detecciones
+> difíciles. Elegir "el mejor" sin mirar `LEVEL_2` es el error de la exactitud, otra vez.
 
-**Un alumno que reporte "mejoré el modelo con ajuste de hiperparámetros" no ha entendido la
-experiencia**, por bien ejecutado que esté el código.
+**Un alumno que reporte solo "mejoré el F1-macro" no ha cerrado la experiencia.**
 
 ---
 
@@ -55,8 +53,8 @@ experiencia**, por bien ejecutado que esté el código.
 | **2** | Usa validación cruzada pero sin agrupar por segmento, o no justifica la métrica |
 | **1** | Ajusta mirando la prueba, o valida sobre el conjunto de entrenamiento |
 
-**Cifras de referencia:** 5 pliegues, 29.946 filas, 114 segmentos, **0 compartidos**. Brecha media
-validación vs prueba: **+0,0118**. Margen de la trampa: **0,0135**.
+**Cifras de referencia:** 5 pliegues, 384.280 filas de entrenamiento, **30** segmentos,
+**0 compartidos**.
 
 ---
 
@@ -64,13 +62,13 @@ validación vs prueba: **+0,0118**. Margen de la trampa: **0,0135**.
 
 | Nivel | Criterio observable |
 |---|---|
-| **4** | **No reporta la ganancia como mejora** al no superar el ruido; ubica las mejoras de primer orden fuera del ajuste |
+| **4** | Contrasta la ganancia contra el ruido **y** mira si `LEVEL_2` se movió; no vende el macro solo |
 | **3** | Justifica el espacio de búsqueda y la estrategia; compara contra los valores por defecto **y** contra la desviación entre pliegues |
 | **2** | Ejecuta la búsqueda y reporta la mejor configuración como una mejora, sin contrastarla |
 | **1** | No compara contra los valores por defecto |
 
-**Cifras de referencia:** por defecto **0,6970** (desv. 0,0087) · mejor de 12 combinaciones
-**0,6964** (desv. 0,0091) · ganancia **−0,0006**.
+**Cifras de referencia (v2, 2026-09-08):** por defecto **0,5104** → búsqueda **0,5893** ·
+ganancia **+0,0789** (supera ruido 0,0282).
 
 ---
 

@@ -94,9 +94,9 @@ conclusión, no está listo.
 > interpretación. Si alguien abre 2.2 y copia el informe, D5 queda en Inicial:
 > hoy se exige la frase de negocio, no el `classification_report`.
 >
-> Cifras que no se recitan de memoria (semilla 42, pauta 2.2): exactitud **0,8965**,
-> dummy **0,8896**, F1 `LEVEL_2` **0,4622**, recall **0,4028**, TP **456**, FN **676**,
-> FP **385**. De cada 100 difíciles: **40** encontradas, **60** perdidas.
+> Cifras que no se recitan de memoria (Perception v2, pauta 2.2): exactitud **0,7805**,
+> dummy **0,8172**, F1 `LEVEL_2` **0,0893**, recall **0,0588**, TP **1.572**, FN **25.141**,
+> FP **6.937**. De cada 100 difíciles: **6** encontradas, **94** perdidas.
 """
     ),
     md(

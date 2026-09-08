@@ -98,8 +98,8 @@ dónde salen* ni *qué tan sucios están*, sino:
 > **Si el tiempo se acorta, se recorta el 5** (se puede dejar como trabajo autónomo) y se
 > comprime el 2. **Nunca recortes el 4.**
 >
-> **Todas las cifras de esta pauta están medidas** sobre el CSV publicado (semilla 42,
-> 40.680 filas). Los tiempos varían según la máquina: lo que no varía es el orden de magnitud.
+> **Todas las cifras de esta pauta están medidas** sobre Perception v2 (40 segmentos,
+> **530.396** filas, 2026-09-08). Los tiempos varían según la máquina: lo que no varía es el orden de magnitud.
 """
     ),
     md(
@@ -277,14 +277,14 @@ print("✅ Mismo resultado, mucha menos memoria y mucho menos tiempo.")
         """
 > ### 🎓 Pauta docente — TODO 1 y 2
 >
-> **Cifras medidas** sobre las 39.893 velocidades no nulas del CSV publicado:
+> **Cifras medidas** sobre las 530.396 velocidades (0 nulos) de Perception v2:
 >
 > | | Valor |
 > |---|---|
-> | Lista de Python | **1,22 MB** |
-> | Arreglo NumPy (`float64`) | **0,30 MB** |
+> | Lista de Python | **16,19 MB** |
+> | Arreglo NumPy (`float64`) | **4,05 MB** |
 > | Factor de memoria | **4,0×** |
-> | `sys.getsizeof(lista)` a secas | 0,30 MB ← *el engaño* |
+> | `sys.getsizeof(lista)` a secas | 4,05 MB ← *el engaño* |
 > | Ciclo vs vectorizado | del orden de **20×** |
 >
 > **El detalle de `sys.getsizeof` vale la clase entera.** Da casi exactamente lo mismo que el
@@ -379,7 +379,7 @@ Lo mismo, pero sobre todo el dataset. Dos cambios:
     ),
     code(
         """
-CATEGORICAS = ["object_type", "weather", "time_of_day", "detection_difficulty", "sensor_version"]
+CATEGORICAS = ["object_type", "weather", "time_of_day", "detection_difficulty", "location"]
 CONTINUAS = ["box_center_x", "box_center_y", "box_center_z",
              "box_length", "box_width", "box_height", "speed_mps"]
 
@@ -398,7 +398,7 @@ print(f"Ahorro  : {100*(1 - mem_despues/mem_antes):5.0f} %")
 """,
         """
 # TODO 4: reduce la memoria del DataFrame sin perder ninguna fila.
-CATEGORICAS = ["object_type", "weather", "time_of_day", "detection_difficulty", "sensor_version"]
+CATEGORICAS = ["object_type", "weather", "time_of_day", "detection_difficulty", "location"]
 CONTINUAS = ["box_center_x", "box_center_y", "box_center_z",
              "box_length", "box_width", "box_height", "speed_mps"]
 
@@ -440,11 +440,11 @@ print(f"✅ {mem_antes:.1f} MB → {mem_despues:.1f} MB con las mismas {len(df):
 > catastrófica); cuando el dato es dinero. *La precisión que necesitas la define el dominio, no
 > la costumbre.*
 >
-> **TODO 4.** Medido sobre el CSV publicado: **20,1 MB → 8,7 MB, un 57 % de ahorro**, sin perder
+> **TODO 4.** Medido sobre Perception v2: **257,1 MB → 104,5 MB, un 59 % de ahorro**, sin perder
 > una sola fila.
 >
 > **De dónde sale el grueso del ahorro:** de `category`, no de `float32`. Una columna `object`
-> con 40.680 cadenas de texto guarda 40.680 objetos `str` de Python; como `category` guarda un
+> con 530.396 cadenas de texto guarda 530.396 objetos `str` de Python; como `category` guarda un
 > diccionario de 7 valores más un arreglo de enteros pequeños. Conviene mostrarlo columna a
 > columna con `df.memory_usage(deep=True).sort_values()`.
 >
@@ -625,7 +625,7 @@ El peligroso es este. Queremos agregar la velocidad en km/h a una tabla de cicli
     ),
     code(
         """
-kmh = ciclistas["speed_mps"] * 3.6          # conserva el índice original: 76, 194, 199, ...
+kmh = ciclistas["speed_mps"] * 3.6          # conserva el índice original: 11096, 11191, ...
 tabla = ciclistas.reset_index(drop=True)    # índice nuevo: 0, 1, 2, ...
 
 tabla["speed_kmh"] = kmh                    # pandas alinea por ETIQUETA, no por posición
@@ -642,11 +642,9 @@ print(tabla[["object_type", "speed_mps", "speed_kmh"]].head(3))
 Mira la última salida con calma:
 
 - La operación **no dio error**.
-- La mayoría de las filas quedó en `NaN`.
-- **Unas pocas sí tienen valor, y ese valor está equivocado**: le corresponde a otra detección,
-  la que originalmente llevaba esa etiqueta.
-
-Un resultado parcialmente lleno es más peligroso que uno vacío: parece que funcionó.
+- En este lote **todas** las filas quedaron en `NaN` (las etiquetas originales empiezan en 11096).
+- Si alguna etiqueta original fuera menor que 2.386, esas celdas se llenarían con la velocidad
+  **de otra detección**. Un resultado parcialmente lleno es más peligroso que uno vacío.
 
 Ahora arréglalo de las dos formas posibles.
 
@@ -773,22 +771,23 @@ En una frase: ¿cuándo usarías `.iloc` y cuándo `.loc`? Da un ejemplo de cada
 >
 > **Este es el bloque que justifica la sesión.** Si solo alcanza para uno, es este.
 >
-> **Cifras medidas** sobre el CSV publicado: hay **789** detecciones `CYCLIST`, y sus primeras
-> etiquetas son **76, 194, 199, 305, 312**. Tras el `reset_index`, la asignación rota deja
-> **771 NaN de 789**, y **18 filas con un valor equivocado**.
+> **Cifras medidas** sobre Perception v2: hay **2.386** detecciones `cyclist`, y sus primeras
+> etiquetas son **11096, 11191, 11286, 11381, 11476**. Tras el `reset_index`, la asignación
+> deja **2.386 NaN de 2.386**: ninguna etiqueta original es menor que 2.386, así que no hay
+> coincidencia accidental. El código **igual no falla**.
 >
-> **De dónde salen esos 18.** Son las etiquetas originales de ciclistas que resultan ser menores
-> que 789 y por tanto existen también en el índice nuevo (76, 194, 199, 305, 312, …). pandas
-> encuentra la etiqueta, la considera una coincidencia legítima y copia el valor. Nadie avisa
-> nada.
+> **De dónde saldrían valores equivocados.** Si alguna etiqueta original fuera menor que el
+> largo del filtro, pandas la encontraría en el índice nuevo y copiaría **la velocidad de otra
+> detección**. Nadie avisa. En este lote esa trampa no se dispara; el peligro es el mismo.
 >
 > **Cómo montarlo en clase.** Antes de ejecutar la celda del TODO 7, pregunta cuántos `NaN` van a
-> salir. La sala se divide entre "ninguno" y "todos". Nadie dice 771. Ejecutar entonces tiene
-> mucho más efecto que explicarlo.
+> salir. La sala se divide entre "ninguno" y "todos". Aquí sale **todos** (2.386). Ejecutar
+> entonces tiene mucho más efecto que explicarlo.
 >
 > **La frase que debe quedar:** *un resultado parcialmente lleno es más peligroso que uno vacío,
-> porque parece que funcionó.* Con 789 filas se nota. Con 4 millones y un `.head()` que sale
-> perfecto porque las primeras etiquetas sí coincidieron, no se nota hasta producción.
+> porque parece que funcionó.* Este lote te deja el caso vacío (todas NaN). Con 4 millones y un
+> `.head()` que sale perfecto porque las primeras etiquetas sí coincidieron, no se nota hasta
+> producción.
 >
 > **Respuesta al TODO 8:** la posición 10 es `speed_mps`; al ordenar alfabéticamente pasa a ser
 > `num_lidar_points`. `.iloc[:, 10]` cambia de columna sin decir nada; `.loc[:, "speed_mps"]` no.
@@ -962,13 +961,11 @@ cruce
         """
 > ### 🎓 Pauta docente — Bloque 5
 >
-> **TODO 9.** Salen **7 filas**, no 4: las variantes de escritura de `object_type` siguen ahí
-> (`PEDESTRIAN`, `Pedestrian`, `PEATON`, `Ped`). Es el mismo recordatorio de la Actividad 1.1:
-> agrupar no limpia. Bien aprovechado, es la mejor motivación para el bloque de categorías de la
-> 1.3: *sin normalizar, este `groupby` reparte a los peatones en cuatro grupos y ninguna cifra
-> sirve.*
+> **TODO 9.** Salen **4 filas**: v2 ya trae `object_type` normalizado (`vehicle`, `sign`,
+> `pedestrian`, `cyclist`). Agrupar no inventa suciedad; si alguien ve 7 grupos, no está
+> leyendo el parquet del curso.
 >
-> **TODO 10.** El `merge` deja **40.680 filas**, las mismas. El `assert` es el punto pedagógico:
+> **TODO 10.** El `merge` deja **530.396 filas**, las mismas. El `assert` es el punto pedagógico:
 > un `merge` que cambia el número de filas casi siempre significa llaves duplicadas en la tabla
 > derecha, y es un error que pasa desapercibido porque el código no falla. Enséñales a comprobar
 > el largo **siempre** después de un `merge`.
@@ -1014,7 +1011,7 @@ los datasets de internet.
 
 Exporta una muestra del dataset en los cuatro formatos y compara peso y tiempos.
 
-Usamos una **muestra de 5.000 filas** por una razón práctica: escribir 40.680 filas con
+Usamos una **muestra de 5.000 filas** por una razón práctica: escribir 530.396 filas con
 `openpyxl` tarda del orden de un minuto, y no vamos a gastar la clase mirando una barra de
 progreso. (Además, Excel admite como máximo 1.048.576 filas: no es un formato para volumen.)
 

@@ -51,16 +51,15 @@ src/kedro_mly1101/
     supervisado/          modelamiento: 8 nodos                (RA2 · Act. 2.2)
     no_supervisado/       agrupamiento y PCA: 7 nodos          (RA2 · Act. 2.3)
     optimizacion/         ajuste, ensamble y selección: 6 nodos (RA3)
-    ingesta/              fuentes reales: 5 nodos (inventario, v2, camera_box, E2E, comparar)
-data/                     salidas del recorrido sintetico. No se versiona
-data/waymo/               salidas del recorrido real.        No se versiona
+    ingesta/              fuentes: 4 nodos (inventario, v2, camera_box, E2E)
+data/                     salidas. No se versiona
 ```
 
 ### Las capas del catálogo
 
 | Capa | Qué contiene | Regla |
 |---|---|---|
-| `01_raw` | Lo que llegó (el CSV, fuera de este proyecto) | **No se toca nunca.** Es la evidencia de origen |
+| `01_raw` | Lo que llegó (`detecciones_reales.parquet`) | **No se toca nunca.** Es la evidencia de origen |
 | `02_intermediate` | Diagnósticos y tablas de trabajo | Se puede borrar y regenerar |
 | `03_primary` | `detecciones_limpias.parquet`, listo para modelar | Lo consume el pipeline `supervisado` |
 | `04_feature` … `07_model_output` | Tabla de modelamiento, partición, modelo y métricas | Salidas de las Act. 2.2, 2.3 y 3.1–3.3 |
@@ -89,10 +88,9 @@ Un valor imposible se convierte en faltante; no se borra la fila entera, porque 
 fila sí era válido. Lo único que se elimina son los duplicados exactos, que por definición no
 aportan nada.
 
-> **Consecuencia contraintuitiva:** después de limpiar hay **más** celdas faltantes que antes
-> (2.862 → 4.420). No aparecieron faltantes nuevos: los que estaban disfrazados de `-1` o de
-> `"N/D"` pasaron a contarse. Si esa cifra bajara, sería la señal de que se eliminaron filas en
-> vez de marcarlas. Hay un test que lo deja por escrito.
+> **En Perception v2 las celdas faltantes siguen en 0.** El lote llega curado: no hay `-1`
+> ni `"N/D"`. El código igual convierte centinelas (los tests los inyectan) para que una
+> corrida sucia no ensucie un promedio. Marcar antes que borrar sigue siendo la regla.
 
 ---
 
@@ -101,35 +99,31 @@ aportan nada.
 **La pregunta:** ¿se puede anticipar qué detecciones van a ser difíciles
 (`detection_difficulty`) a partir de la geometría del objeto y de dónde está?
 
-Se descartó clasificar `object_type`, que parecía lo natural: sobre este dataset se resuelve al
-**99,98 %** con cualquier partición, porque el generador sortea las dimensiones por tipo de
-objeto y basta el largo de la caja. Un ejercicio donde todo sale perfecto no enseña a evaluar.
+Se descartó clasificar `object_type`: las dimensiones de la caja ya separan tipos casi a la
+perfección y no enseña a evaluar un modelo. El objetivo es `detection_difficulty`.
 
-### Lo que produce, medido
+### Lo que produce, medido (Perception v2, 2026-09-08)
 
 | Clase | Precisión | Recall | F1 | Soporte |
 |---|---|---|---|---|
-| `LEVEL_1` (88,9 %) | 0,93 | 0,96 | 0,94 | 9.122 |
-| `LEVEL_2` (11,1 %) | **0,54** | **0,40** | **0,46** | 1.132 |
-| **exactitud** | | | **0,90** | |
-| **macro avg** | 0,74 | 0,68 | **0,70** | |
+| `LEVEL_1` (87,67 %) | 0,8173 | 0,9419 | 0,8752 | 119.403 |
+| `LEVEL_2` (12,33 %) | **0,1847** | **0,0588** | **0,0893** | 26.713 |
+| **exactitud** | | | **0,7805** | |
+| **macro avg** | 0,5010 | 0,5004 | **0,4822** | |
 
-**Ese contraste es el material de clase.** El 90 % de exactitud suena bien hasta que se mira la
-fila de `LEVEL_2`: el modelo se pierde el **60 % de las detecciones difíciles**, que son justo las
-que interesaban. Un promedio global oculta a la minoría.
+**Ese contraste es el material de clase.** El 78 % de exactitud suena mejor que el F1 de
+`LEVEL_2` (0,0893): el modelo se pierde el 94 % de las detecciones difíciles. Un promedio
+global oculta a la minoría.
 
-### Dos fugas de información, y solo una se manifiesta
+### Dos fugas de información
 
-| Tipo de fuga | Qué se midió | Resultado |
+| Tipo de fuga | Qué es | En este lote |
 |---|---|---|
-| **Por variable derivada** — incluir `num_lidar_points`, de donde sale la etiqueta | F1-macro con y sin ella | **0,7025 → 0,7543 (+0,052)**. Real y medible |
-| **Por agrupación** — partir al azar por fila en vez de por segmento | F1-macro con las dos particiones | **−0,005**, es decir nada. 153 segmentos compartidos contra 0 |
+| **Por variable derivada** — incluir `num_lidar_points`, de donde sale la etiqueta | Contarle la respuesta al modelo | Se mide en la Act. 2.2 |
+| **Por agrupación** — partir al azar por fila en vez de por segmento | Fotogramas del mismo `segment_id` en train y test | Por grupo: **30 / 10** segmentos, **0 compartidos**. Al azar: **40 compartidos** |
 
-La segunda merece una explicación honesta, porque un resultado nulo es fácil de malinterpretar:
-en este dataset sintético cada detección se sortea de forma independiente dentro del segmento,
-así que la dependencia que la fuga explotaría no existe. **Partir por grupo sigue siendo lo
-correcto** —en datos reales de Waymo los fotogramas consecutivos siguen al mismo objeto—, pero
-aquí se justifica por cómo se generaron los datos, no por la diferencia que se mide.
+**Partir por grupo sigue siendo lo correcto**: en Waymo los fotogramas consecutivos siguen al
+mismo objeto. Un riesgo que no se manifieste en la métrica de prueba sigue siendo un riesgo.
 
 > La conclusión que se busca no es *"partir por grupo da igual"*, sino una más incómoda y más
 > útil: **un riesgo que no se manifiesta en tus datos de prueba sigue siendo un riesgo.**
@@ -147,11 +141,11 @@ Es la contracara de la Act. 2.2: allí había etiqueta y se medía el acierto; a
 
 ### Lo que salió, y por qué es mejor que un resultado limpio
 
-| | CSV del repo | Waymo v2 (40 segmentos) |
-|---|---|---|
-| Silueta | **k = 3** (0,473), luego cae | **sin codo**: 0,5228 (k=2) … **0,6103** (k=8) |
-| ¿Los grupos recuperan el tipo de objeto? | Parcialmente | **No** (tres ~100 % vehicle; uno 47,24 % peatón / 50,59 % sign) |
-| PCA: 2 componentes explican | 70,2 % | **74,47 %** |
+| | Perception v2 (40 segmentos) |
+|---|---|
+| Silueta | **sin codo**: 0,5228 (k=2) … **0,6103** (k=8) |
+| ¿Los grupos recuperan el tipo de objeto? | **No** (tres ~100 % vehicle; uno 47,24 % peatón / 50,59 % sign) |
+| PCA: 2 componentes explican | **74,47 %** |
 
 En los datos reales, tres grupos son 99,9 / 99,57 / 100 % `vehicle` y el otro mezcla peatones
 (47,24 %) y señalética (50,59 %). El agrupamiento **no descubrió los tipos de objeto**: descubrió
@@ -166,12 +160,10 @@ cosas son el material de clase:
 
 ---
 
-## Los datos REALES de Waymo: `kedro run --pipeline waymo_real`
+## Los datos: `kedro run` (Perception v2)
 
-**El mismo análisis, sobre datos reales, sin duplicar un solo nodo.** El pipeline `waymo_real`
-reutiliza `calidad`, `preprocesamiento`, `supervisado`, `no_supervisado` y `optimizacion` remapeando su entrada:
-donde leían el CSV sintético, leen la salida de la ingesta de Waymo. Esa es, en una línea, la
-razón de haber separado el catálogo del análisis.
+**Un solo grafo.** `__default__` y `waymo_real` son el mismo: ingesta + calidad +
+preprocesamiento + supervisado + no supervisado + optimización (34 nodos).
 
 ```bash
 # 1. Aceptar los términos en https://waymo.com/open/terms/ con tu cuenta de Google
@@ -180,30 +172,27 @@ gcloud auth login
 
 # 2. Descargar VARIOS segmentos livianos (lidar_box + stats; no imágenes)
 python herramientas/descargar_waymo.py --muestra 40     # ~40 MB
-# Si ya están en disco: --lote 8 ensambla la tabla sin pedir GCS
 
-# 3. Ver las fuentes (rápido) o el análisis completo
+# 3. Ver las fuentes o el análisis completo
 cd kedro_mly1101
-uv run kedro run --pipeline ingesta        # inventario + v2 + camera_box + E2E
-uv run kedro run --pipeline waymo_real     # eso + el mismo grafo de siempre
+uv run kedro run --pipeline ingesta        # 4 nodos: inventario + v2 + camera_box + E2E
+uv run kedro run                           # 34 nodos: eso + EDA + ML
 ```
 
 Los datos **no están en el repositorio**: la licencia de Waymo es de uso no comercial y prohíbe
-redistribuirlos. Sin ellos, `kedro run` funciona igual; solo `ingesta` y `waymo_real` los
-necesitan.
+redistribuirlos. Sin ellos, `kedro run` **no arranca**.
 
 ### Qué corre EDA + ML y qué solo se ve
 
 | Fuente | Nodos | EDA | Supervisado / k-medias / RA3 |
 |---|---|---|---|
-| CSV sintético (pauta) | 30 (`kedro run`) | ✅ | ✅ |
-| Perception v2 (`lidar_box` + `stats`) | 30 remapeados | 530.396 filas, 0 nulos | F1 LEVEL_2 = 0,0893; k sin codo |
+| Perception v2 (`lidar_box` + `stats`) | 30 de análisis | 530.396 filas, 0 nulos | F1 LEVEL_2 = 0,0893; k sin codo |
 | `camera_box` | 1 (`ensamblar_cajas_camara`) | **407.267** × 11 | no entra al RF |
 | JSON E2E | 1 (`leer_metadatos_e2e`) | **479** clusters | no |
 | v1 / Motion / `camera_image` | 0 | 0 archivos en disco | no |
 
-`ingesta` = 5 nodos. `waymo_real` = esas 5 + el grafo de 30 **sin duplicar código**. El modelo
-no mezcla productos: una fila de `camera_box` no se concatena con `lidar_box`.
+`ingesta` = 4 nodos. El modelo no mezcla productos: una fila de `camera_box` no se concatena
+con `lidar_box`.
 
 ### Por qué varios segmentos y no uno
 
@@ -218,40 +207,32 @@ Están en `src/waymo.py::traducir_esquema`, con tests:
 
 1. **La velocidad es un vector.** Waymo da `speed.x` y `speed.y`; la rapidez es su módulo.
    Quedarse con `speed.x` da valores plausibles y equivocados.
-2. **El tipo de objeto es un entero**, no una cadena. Y existe el `0` (*unknown*), que el
-   sintético no tiene.
+2. **El tipo de objeto es un entero**, no una cadena. Y existe el `0` (*unknown*).
 3. **El `NaN` de la dificultad NO es un dato faltante.** Waymo solo rellena
    `difficulty_level.detection` cuando la detección es difícil; vacío significa `LEVEL_1`. En el
    segmento verificado son **15.356 `NaN` de 18.633**: tratarlos como faltantes borraría el 82 %
    de los datos y dejaría una sola clase.
 
-   Es el **reverso exacto** del defecto que se estudia en la Actividad 1.3, donde un `-1`
-   disfraza un faltante. Aquí un faltante disfraza un valor.
+### Cifras medidas el 2026-09-08 (Perception v2, 40 segmentos)
 
-### Lo que cambia al pasar del CSV de pauta a Waymo v2 (medido 2026-09-08)
+Inventario: `data/02_intermediate/inventario_fuentes_waymo.csv`.
+Clasificador: `data/07_model_output/metricas_por_clase.csv`.
 
-Inventario: `data/02_intermediate/inventario_fuentes_waymo.csv`. Clasificador:
-`data/waymo/07_model_output/metricas_por_clase.csv` (09:09, mismos 530.396). k/PCA: 10:55.
-
-| | CSV del repo | Waymo v2 (40 segmentos) |
-|---|---|---|
-| Filas | 40.680 | **530.396** |
-| Segmentos | 153 | 40 |
-| vehicle / sign / peatón / ciclista | 61,73 / 8,12 / 26,22 / 1,94 % | **48,43 / 26,46 / 24,67 / 0,45 %** (256.855 / 140.319 / 130.836 / 2.386) |
-| LEVEL_2 | 11,1 % | 12,33 % (65.394) |
-| Mediana `speed_mps` | 5,35 | **0,0133** |
-| Mediana `num_lidar_points` | 96 | 36 |
-| Mediana `box_length` | 3,99 m | 1,21 m |
-| Clima | 3 categorías sucias | **530.396 `sunny`** |
-| Ubicación | — | SF 398.065 · Phoenix 132.331 |
-| Valores imposibles | hay (inyectados) | **0 filas** |
-| Celdas faltantes tras limpiar | suben (defectos destapados) | **0 → 0** |
-| F1 LEVEL_2 | 0,46 | **0,0893** (prec. 0,1847 · rec. 0,0588 · 1.572/26.713) |
-| Exactitud | 0,90 | **0,7805** |
-| F1-macro | 0,70 | **0,4822** |
-| Silueta | máximo k=3 (0,473) | **0,5228 (k=2) … 0,6103 (k=8), sin codo** |
-| PCA, 2 componentes | 70,2 % | **74,47 %** |
-| Ajuste de hiperparámetros | no mejora (pauta Act. 3.1) | **+0,0789** (0,5104 → 0,5893; sí supera ruido) |
+| | Waymo v2 |
+|---|---|
+| Filas · segmentos | **530.396 · 40** |
+| vehicle / sign / peatón / ciclista | **48,43 / 26,46 / 24,67 / 0,45 %** |
+| LEVEL_2 | 12,33 % (65.394) |
+| Mediana `speed_mps` | **0,0133** |
+| Clima | **530.396 `sunny`** |
+| Ubicación | SF 398.065 · Phoenix 132.331 |
+| Nulos / imposibles | **0 / 0** |
+| F1 LEVEL_2 | **0,0893** (prec. 0,1847 · rec. 0,0588) |
+| Exactitud | **0,7805** |
+| F1-macro | **0,4822** |
+| Silueta | **0,5228 (k=2) … 0,6103 (k=8), sin codo** |
+| PCA, 2 componentes | **74,47 %** |
+| Ajuste de hiperparámetros | **+0,0789** (0,5104 → 0,5893) |
 
 Otras fuentes en el mismo `datos/waymo_real/` (no entran al RF):
 
@@ -290,11 +271,11 @@ decisión de limpieza, los tests dicen qué pauta quedó desalineada.
 
 | Experiencia | Pipeline | Consume | Estado |
 |---|---|---|---|
-| **RA1** · Datos | `calidad` · `preprocesamiento` | El CSV crudo | ✅ |
+| **RA1** · Datos | `calidad` · `preprocesamiento` | `detecciones_reales` | ✅ |
 | **RA2** · Supervisado (Act. 2.2) | `supervisado` — partición sin fuga, entrenamiento, evaluación por clase | `detecciones_limpias` | ✅ |
 | **RA2** · No supervisado (Act. 2.3) | `no_supervisado` — agrupamiento y reducción de dimensionalidad | `detecciones_limpias` | ✅ |
 | **RA3** · Optimización (Act. 3.1–3.3) | `optimizacion` — ajuste, ensamble y selección sustentada | Salidas de `supervisado` | ✅ |
-| — | `ingesta` (5) + `waymo_real` (35) — EDA + ML sobre v2; camera_box y E2E a la vista | Parquet de Waymo | ✅ |
+| — | `ingesta` (4) + `waymo_real` (34) — EDA + ML sobre v2; camera_box y E2E a la vista | Parquet de Waymo | ✅ |
 
 Se registran en `pipeline_registry.py` sin tocar lo que ya existe. Cada experiencia **añade
 nodos, no reescribe el análisis anterior**. Que `supervisado` corra después de

@@ -121,7 +121,7 @@ Cubre las actividades **1.1** y **1.2** completas, más los bloques 1 y 2 de la 
 
 | Nivel | Criterio observable |
 |---|---|
-| **4** | Todo lo del nivel 3, y además: trae datos desde las tres naturalezas de fuente sin ayuda; explica por qué `id_interno` y `sensor_version` no son variables predictoras con el argumento correcto (cardinalidad y varianza cero); **explica por qué una asignación con índice desalineado no lanza error** |
+| **4** | Todo lo del nivel 3, y además: trae datos desde las tres naturalezas de fuente sin ayuda; explica por qué `id_interno` no es predictora (cardinalidad) y por qué `weather` constante no discrimina en este lote; **explica por qué una asignación con índice desalineado no lanza error** |
 | **3** | Clasifica correctamente las 16 columnas y describe qué representa una fila; lee el dataset desde CSV, SQL y JSON anidado; distingue `.loc` de `.iloc` con un ejemplo propio; optimiza los tipos con un ahorro medido |
 | **2** | Clasifica la mayoría de las variables pero confunde discreta con continua, o resuelve las fuentes estructuradas y se pierde en el JSON anidado y el texto libre |
 | **1** | Ejecuta `.info()` y `.describe()` sin interpretarlos; solo lee el CSV; usa `.loc` e `.iloc` indistintamente |

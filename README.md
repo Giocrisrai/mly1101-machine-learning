@@ -68,9 +68,8 @@ Problema → Datos → Exploración → Preprocesamiento → Modelamiento → Ev
 **108 horas · 4 SCT.** Las evaluaciones parciales ponderan 30 / 40 / 30 y suman el **60 %** de la
 nota final; el EFT, el **40 %** restante.
 
-> **Los notebooks de actividad usan un hilo de detecciones LiDAR (esquema Waymo).** El lote
-> **real** se arma en el paso 2–3 de arriba (~8 MB). Las actividades calificadas leen el CSV del
-> repositorio para que las cifras de la pauta coincidan. El **proyecto** usa el parquet real.
+> **Los notebooks de actividad usan un hilo de detecciones LiDAR (Perception v2).** El lote
+> se arma en el paso 2–3 de arriba. Las Act. 1.1–3.3 y el **proyecto** leen el mismo parquet.
 > Las **parciales y el EFT** se rinden sobre los casos oficiales: *Telco Customer Churn*,
 > *House Prices* o *Spotify Tracks*.
 
@@ -95,7 +94,7 @@ datos → cómo se almacenan y manipulan → qué tan sucios están → a quién
 | Notebook transversal | Para quién | Abrir |
 |---|---|---|
 | `14_opcional_waymo_buckets.ipynb` | **Empieza por aquí** si vas a usar datos reales: lote liviano, grupos, sin imágenes | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/14_opcional_waymo_buckets.ipynb) |
-| `00_opcional_waymo_real.ipynb` | EDA profundo sobre un segmento real (comparar con el CSV) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/00_opcional_waymo_real.ipynb) |
+| `00_opcional_waymo_real.ipynb` | EDA profundo sobre un segmento real (un segmento no alcanza para train/test) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/00_opcional_waymo_real.ipynb) |
 | `10_proyecto_equipo_plantilla.ipynb` | El equipo la copia; si ya corriste el 14, usa el parquet real | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/10_proyecto_equipo_plantilla.ipynb) |
 | `04_opcional_kedro_databricks.ipynb` | Quien quiera ver el análisis como pipeline ([`kedro_mly1101/`](kedro_mly1101/)) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/04_opcional_kedro_databricks.ipynb) |
 
@@ -497,28 +496,24 @@ python herramientas/descargar_waymo.py         # baja lidar_box + stats de un se
 pytest tests/test_mapeo_waymo.py -v
 ```
 
-Comprueban que los nombres de columna del notebook opcional siguen siendo los del dataset real, y
-que las relaciones que reproduce el dataset sintético existen también en los datos reales.
+Comprueban que los nombres de columna del notebook opcional siguen siendo los del dataset real.
 
 ### Estado de verificación
 
 | Qué | Cómo | Estado |
 |---|---|---|
-| Reproducibilidad del dataset | `pytest` (SHA-256 de dos generaciones) | ✅ |
-| Presencia de los 10 defectos | `pytest`, un test por defecto | ✅ |
 | Utilidades de `src/eda.py` | `pytest`, 14 tests | ✅ |
 | El solucionario ejecuta completo | `jupyter nbconvert --execute` | ✅ |
 | El notebook del alumno no filtra la pauta | `grep` sobre el `.ipynb` | ✅ |
-| Cifras de la pauta y la rúbrica | Comprobadas contra el CSV publicado | ✅ |
+| Cifras de la pauta y la rúbrica | Comprobadas contra el parquet real (530.396) | ✅ |
 | Esquema del notebook de Waymo | Contrastado con el código fuente oficial (2026-08-12) | ✅ |
 | Ejecución del notebook de Waymo | `jupyter nbconvert --execute` sobre datos reales descargados | ✅ ejecutado de extremo a extremo el 2026-08-13 |
 | Análisis de sesgo de muestreo | **Censo** de los 798 segmentos de training de Waymo | ✅ medido el 2026-08-16 · [informe](docs/sesgo_waymo.md) |
 | **Ejecución en Google Colab** (notebooks 01) | Abiertos desde el badge y ejecutados | ✅ 2026-08-16 · 29 celdas, 0 errores, 0 warnings |
 | Ejecución en Colab del notebook de Waymo | Ejecutado en Colab el 2026-08-16 | ⚠️ **depende de tu cuenta**: el código llega a Google Cloud, pero la descarga exige que la cuenta de Colab sea la que aceptó los términos de Waymo. Tres trampas documentadas en el Paso 2 del notebook |
 | Mapeo del esquema de Waymo | `pytest tests/test_mapeo_waymo.py` contra un Parquet real | ✅ 10/10 |
-| Kedro sintético (pauta Act. 1.3–3.3) | `kedro run` | ✅ **30/30** |
-| Kedro `ingesta` (fuentes en disco) | `kedro run --pipeline ingesta` 2026-09-08 10:55 | ✅ **5/5** · inventario: v2 40×34,943 MB · camera_box 40×7,181 MB · E2E 1×0,035 MB · v1/Motion/JPEG = 0 |
-| Kedro `waymo_real` | mismos 530.396 | **35/35** en 1568,4 s (11:21). F1 `LEVEL_2` = **0,0893** · exactitud 0,7805 · ganancia RA3 +0,0789 |
+| Kedro `__default__` = `waymo_real` | `kedro run` | ✅ **34 nodos** · F1 `LEVEL_2` = **0,0893** |
+| Kedro `ingesta` | `kedro run --pipeline ingesta` 2026-09-08 | ✅ **4/4** · v2 40×34,943 MB · camera_box 40×7,181 MB · E2E 1×0,035 MB |
 | Notebooks docente 1.1–3.3 + 04 + 10 | `nbconvert --execute` | ✅ |
 | Perception v1 / Motion / `camera_image` | 0 archivos en disco | no se bajan |
 

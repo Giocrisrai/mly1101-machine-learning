@@ -3,6 +3,9 @@ datos/waymo_real/
 *.parquet
 *.tfrecord
 
+# No hay CSV de pauta. No vuelvas a versionar uno.
+datos/crudos/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -15,21 +18,14 @@ venv/
 # Salidas de trabajo del alumno
 notebooks/*_resuelto.ipynb
 salidas/
-
-# Exportaciones del benchmark de formatos (Actividad 1.2)
 salidas_act12/
 notebooks/salidas_act12/
-
-# Salidas de la plantilla de proyecto de equipo
 salidas_proyecto/
 notebooks/salidas_proyecto/
+notebooks/kedro_mly1101/
 
-# El proyecto Kedro SI se versiona (kedro_mly1101/): es la columna de ingenieria
-# de la asignatura. Lo que NO se versiona son sus salidas, que se regeneran con
-# `kedro run` en un par de segundos. Incluye data/waymo/, las del recorrido real.
+# El pipeline Kedro SÍ se versiona. Sus salidas no.
 kedro_mly1101/data/
-
-# Artefactos que Kedro escribe al correr (no son el pipeline).
 kedro_mly1101/.viz/
 kedro_mly1101/uv.lock
 kedro_mly1101/.telemetry
@@ -37,6 +33,8 @@ kedro_mly1101/.telemetry
 # Credenciales locales (AWS Academy, GCS). Nunca versionar.
 .env
 .env.local
+credentials.json
+**/credentials.json
 
 # macOS
 .DS_Store

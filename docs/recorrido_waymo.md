@@ -29,7 +29,7 @@ datos/waymo_real/detecciones_reales.parquet     ← gitignore, licencia Waymo
 datos/waymo_real/muestra/<segmento>/*.parquet
         │
         ├─ Colab / local     notebooks 14 · 10 · 00     waymo.cargar_tabla_curso
-        ├─ Kedro             waymo_real (35 nodos)      catalog.yml remapea la entrada
+        ├─ Kedro             kedro run (34 nodos)       catalog.yml
         │                    salidas → kedro_mly1101/data/waymo/
         ├─ CloudShell        Upload file  o  aws s3 cp  al mismo path
         ├─ S3 privado        s3://…/detecciones_reales.parquet   (opcional, no público)
@@ -197,22 +197,22 @@ Supervisado y no supervisado son **RA2**. Ajuste / ensamble / CV son **RA3**.
 | **Hiperparámetros** | ¿Ajustar gana más que el ruido? | 08 · Act 3.1 | `optimizacion` | `ganancia_del_ajuste.csv` |
 | **Ensamble** | ¿Voting / boosting justifican el costo? | 09 · Act 3.2 | `optimizacion` | `comparacion_modelos.csv` |
 | **Robustez / selección** | ¿La diferencia es real? | 11 · Act 3.3 | `optimizacion` | `robustez_modelos.csv`, `seleccion_de_modelo.csv` |
-| **Proyecto** | Todo sobre *tu* tabla | **10** | `waymo_real` (35 nodos) | `data/waymo/` |
+| **Proyecto** | Todo sobre *tu* tabla | **10** | `kedro run` (34 nodos) | `data/` |
 
 Comandos:
 
 ```bash
 cd kedro_mly1101
-kedro run                              # 30 nodos · CSV de la pauta
-kedro run --pipeline ingesta           # 5 nodos · inventario de lo que hay en disco
-kedro run --pipeline waymo_real        # 35 nodos · mismos análisis, entrada real
+kedro run                              # 34 nodos · Perception v2
+kedro run --pipeline ingesta           # 4 nodos · inventario
+kedro run --pipeline waymo_real        # alias de kedro run
 kedro run --pipeline supervisado       # solo clasificación (pide datos limpios)
 kedro run --pipeline no_supervisado    # solo k-medias / PCA
 kedro run --pipeline optimizacion      # RA3 (pide la partición del supervisado)
 ```
 
-`waymo_real` **no duplica nodos**: remapea `detecciones_crudas` → `detecciones_reales`.
-Las salidas reales van a `kedro_mly1101/data/waymo/` (no se versionan).
+`__default__` y `waymo_real` son el mismo grafo. Las salidas van a `kedro_mly1101/data/`
+(no se versionan).
 
 ---
 
@@ -222,8 +222,8 @@ Sobre **datos reales** el informe de limpieza suele dar diferencia ~0 (Waymo ent
 limpias). El trabajo no es “encontrar nulos”: es desbalance (`cyclist`, `LEVEL_2`), clima
 casi todo `sunny`, y **no partir al azar por fila**.
 
-Funciones puras en `src/eda.py` (las mismas que Kedro). Notebook 01 = pauta sobre el CSV;
-notebook 14 = la misma lógica sobre el parquet.
+Funciones puras en `src/eda.py` (las mismas que Kedro). Notebook 01 = EDA sobre el parquet;
+notebook 14 = armar el lote.
 
 Partición: `segment_id` es el grupo. `waymo.partir_por_grupo` / nodo `particionar`. Un solo
 segmento → el pipeline **falla a propósito** (todas las filas comparten contexto).
@@ -243,8 +243,8 @@ segmento → el pipeline **falla a propósito** (todas las filas comparten conte
 | Métrica que manda | **F1 macro** (desbalance ~88/12). La exactitud miente |
 | Modelo de referencia | Random Forest (`parameters.yml` → `modelo`) |
 
-No se clasifica `object_type` en la pauta: en el CSV sintético se resuelve al 99,98 % por
-cómo se sortean las dimensiones. No enseña a evaluar.
+No se clasifica `object_type`: en v2 las dimensiones ya separan tipos casi a la
+perfección y no enseña a evaluar un modelo.
 
 ### Regresión (IL2.2, otro caso)
 
@@ -302,12 +302,11 @@ python herramientas/descargar_waymo.py --muestra 40   # o Upload file
 #    (no el Python de los nodos)
 
 # 3) Mismo comando
-cd kedro_mly1101 && kedro run --pipeline waymo_real
+cd kedro_mly1101 && kedro run
 ```
 
-El modelo queda en `data/06_models/clasificador.pickle` (recorrido sintético). El real
-escribe métricas en `data/waymo/07_model_output/`. Compara **antes/después** con las
-tablas CSV, no con un pantallazo.
+El modelo queda en `data/06_models/clasificador.pickle`. Las métricas, en
+`data/07_model_output/`. Compara **antes/después** con las tablas CSV, no con un pantallazo.
 
 ---
 
@@ -320,7 +319,7 @@ Aquí eso ya está:
 |---|---|---|
 | Rutas y formatos | `kedro_mly1101/conf/base/catalog.yml` | Único sitio con paths. CSV local vs Parquet vs (más adelante) un URI |
 | Decisiones | `parameters.yml` | Umbrales, mapas, k, hiperparámetros |
-| Grafo | `pipeline_registry.py` | `__default__` = 30 nodos; `waymo_real` = 35 |
+| Grafo | `pipeline_registry.py` | `__default__` = `waymo_real` = 34 nodos |
 | Artefacto | `clasificador.pickle` | El modelo entrenado, no un servicio HTTP |
 | Contrato de tests | `tests/test_pipeline_supervisado.py` | El RF **no** ve `camera_box` |
 
@@ -386,10 +385,9 @@ Capas Kedro (`01_raw` no se toca → `03_primary` limpio → `07_model_output` m
 
 | Trabajo | RAM de verdad | Dónde |
 |---|---|---|
-| Act. 1.1–3.3 (CSV) | 20 MB + sklearn chico → **< 1 GB** | Colab o CloudShell |
+| Act. 1.1–3.3 (parquet v2) | tabla ~257 MB → **1–2 GB** | Colab o CloudShell |
 | Notebook 14, lote 8 | decenas de MB | Colab |
-| `kedro run` (30 nodos, CSV) | < 2 GB | CloudShell o Colab |
-| `waymo_real` 40 segmentos (RF + RA3) | tabla 257 MB + bosques → **pide 8–16 GB** | Colab (≈ 12 GB) o SageMaker **`ml.t3.large` / `xlarge`**, `LabRole`, **sin GPU**. Stop al terminar |
+| `kedro run` 40 segmentos (34 nodos, RF + RA3) | tabla 257 MB + bosques → **8–16 GB** | Colab (≈ 12 GB) o SageMaker **`ml.t3.large` / `xlarge`**, `LabRole`, **sin GPU**. Stop al terminar |
 | Spark “a ver” | el driver del Free Edition | [Databricks Free](databricks_free.md), no EMR |
 
 **EC2: no.** Si alguien la prende igual: `t3.medium` o `large`, `LabInstanceProfile`, disco

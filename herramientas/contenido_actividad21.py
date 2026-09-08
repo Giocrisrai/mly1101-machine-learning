@@ -288,8 +288,8 @@ print(pd.Series(hallazgos).rename("fase").to_string())
 >
 > | Hallazgo | Fase | Por qué |
 > |---|---|---|
-> | 10 defectos, 40.680 filas | `comprension_de_los_datos` | Diagnóstico. Actividad 1.3 |
-> | `CYCLIST` ~2 % | `comprension_de_los_datos` | Desbalance medido; aún no es un KPI |
+> | 530.396 filas, 40 segmentos, 0 % nulos | `comprension_de_los_datos` | Diagnóstico. Actividad 1.3 |
+> | `cyclist` 0,45 % | `comprension_de_los_datos` | Desbalance medido; aún no es un KPI |
 > | Tabla de decisiones | `preparacion_de_los_datos` | Imputar/tirar/conservar. 1.3 y pipeline |
 > | 793/798 `sunny` | `comprension_del_negocio` | El sistema no va a operar solo con sol. 1.4 |
 > | Parquet vs CSV | `preparacion_de_los_datos` | Actividad 1.2: el formato es una decisión |
@@ -304,8 +304,8 @@ print(pd.Series(hallazgos).rename("fase").to_string())
 > éxito **del equipo de percepción**, no del censo) es lo que cierra el bloque 3:
 > ética y sesgo ya tocaron negocio, pero la pregunta operativa sigue prestada.
 >
-> Cifras para no citar de memoria: 40.680 filas, 153 segmentos, `CYCLIST` 1,94 %
-> en el CSV sucio (antes de normalizar `object_type`).
+> Cifras para no citar de memoria: 530.396 filas, 40 segmentos, `cyclist` 0,45 %
+> en Perception v2 (0 % nulos; `weather` 100 % `sunny`).
 """
     ),
     # ======================================================================

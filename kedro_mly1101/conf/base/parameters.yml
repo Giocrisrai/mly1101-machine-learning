@@ -49,8 +49,8 @@ reglas_dominio:
     columna: num_lidar_points
 
 # Columnas que no aportan información a un modelo.
-# sensor_version es constante (varianza cero); id_interno es casi único, así que
-# un modelo con capacidad suficiente lo memoriza y el rendimiento en test se cae.
+# `sensor_version` no viene en v2 (si aparece, se tira: varianza cero).
+# `id_interno` es casi único: un modelo con capacidad suficiente lo memoriza.
 columnas_a_descartar:
   - sensor_version
 

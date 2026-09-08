@@ -332,7 +332,7 @@ print("memoria, existen solo durante la ejecución y no tocan el disco.")
         """
 Fíjate en dos cosas del listado:
 
-1. Los cuatro nodos de **calidad** dependen solo de `detecciones_crudas`: son independientes
+1. Los cuatro nodos de **calidad** dependen solo de `detecciones_reales`: son independientes
    entre sí y podrían correr en paralelo.
 2. Los cinco de **preprocesamiento** forman una cadena, porque cada uno consume la salida del
    anterior. Kedro lo dedujo de los nombres, no de una lista de pasos.
@@ -483,7 +483,7 @@ El mismo análisis de la Actividad 1.3, pero ahora:
 Kedro resuelve la **estructura**. Databricks resuelve la **escala**: qué hacer cuando los datos
 ya no caben en la memoria de un computador.
 
-Nuestro dataset son 40.680 filas y unos 20 MB en RAM. La flota real de Waymo genera del orden de
+Nuestro lote de clase son **530.396** filas y unos **257 MB** en RAM. La flota real de Waymo genera del orden de
 **200.000 detecciones por segmento**, y hay 798 segmentos solo en el conjunto de entrenamiento:
 unos 160 millones de filas. Eso ya no lo abre pandas en un portátil.
 

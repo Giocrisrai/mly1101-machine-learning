@@ -8,7 +8,7 @@ Community Edition se retiró en 2025. Usa
 
 El contrato con este curso: **los nodos de Kedro no se reescriben.** Cambia el *dónde* viven
 los archivos (un Volume). El *cómo* (pandas vs Spark) se prueba en **una** celda, no en el
-grafo de 30 nodos.
+grafo de 34 nodos.
 
 Guía de tamaños y máquinas: [`recorrido_waymo.md`](recorrido_waymo.md).
 Lab AWS: [`aws_academy_laboratorio.md`](aws_academy_laboratorio.md).
@@ -21,8 +21,8 @@ Notebook que lo enseña: `04_opcional_kedro_databricks.ipynb`.
 | Sí | No |
 |---|---|
 | Importar los `.ipynb` del curso (14, 10, 04, 01) | Bajar el bucket Waymo (JPEG / nubes) |
-| Subir **tu** CSV o parquet a un Volume **privado** | Hacer público el parquet (licencia Waymo) |
-| Correr pandas en el driver (40 k o 530 k filas caben) | Cluster EMR en Academy “porque es Spark” |
+| Subir **tu** parquet a un Volume **privado** | Hacer público el parquet (licencia Waymo) |
+| Correr pandas en el driver (530 k filas caben) | Cluster EMR en Academy “porque es Spark” |
 | Una celda PySpark con `count()` (evaluación perezosa) | Reescribir `src/eda.py` a Spark para la nota |
 | Git Folder del repo (código) | `kedro run --pipeline waymo_real` **dentro** de Free Edition como entregable |
 | Editar `catalog.yml` *en papel* (pandas → Spark/Delta) | Unity Catalog de producción, Jobs de pago, DLT |

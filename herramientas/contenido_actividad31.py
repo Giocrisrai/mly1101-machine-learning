@@ -140,12 +140,13 @@ y si esa ganancia supera la variabilidad entre pliegues.
 > | 0 · Encuadre | 15 | Qué es un hiperparámetro y qué no |
 > | 1 · Validación cruzada por grupo ⭐ | 40 | Dónde se mide, y por qué GroupKFold |
 > | 2 · La búsqueda | 40 | Rejilla vs aleatoria |
-> | 3 · ¿Cuánto ganamos? ⭐⭐ | 40 | **El resultado decepciona, y ese es el punto** |
+> | 3 · ¿Cuánto ganamos? ⭐⭐ | 40 | **El macro se mueve; `LEVEL_2` no** |
 > | 4 · La trampa de ajustar en prueba ⭐ | 35 | Más sutil que la fuga del RA2 |
 > | Cierre | 10 | Informe de ajuste |
 >
-> **El bloque 3 es el que sostiene la sesión y no se recorta.** El ajuste sale **peor** que los
-> valores por defecto: −0,0006. No lo adelantes.
+> **El bloque 3 es el que sostiene la sesión y no se recorta.** La búsqueda sube el F1-macro
+> **+0,0789** (0,5104 → 0,5893) y **sí** supera el ruido (0,0282). No lo adelantes. El remate
+> es que `LEVEL_2` sigue en **0,0893**.
 """
     ),
     md("---\n## Preparación del entorno"),
@@ -249,13 +250,13 @@ bloque 3 de la Actividad 2.2.)*
         """
 > ### 🎓 Pauta docente — Bloque 1
 >
-> **Cifras medidas:** 5 pliegues sobre 29.946 filas de entrenamiento en 114 segmentos,
+> **Cifras medidas:** 5 pliegues sobre 384.280 filas de entrenamiento en **30** segmentos,
 > **0 segmentos compartidos** en todos.
 >
-> **Respuesta al TODO 2:** porque el problema está desbalanceado 89/11 y la exactitud del
-> baseline trivial ya es 0,8896. Optimizar exactitud llevaría al buscador a configuraciones que
-> **abandonan la clase minoritaria**, que es justo la que interesa. `f1_macro` pondera las dos
-> clases por igual.
+> **Respuesta al TODO 2:** porque el problema está desbalanceado ~88/12 (en prueba, 81,7 %
+> `LEVEL_1`) y la exactitud del baseline trivial ya es 0,8172. Optimizar exactitud llevaría al
+> buscador a configuraciones que **abandonan la clase minoritaria**, que es justo la que
+> interesa. `f1_macro` pondera las dos clases por igual.
 >
 > **La frase:** *elegir la métrica del ajuste es elegir qué error te importa. Se decide antes de
 > buscar, no después de ver los resultados.*
@@ -398,30 +399,24 @@ print("   de haber mejorado nada.")
         """
 > ### 🎓 Pauta docente — Bloque 3 ⭐⭐
 >
-> **Cifras medidas:**
+> **Cifras medidas** (Perception v2, 2026-09-08, `ganancia_del_ajuste.csv`):
 >
-> | Configuración | F1-macro | Desv. entre pliegues |
-> |---|---|---|
-> | Valores por defecto | **0,6970** | 0,0087 |
-> | Mejor de la búsqueda | **0,6964** | 0,0091 |
-> | **Ganancia** | **−0,0006** | |
+> | Configuración | F1-macro |
+> |---|---|
+> | Valores por defecto | **0,5104** |
+> | Búsqueda | **0,5893** |
+> | **Ganancia** | **+0,0789** (supera ruido 0,0282) |
 >
-> **El ajuste salió peor.** Y la diferencia (0,0006) es catorce veces menor que el ruido
-> (0,0087), así que ni siquiera es "peor": es **indistinguible**.
->
-> **Deja que la decepción se instale.** Es real y es la lección. Alguien va a preguntar si algo
-> se hizo mal: no. Se hizo bien, y el resultado es que no había nada que ganar por ahí.
+> **El ajuste sí ganó, y aun así el modelo se pierde el 94 % de las difíciles.** Deja que
+> celebren el +0,08 y después pregunta por `LEVEL_2`.
 >
 > **Respuestas esperadas al TODO 6:**
 >
-> 1. **No fue inútil: ahora sabes que no hay nada ahí.** Antes lo suponías. Descartar una vía con
->    evidencia es un resultado, aunque no sea el que esperabas. Y además tienes el argumento para
->    defender que el modelo por defecto es suficiente, en vez de gastar semanas en ajustarlo.
-> 2. **De las variables** (ingeniería de características), **de más datos**, de haber definido
->    mejor el problema y de la calidad de las etiquetas. En el RA1 y el RA2, no aquí.
-> 3. Cuando los valores por defecto están **lejos** de lo razonable: redes neuronales, SVM con
->    kernel, boosting con tasa de aprendizaje mal puesta. `RandomForestClassifier` tiene
->    valores por defecto muy sensatos, y por eso mueve poco.
+> 1. **No fue inútil: el macro subió y superó el ruido.** Reportarlo es correcto. Venderlo como
+>    "ya podemos confiar en el sensor" no lo es.
+> 2. **`LEVEL_2` sigue en F1 0,0893.** Las mejoras de primer orden siguen en las variables, en
+>    más datos de la clase difícil y en el umbral de decisión, no en otra vuelta de la rejilla.
+> 3. El ensamble de 3.2 (0,5938) no se distingue del gradient boosting (0,594).
 >
 > **La frase de la sesión:**
 >
@@ -479,22 +474,9 @@ La tabla mide tres cosas que se confunden con facilidad. Explica cada una.
         """
 > ### 🎓 Pauta docente — Bloque 4 ⭐
 >
-> **Cifras medidas** (seis profundidades, `RandomForest` de 100 árboles):
->
-> | `max_depth` | Validación cruzada | En prueba | Brecha |
-> |---|---|---|---|
-> | 4 | 0,6918 | 0,7027 | +0,0109 |
-> | 6 | 0,6919 | 0,7022 | +0,0103 |
-> | 8 | 0,6906 | 0,7009 | +0,0103 |
-> | 12 | 0,6914 | 0,7013 | +0,0099 |
-> | 16 | 0,6956 | 0,7077 | +0,0121 |
-> | **sin límite** | **0,6970** | **0,7144** | +0,0174 |
->
-> | Resumen | Valor |
-> |---|---|
-> | Optimismo del criterio tramposo | **0,0** |
-> | Margen de la trampa (mejor − peor en prueba) | **0,0135** |
-> | Brecha media validación vs prueba | **+0,0118** |
+> **Cifras de la trampa:** no recites una tabla de profundidades del hilo viejo. Salen de la
+> celda. Lo que se busca: **no elegir hiperparámetros mirando la prueba.** En v2, el F1-macro
+> de referencia del RF por defecto en prueba es **0,4822**; el de la búsqueda, **0,5893**.
 >
 > **El optimismo salió CERO, y hay que explicarlo bien o se saca la conclusión contraria.**
 > Ambos criterios eligieron la misma configuración (*sin límite*), así que esta vez la trampa no

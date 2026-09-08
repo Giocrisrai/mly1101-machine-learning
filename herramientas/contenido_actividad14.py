@@ -305,15 +305,12 @@ print("   Es decir, por cada ciclista hay unos", int(1/composicion.loc[minoritar
         """
 > ### 🎓 Pauta docente — Bloque 2
 >
-> **Cifras medidas** sobre el dataset sintético: `vehicle` 61,73 % · `pedestrian` 26,22 % ·
-> `sign` 8,12 % · **`cyclist` 1,94 %**. Uno por cada ~32 vehículos.
->
-> **Sobre los datos reales es peor:** en los 40 segmentos descargados, los ciclistas son el
-> **0,45 %**. El dataset sintético es más benigno que la realidad.
+> **Cifras medidas** sobre Perception v2 (40 segmentos): `vehicle` 48,43 % · `sign` 26,46 % ·
+> `pedestrian` 24,67 % · **`cyclist` 0,45 %**. Uno por cada ~108 vehículos.
 >
 > **La cadena que se busca en el TODO 4**, y hay que dejarla decir a ellos:
 >
-> 1. La minoría del dataset son los **ciclistas** (1,94 %).
+> 1. La minoría del dataset son los **ciclistas** (0,45 %).
 > 2. En la vía, un ciclista es de los usuarios **más vulnerables**: sin carrocería, sin airbag.
 > 3. Por lo tanto: *el grupo del que el modelo tiene menos ejemplos es exactamente el que más
 >    daño sufre si el modelo se equivoca.*
@@ -323,8 +320,8 @@ print("   Es decir, por cada ciclista hay unos", int(1/composicion.loc[minoritar
 > igual en banca (clientes sin historial crediticio), en salud (enfermedades raras) y en
 > contratación (perfiles atípicos).
 >
-> **Adelanto útil hacia el RA2:** con el 1,94 %, un modelo que **ignore a los ciclistas por
-> completo** puede sacar más del 98 % de exactitud. Se mide en la Actividad 2.2, y ahí se
+> **Adelanto útil hacia el RA2:** con el 0,45 %, un modelo que **ignore a los ciclistas por
+> completo** puede sacar más del 99 % de exactitud. Se mide en la Actividad 2.2, y ahí se
 > entiende del todo. Aquí basta con sembrarlo.
 >
 > **Criterio de logro:** identifica la minoría con su cifra y conecta subrepresentación con
@@ -680,9 +677,9 @@ print("   Ninguna de las tres es un dato personal. Las tres juntas son un identi
 >    las imágenes contienen **personas, matrículas y fachadas** de vía pública real. No es
 >    burocracia: es que quien aparece en esos datos no dio su consentimiento.
 >
-> **El cierre del bloque, si hay tiempo:** que noten que este repositorio usa un dataset
-> **sintético** justamente por esto, y que esa decisión está documentada. La coherencia entre lo
-> que se enseña y lo que se hace es parte de la clase.
+> **El cierre del bloque, si hay tiempo:** que noten que este repositorio **no redistribuye**
+> el parquet de Waymo (licencia no comercial) y que esa decisión está documentada. La coherencia
+> entre lo que se enseña y lo que se hace es parte de la clase.
 >
 > **Criterio de logro:** interpreta el salto de cardinalidad, identifica la trayectoria como el
 > riesgo concreto y aplica minimización a una columna justificando la elección.

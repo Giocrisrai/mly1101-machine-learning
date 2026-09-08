@@ -149,22 +149,13 @@ comparacion
         """
 > ### 🎓 Pauta docente — Bloque 1
 >
-> **Cifras medidas** (`f1_macro`, `GroupKFold` de 5 pliegues):
+> **Cifras medidas** (Perception v2, 2026-09-08): gradient boosting **0,594** · ensamble
+> **0,5938** · ruido **0,0282**. El detalle por pliegue sale de la celda; no recites la tabla
+> del hilo viejo.
 >
-> | Modelo | Media | Desv. | Peor pliegue | Mejor pliegue | Segundos |
-> |---|---|---|---|---|---|
-> | Bosque aleatorio | **0,6909** | 0,0079 | 0,6790 | 0,7032 | 4,5 |
-> | Ensamble por votación | 0,6869 | 0,0085 | 0,6779 | 0,7017 | 5,9 |
-> | Gradient boosting | 0,6804 | 0,0085 | 0,6739 | 0,6972 | 1,3 |
-> | Árbol | 0,6708 | 0,0166 | 0,6450 | 0,6934 | 0,3 |
-> | Regresión logística | **0,4847** | 0,0049 | 0,4751 | 0,4889 | 0,3 |
-> | Baseline | 0,4705 | 0,0010 | 0,4691 | 0,4715 | 0,3 |
->
-> **Respuesta al TODO 2:** la regresión logística saca **0,0142** sobre el baseline. Casi nada.
->
-> **Y eso es un diagnóstico, no un fracaso:** el problema **no es linealmente separable**. Una
-> frontera recta en el espacio de las siete variables no distingue las detecciones difíciles de
-> las fáciles. Los modelos de árbol, que trazan fronteras escalonadas, sacan 0,20 más.
+> **Respuesta al TODO 2:** si la logística queda pegada al baseline, el problema **no es
+> linealmente separable**. Una frontera recta no distingue las difíciles. Los árboles, sí
+> (aunque `LEVEL_2` siga en F1 0,0893).
 >
 > Merece decirse así:
 >
@@ -296,18 +287,14 @@ El ensamble combina árbol, bosque y boosting. No mejoró. Da una explicación, 
 >
 > **Cifras medidas:**
 >
-> | | Bosque solo | Ensamble por votación |
+> | | Búsqueda / GB | Ensamble |
 > |---|---|---|
-> | F1-macro | **0,6909** | 0,6869 |
-> | Desv. entre pliegues | 0,0079 | 0,0085 |
-> | Segundos | 4,5 | **5,9** |
+> | F1-macro (v2) | **0,594** | **0,5938** |
 >
-> ⚠️ **Los tiempos varían entre máquinas y entre corridas**; el sobrecosto medido oscila entre un
-> 10 % y un 30 %. Lo que no varía es el orden: el ensamble entrena los tres modelos que combina,
-> así que **siempre** cuesta más que el más caro de ellos. Al corregir, mira el orden, no el
-> porcentaje.
+> **Diferencia: −0,0002**, menor que el ruido (**0,0282**). El ensamble no suma.
 >
-> **Diferencia: −0,0040**, menor que el ruido (0,0079). Y además **es el más lento de los seis**.
+> ⚠️ **Los tiempos varían entre máquinas**; el ensamble **siempre** cuesta más que el más caro
+> de sus miembros. Al corregir, mira el orden, no el porcentaje.
 >
 > **El TODO 4 funciona si apuestan.** Casi todos dicen "por encima": es lo que sugiere la
 > intuición y lo que dicen los tutoriales. Queda por debajo.

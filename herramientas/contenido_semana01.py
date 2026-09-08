@@ -242,7 +242,7 @@ df.head()
 | `weather` | Condición climática del segmento |
 | `time_of_day` | Momento del día |
 | `detection_difficulty` | Dificultad de la detección según el sensor (LEVEL_1 = fácil) |
-| `sensor_version` | Versión del firmware del sensor |
+| `location` | Ciudad del segmento (`location_sf` / `location_phx`) |
 
 **Una fila = una detección de un objeto en un instante determinado.** No es un objeto, ni un
 segmento, ni un vehículo. Ténlo presente: define qué significa "duplicado" más adelante.
@@ -319,18 +319,19 @@ print("   (Si esto fuera un CSV, un solo texto ensuciaría toda la columna. Parq
         """
 > ### 🎓 Pauta docente — TODO 2
 >
-> **Respuesta:** `timestamp_micros` tiene dtype `object` porque contiene el literal `"N/D"` en
-> ~60 filas (0,15 %). Basta **un** valor de texto para que toda la columna deje de ser numérica.
+> **Respuesta:** `timestamp_micros` en el parquet **ya es `int64`**. `to_numeric` no convierte
+> nada: 0 valores no numéricos. Parquet conservó el tipo. Un CSV habría podido ensuciar toda
+> la columna con un solo `"N/D"`.
 >
-> **Pregunta para el curso:** ¿por qué es peligroso? Porque `df["timestamp_micros"].mean()`
-> falla, `.sort_values()` ordena alfabéticamente ("9" > "10") y cualquier resta de tiempos
-> revienta. Un error de 60 filas rompe una columna de 40.000.
+> **Pregunta para el curso:** ¿por qué igual convertimos? Porque el hábito de auditar el dtype
+> se lleva a cualquier fuente. Aquí el hallazgo es *cero suciedad de tipo*; eso también se
+> documenta.
 >
-> **Error frecuente:** el alumno hace `df.dropna()` esperando que desaparezca. No desaparece:
-> `"N/D"` **no es** un nulo para pandas, es un string perfectamente válido.
+> **Error frecuente:** el alumno hace `df.dropna()` esperando que desaparezca un `"N/D"`. No
+> hay ninguno. `"N/D"` **no es** un nulo para pandas: si apareciera, `dropna()` no lo vería.
 >
-> **Criterio de logro:** identifica la columna, cuantifica el problema (60 filas) y explica por
-> qué el dtype importa.
+> **Criterio de logro:** identifica el dtype, cuantifica (0 no numéricos) y explica por qué
+> el formato importa.
 """
     ),
     md(
@@ -403,11 +404,12 @@ print(____)
 >    memoriza el identificador y el rendimiento en test se desploma. Sirve como llave, no como
 >    feature. (`segment_id` es distinto: agrupa detecciones y **sí** sirve para razonar sobre
 >    dependencia entre filas y para armar el split más adelante.)
-> 2. **`sensor_version`** es constante (`v2.0.1`). Varianza cero ⇒ información cero. Se elimina.
->    Vale la pena preguntar al curso: ¿y si mañana llega la versión `v2.1`? Entonces sí importa,
->    y probablemente cambien las distribuciones. Documentarlo es parte del trabajo.
-> 3. Nulos declarados: `speed_mps` (~2 %) y `weather` (~5 %). Nulos ocultos: `num_lidar_points`
->    con `-1` (~3 %) y `timestamp_micros` con `"N/D"`.
+> 2. **`weather`** es constante en este lote (`sunny`, 100 %). Varianza cero ⇒ no discrimina
+>    detecciones, pero **sí es un hallazgo de cobertura**: el sistema no va a operar solo con
+>    sol. No se tira a la ligera: se documenta. (`location` sí varía: SF / Phoenix.)
+> 3. Nulos declarados: **0**. Nulos ocultos (`-1`, `"N/D"`): **0**. v2 llega curado. El trabajo
+>    no es cazar 10 defectos plantados: es el desbalance (`cyclist` 0,45 %, `LEVEL_2` 12,33 %)
+>    y el sesgo de muestreo.
 >
 > **Punto clave del bloque:** `df.isna().sum()` **no** basta para auditar los faltantes.
 """
@@ -459,7 +461,7 @@ tipos_estadisticos = {
     "weather": "nominal",
     "time_of_day": "nominal",
     "detection_difficulty": "ordinal",
-    "sensor_version": "constante",
+    "location": "nominal",
 }
 """,
         """
@@ -481,7 +483,7 @@ tipos_estadisticos = {
     "weather": "____",
     "time_of_day": "____",
     "detection_difficulty": "____",
-    "sensor_version": "____",
+    "location": "____",
 }
 """,
     ),
@@ -879,22 +881,20 @@ print("✅ 0 duplicados exactos y 0 lógicos. drop_duplicates() aquí no cambia 
         """
 > ### 🎓 Pauta docente — TODO 11
 >
-> **Cifras esperadas (dataset de 40.680 filas):** ~480 duplicados exactos y ~200 duplicados
-> lógicos (680 por llave en total).
+> **Cifras esperadas (Perception v2, 530.396 filas):** **0** duplicados exactos y **0**
+> duplicados lógicos. `drop_duplicates()` aquí no cambia nada.
 >
-> **La demostración que conviene hacer en vivo:** ejecutar `len(df.drop_duplicates())` y mostrar
-> que quedan ~200 filas con llave repetida. `drop_duplicates()` **no terminó el trabajo**.
+> **La demostración que conviene hacer en vivo:** ejecutar el reporte y mostrar el cero. El
+> método es el mismo que usarías si el cero no estuviera: en un pipeline real los duplicados
+> aparecen. Aquí el hallazgo es *curado*, y también se documenta.
 >
 > **Preguntas:**
-> - *"¿Por qué existen duplicados lógicos en un sistema real?"* → reprocesamiento del mismo
->   segmento con otra versión del algoritmo, mezcla de dos exportaciones, reintentos tras una
->   caída de red. Es lo normal en un pipeline de datos, no una rareza.
-> - *"¿Con cuál de las dos filas te quedas?"* → no hay respuesta única, y ese es el punto: hay
->   que **decidir y documentar** (la más reciente, la de más puntos láser, el promedio). Lo
->   inaceptable es no darse cuenta.
+> - *"¿Por qué un sistema real sí tiene duplicados?"* → reprocesamiento, mezcla de exportaciones,
+>   reintentos. Es lo normal en un pipeline, no una rareza.
+> - *"¿Con cuál de las dos filas te quedas si aparecen?"* → hay que **decidir y documentar**.
 >
-> **Criterio de logro:** distingue ambos tipos, los cuantifica y propone una regla de
-> desempate justificada.
+> **Criterio de logro:** distingue ambos tipos, los cuantifica (aquí: cero) y propone una regla
+> de desempate por si mañana no es cero.
 """
     ),
     # ======================================================================
@@ -1143,14 +1143,14 @@ Completa esta tabla con tus decisiones. Es el corazón de tu entrega.
 
 | Columna | Problema detectado | Cifra | Decisión | Justificación |
 |---|---|---|---|---|
-| `timestamp_micros` | Valor `"N/D"` fuerza dtype texto | 60 filas | Convertir a numérico, `"N/D"` → `NaN` | Se preserva la fila; solo se pierde el instante |
-| `num_lidar_points` | `-1` como nulo oculto | | | |
-| `weather` | | | | |
-| `object_type` | | | | |
-| duplicados | | | | |
-| `box_length` | | | | |
-| `speed_mps` | | | | |
-| `sensor_version` | | | | |
+| `timestamp_micros` | ¿dtype texto / `"N/D"`? | | | |
+| `num_lidar_points` | ¿`-1` centinela? | | | |
+| `weather` | cobertura (¿constante?) | | | |
+| `object_type` | desbalance | | | |
+| duplicados | exactos y lógicos | | | |
+| `box_length` | imposibles vs atípicos | | | |
+| `speed_mps` | nulos / imposibles | | | |
+| `location` | sesgo geográfico | | | |
 
 *(doble clic para editar la tabla)*
 """
@@ -1161,14 +1161,14 @@ Completa esta tabla con tus decisiones. Es el corazón de tu entrega.
 >
 > | Columna | Problema | Cifra | Decisión razonable | Justificación |
 > |---|---|---|---|---|
-> | `timestamp_micros` | `"N/D"` | 60 | `to_numeric(errors="coerce")` | No se pierde la fila completa por un campo |
-> | `num_lidar_points` | `-1` centinela | ~1.200 (3 %) | `-1` → `NaN` + columna indicadora | El `-1` contaminaría cualquier promedio |
-> | `weather` | 11 variantes + 5 % nulos | ~2.000 nulos | Normalizar; nulo como categoría `"desconocido"` | El nulo de clima puede ser informativo |
-> | `object_type` | 7 variantes para 4 clases | ~2.300 filas | Normalizar a 4 categorías | En 2.2 el objetivo será `detection_difficulty`, no el tipo |
-> | duplicados | 480 exactos + 200 lógicos | 1,7 % | Eliminar exactos; para lógicos, regla explícita (p. ej. conservar el de más puntos láser) | Un duplicado sesga el entrenamiento y contamina el split |
-> | `box_length` | negativos vs. buses | 80 vs. 600 | Negativos → `NaN`; buses **se conservan** | Solo lo imposible es error |
-> | `speed_mps` | nulos MNAR + imposibles | 787 + 160 | Imposibles → `NaN`; **no** eliminar filas; imputar por grupo + indicador | Eliminar sesga contra la noche |
-> | `sensor_version` | constante | 100 % | Eliminar la columna | Varianza cero |
+> | `timestamp_micros` | dtype (¿texto?) | `int64`, 0 `"N/D"` | Dejar; documentar que Parquet conservó el tipo | Un CSV habría roto la columna |
+> | `num_lidar_points` | ¿centinela `-1`? | 0 | El código igual convierte centinelas | Hábitos de auditoría |
+> | `weather` | constante `sunny` | **100 %** | Conservar y documentar el sesgo | Cobertura, no suciedad |
+> | `object_type` | desbalance | `cyclist` **0,45 %** | No tirar la minoría | Ética + modelo |
+> | duplicados | exactos / lógicos | **0 / 0** | Regla lista por si aparecen | Auditar no es inventar suciedad |
+> | `box_length` | imposibles vs buses | 0 imposibles; max > 12 m | Conservar atípicos reales | Solo lo imposible es error |
+> | `speed_mps` | nulos / imposibles | 0 nulos; max 34 m/s | No imputar lo que no falta | `dropna()` global no aplica |
+> | `location` | sesgo geográfico | SF 75 % · PHX 25 % | Documentar; no es feature de la caja | El sistema no opera solo en 2 ciudades |
 >
 > Se acepta cualquier decisión distinta **si está justificada**. Lo que no se acepta es
 > `df.dropna()` sin argumento.
@@ -1213,8 +1213,8 @@ def limpiar(datos: pd.DataFrame) -> pd.DataFrame:
            .drop_duplicates(subset=["segment_id", "timestamp_micros", "id_interno"], keep="first")
            .sort_index())
 
-    # 6. Columnas sin valor predictivo
-    d = d.drop(columns=["sensor_version"])
+    # 6. Columnas que no existen en v2 (p. ej. sensor_version del hilo viejo)
+    d = d.drop(columns=["sensor_version"], errors="ignore")
 
     return d
 
@@ -1253,8 +1253,8 @@ def limpiar(datos: pd.DataFrame) -> pd.DataFrame:
            .drop_duplicates(subset=["segment_id", "timestamp_micros", "id_interno"], keep="first")
            .sort_index())
 
-    # 6. Columnas sin valor predictivo
-    d = d.drop(columns=[____])
+    # 6. Columnas sin valor predictivo (si no está, no falla)
+    d = d.drop(columns=[____], errors="ignore")
 
     return d
 
