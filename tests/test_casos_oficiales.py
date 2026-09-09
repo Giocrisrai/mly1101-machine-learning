@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import io
+import sys
 import zipfile
 from pathlib import Path
 
 import pytest
-
-import sys
 
 RAIZ = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RAIZ / "herramientas"))
@@ -21,10 +20,6 @@ from preparar_casos_oficiales import (  # noqa: E402
 
 def _zip_parciales_minimo(tmp: Path) -> Path:
     """Un zip con la misma jerarquía que ``EV PARCIALES MLY1101`` pero CSV chicos."""
-    raiz = tmp / "EV PARCIALES MLY1101" / "PARCIAL 1"
-    for caso, meta in CASOS.items():
-        carpeta = raiz / meta["zip_interno"].replace(".zip", "")
-        # no: the official layout is PARCIAL 1/Telco_Dataset.zip containing Telco_Dataset/file.csv
     dest = tmp / "EV PARCIALES MLY1101.zip"
     with zipfile.ZipFile(dest, "w") as externo:
         for caso, meta in CASOS.items():

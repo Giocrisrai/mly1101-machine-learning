@@ -12,8 +12,8 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pytest
 
 RAIZ = Path(__file__).resolve().parents[1]

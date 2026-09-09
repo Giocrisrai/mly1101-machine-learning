@@ -1,0 +1,48 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Instalar Python del repo y dependencias
+        run: |
+          uv python install
+          uv sync --extra kedro
+
+      - name: Lint
+        run: uv run ruff check src kedro_mly1101/src herramientas tests
+
+      - name: Tests (Waymo y CSV oficiales se saltan si no están)
+        run: uv run pytest
+
+      - name: Notebooks regenerados coinciden con git
+        run: |
+          uv run python herramientas/construir_notebooks.py
+          git diff --exit-code notebooks/
+
+      - name: Ningún notebook de alumno filtra la pauta
+        run: |
+          if grep -q "Pauta docente" notebooks/*alumno*.ipynb notebooks/10_proyecto*.ipynb; then
+            echo "Un notebook de alumno contiene 'Pauta docente'."
+            exit 1
+          fi

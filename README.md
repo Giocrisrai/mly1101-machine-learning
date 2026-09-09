@@ -1,5 +1,7 @@
 # MLY1101 · Machine Learning — Duoc UC
 
+[![Tests](https://github.com/Giocrisrai/mly1101-machine-learning/actions/workflows/ci.yml/badge.svg)](https://github.com/Giocrisrai/mly1101-machine-learning/actions/workflows/ci.yml)
+
 Material de trabajo de la asignatura **Machine Learning (MLY1101)**, Escuela de Informática y
 Telecomunicaciones, Duoc UC. Segundo semestre 2026.
 
@@ -69,7 +71,7 @@ Problema → Datos → Exploración → Preprocesamiento → Modelamiento → Ev
 | **RA1** | Ingeniería de Datos y Análisis Exploratorio | 1.1 Fuentes (6) · 1.2 Estructuras (6) · 1.3 EDA (6) · 1.4 Ética (5) | ✅ las cuatro |
 | **RA2** | Implementación y Análisis de Modelos de ML | 2.1 CRISP-DM (6) · 2.2 Supervisado (6) · 2.3 No supervisado (12) · 2.4 Interpretación (5) | ✅ las cuatro |
 | **RA3** | Optimización y Ensamble de Modelos Avanzados | 3.1 Hiperparámetros (6) · 3.2 Ensamble (6) · 3.3 Robustez (11) | ✅ las tres |
-| — | **Evaluación Final Transversal** | 12 h · 40 % de la nota final | 📐 spec + casos en disco |
+| — | **Evaluación Final Transversal** | 12 h · 40 % de la nota final | ✅ plantilla 15 + IE |
 
 **108 horas · 4 SCT.** Las evaluaciones parciales ponderan 30 / 40 / 30 y suman el **60 %** de la
 nota final; el EFT, el **40 %** restante. Cómo cargar los CSV y cómo notar con IE:
