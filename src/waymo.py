@@ -1356,11 +1356,30 @@ def cargar_o_preparar(
     return preparar_lote(carpeta, n=n)
 
 
+def encontrar_raiz(desde: Path | None = None) -> Path:
+    """Raíz del clone aunque el kernel arranque en ``notebooks/`` o en el repo.
+
+    Cursor y VS Code suelen dejar el cwd en la raíz; Jupyter clásico, en
+    ``notebooks/``. Caminar hacia los padres evita el ``FileNotFoundError``
+    de quien ya bajó el parquet y el notebook lo busca un nivel más arriba.
+    """
+    inicio = Path(desde or Path.cwd()).resolve()
+    for carpeta in (inicio, *inicio.parents):
+        if (carpeta / "src" / "waymo.py").exists():
+            return carpeta
+    raise FileNotFoundError(
+        "No encuentro la raíz del repo (falta src/waymo.py). "
+        "Arranca el kernel en el clone de mly1101-machine-learning o en notebooks/."
+    )
+
+
 MENSAJE_SIN_DATOS_REALES = (
     "Faltan los datos reales de Waymo. No van en el repositorio "
     "(licencia de uso no comercial, sin redistribución). "
     "Acepta los términos en https://waymo.com/open/terms/ y corre:\n"
-    "  uv run python herramientas/descargar_waymo.py --muestra 40"
+    "  uv run python herramientas/descargar_waymo.py --muestra 40\n"
+    "Si ya los bajaste y esto igual falla, el kernel no está en el clone "
+    "(en Cursor debe arrancar en la raíz del repo, no un nivel más arriba)."
 )
 
 
@@ -1372,9 +1391,15 @@ def ruta_detecciones_reales(raiz: Path) -> Path:
 def exigir_detecciones_reales(raiz: Path) -> Path:
     """Ruta del parquet real, o error que dice cómo bajarlo. Sin fallback."""
     ruta = ruta_detecciones_reales(raiz)
-    if not ruta.exists():
-        raise FileNotFoundError(MENSAJE_SIN_DATOS_REALES)
-    return ruta
+    if ruta.exists():
+        return ruta
+    try:
+        alternativa = ruta_detecciones_reales(encontrar_raiz())
+    except FileNotFoundError:
+        alternativa = None
+    if alternativa is not None and alternativa.exists():
+        return alternativa
+    raise FileNotFoundError(MENSAJE_SIN_DATOS_REALES)
 
 
 def leer_tabla(ruta: Path | str) -> pd.DataFrame:

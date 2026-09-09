@@ -137,7 +137,9 @@ if EN_COLAB:
     RAIZ = REPO
 else:
     # El notebook vive en notebooks/, así que la raíz del repositorio es la carpeta superior.
-    RAIZ = Path("..").resolve()
+    RAIZ = Path.cwd().resolve()
+    if not (RAIZ / "src" / "waymo.py").exists():
+        RAIZ = RAIZ.parent
 
 sys.path.insert(0, str(RAIZ / "src"))
 import waymo

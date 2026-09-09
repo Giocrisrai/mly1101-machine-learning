@@ -45,7 +45,7 @@ traduciendo métricas técnicas a conocimientos para la organización.
 
 ### La idea central de hoy
 
-En la Actividad 2.2 el bosque aleatorio sacó **89,65 %** de exactitud y **0,46** de F1
+En la Actividad 2.2 el bosque aleatorio sacó **78,05 %** de exactitud y **0,0893** de F1
 en las detecciones difíciles. La primera cifra entra fácil a una diapositiva. La
 segunda no le dice nada a quien decide si el vehículo puede confiar en el sensor.
 
@@ -120,7 +120,9 @@ if EN_COLAB:
         !git clone -q {URL_REPO}.git {{REPO}}
     RAIZ = REPO.resolve()
 else:
-    RAIZ = Path("..").resolve()
+    RAIZ = Path.cwd().resolve()
+    if not (RAIZ / "src" / "waymo.py").exists():
+        RAIZ = RAIZ.parent
 
 sys.path.insert(0, str(RAIZ / "src"))
 sys.path.insert(0, str(RAIZ / "kedro_mly1101" / "src"))
@@ -225,14 +227,14 @@ assert cien["encuentra"] + cien["pierde"] == 100
         """
 > ### 🎓 Pauta docente — TODO 1
 >
-> `LEVEL_2`: TP **456**, FN **676**, FP **385**. De cada 100 difíciles: **40** y **60**.
+> `LEVEL_2`: TP **1.572**, FN **25.141**, FP **6.937**. De cada 100 difíciles: **6** y **94**.
 >
-> Frase canónica: *"De cada 100 detecciones difíciles, el modelo encuentra 40 y
-> pierde 60."*
+> Frase canónica: *"De cada 100 detecciones difíciles, el modelo encuentra 6 y
+> pierde 94."*
 >
-> **Por qué la exactitud no entra al memo:** 88,96 % lo saca un modelo que **siempre
-> responde LEVEL_1**, sin mirar los datos. Siete décimas de diferencia. El 90 %
-> celebra acertar la mayoría; el negocio necesita no perder la minoría.
+> **Por qué la exactitud no entra al memo:** 81,72 % lo saca un modelo que **siempre
+> responde LEVEL_1**, sin mirar los datos. El bosque saca 78,05 %: *pierde* contra el dummy.
+> El 78 % celebra acertar la mayoría; el negocio necesita no perder la minoría.
 >
 > Destacado: quien añade *"y produce 385 falsas alarmas en el conjunto de prueba"*
 > está leyendo el FP, que el `por_cada_cien` no incluye a propósito (es sobre

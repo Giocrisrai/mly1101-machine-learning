@@ -121,7 +121,9 @@ if EN_COLAB:
         !git clone -q {URL_REPO}.git {{REPO}}
     RAIZ = REPO.resolve()
 else:
-    RAIZ = Path("..").resolve()
+    RAIZ = Path.cwd().resolve()
+    if not (RAIZ / "src" / "waymo.py").exists():
+        RAIZ = RAIZ.parent
 
 sys.path.insert(0, str(RAIZ / "src"))
 import waymo
@@ -413,8 +415,8 @@ No vale la exactitud global. Ya sabes por el RA1 que un modelo que siempre dice
 > - O: *recall de detecciones difíciles nocturnas ≥ 0,50.*
 >
 > **Inicial** si proponen "maximizar accuracy" o "el mejor modelo posible".
-> En 2.2 van a ver 89,65 % de exactitud contra 88,96 % de un dummy: siete décimas.
-> El F1-macro pasa de 0,47 a 0,70. Sembrar eso ahora evita que lleguen a 2.2
+> En 2.2 van a ver 78,05 % de exactitud contra 81,72 % de un dummy: el bosque *pierde*.
+> El F1 de `LEVEL_2` queda en 0,0893. Sembrar eso ahora evita que lleguen a 2.2
 > celebrando la exactitud.
 >
 > El 62 % del dummy `VEHICLE` sale de la Actividad 1.3 (desbalance en el CSV sucio,

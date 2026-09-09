@@ -32,6 +32,21 @@ def test_en_colab_es_falso_fuera_de_colab() -> None:
     assert waymo.en_colab() is False
 
 
+def test_encontrar_raiz_desde_el_repo_o_notebooks() -> None:
+    assert waymo.encontrar_raiz(RAIZ) == RAIZ
+    assert waymo.encontrar_raiz(RAIZ / "notebooks") == RAIZ
+
+
+def test_exigir_detecciones_reales_recupera_si_el_cwd_es_el_repo(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.chdir(RAIZ)
+    if not (RAIZ / "datos" / "waymo_real" / "detecciones_reales.parquet").exists():
+        pytest.skip("sin parquet local")
+    ruta = waymo.exigir_detecciones_reales(RAIZ.parent)
+    assert ruta.exists()
+
+
 def test_los_componentes_livianos_son_los_dos_del_analisis() -> None:
     assert waymo.COMPONENTES_LIVIANOS == ("lidar_box", "stats")
 
@@ -833,7 +848,10 @@ def test_cargar_tabla_curso_exige_el_lote_real(tmp_path: Path) -> None:
     assert ruta.name == "detecciones_reales.parquet"
 
 
-def test_cargar_tabla_curso_falla_si_no_hay_lote(tmp_path: Path) -> None:
+def test_cargar_tabla_curso_falla_si_no_hay_lote(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
     with pytest.raises(FileNotFoundError, match="descargar_waymo.py --muestra"):
         waymo.cargar_tabla_curso(tmp_path)
 

@@ -103,7 +103,9 @@ if EN_COLAB:
     auth.authenticate_user()
     print("Autenticado en Colab.")
 else:
-    RAIZ = Path("..").resolve()
+    RAIZ = Path.cwd().resolve()
+    if not (RAIZ / "src" / "waymo.py").exists():
+        RAIZ = RAIZ.parent
     print("Local. Si falla la descarga:  gcloud auth login")
 
 sys.path.insert(0, str(RAIZ / "src"))

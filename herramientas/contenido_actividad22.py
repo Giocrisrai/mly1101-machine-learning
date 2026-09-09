@@ -163,7 +163,9 @@ if EN_COLAB:
         !git clone -q {URL_REPO}.git {{REPO}}
     RAIZ = REPO.resolve()
 else:
-    RAIZ = Path("..").resolve()
+    RAIZ = Path.cwd().resolve()
+    if not (RAIZ / "src" / "waymo.py").exists():
+        RAIZ = RAIZ.parent
 
 sys.path.insert(0, str(RAIZ / "src"))
 sys.path.insert(0, str(RAIZ / "kedro_mly1101" / "src"))
@@ -1016,10 +1018,10 @@ print(f"   Se le escapan {100*difciles_perdidas/difciles_totales:.0f} de cada 10
     md(
         """
 ---
-# Bloque 6 · ⭐ La fuga que sí se nota
+# Bloque 6 · ⭐ La fuga que también se nota en una variable
 
-En el bloque 2 vimos una fuga que existía pero no movía la métrica. Esta es la contraria: se
-mide y duele.
+En el bloque 2 la fuga por agrupación **infló** el F1 (0,48 → 0,94). Esta es otra: se mide
+en una columna.
 
 `detection_difficulty` **la asigna el sensor a partir de `num_lidar_points`**. Meter esa columna
 entre las predictoras no es informativo: es contarle al modelo la respuesta con otras palabras.
@@ -1105,9 +1107,9 @@ tipo de fuga. No es estadística. Escríbela con tus palabras.
 > que alguien exportó de un sistema.
 >
 > **Si sobra tiempo**, conecta con el bloque 2: son dos fugas de naturaleza distinta. La de
-> agrupación es **temporal/estructural** (filas dependientes); esta es de **la variable objetivo**
-> (información del futuro). Que en este dataset una se mida y la otra no, no las hace desiguales
-> en importancia.
+> agrupación es **temporal/estructural** (filas dependientes) y en este lote **sí mueve** el
+> F1 (0,48 → 0,94). Esta es de **la variable objetivo** (información del futuro) y mueve
+> menos (0,4822 → 0,5368). Las dos se miden.
 >
 > **Criterio de logro:** formula la pregunta de disponibilidad temporal y la aplica a una
 > variable propia distinta de la del ejercicio.
@@ -1236,8 +1238,8 @@ Esta es la entrega de la Actividad 2.2. Máximo una página.
 **Segmentos compartidos entre entrenamiento y prueba:** `____`
 **Por qué no partí al azar:** `____`
 
-> Ojo con esta última: la diferencia medida fue casi nula. Si tu argumento es "porque da mejor
-> resultado", vuelve a leer el bloque 2.
+> Ojo con esta última: partir al azar **infla** el F1 (0,48 → 0,94). Si tu argumento es
+> "porque da mejor resultado al azar", vuelve a leer el bloque 2.
 
 ### Contra qué comparé
 
@@ -1286,7 +1288,7 @@ detección mala, y qué pasa si es prudente de más.)*
 >
 > | Nivel | Descripción |
 > |---|---|
-> | **Destacado (4)** | Todo lo del nivel 3, y además: defiende la partición por grupo **con un argumento de diseño pese a que la métrica no lo respalda**; razona el umbral en términos de costo asimétrico del error; aplica la pregunta de fuga a una variable propia |
+> | **Destacado (4)** | Todo lo del nivel 3, y además: defiende la partición por grupo **aunque el azar se vea mejor en la métrica**; razona el umbral en términos de costo asimétrico del error; aplica la pregunta de fuga a una variable propia |
 > | **Logrado (3)** | Los 17 TODO en verde; compara contra el baseline en dos métricas y explica por qué la exactitud engaña; lee la matriz de confusión y cuantifica los falsos negativos; toma una decisión argumentada sobre producción |
 > | **En desarrollo (2)** | Entrena y evalúa correctamente pero concluye desde la exactitud sola; identifica que hay desbalance sin extraer consecuencias; la decisión final es "el modelo es bueno/malo" sin referirse al uso |
 > | **Inicial (1)** | Ejecuta las celdas sin interpretar; no distingue la partición por grupo de la partición al azar |

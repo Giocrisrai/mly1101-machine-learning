@@ -92,13 +92,42 @@ def test_ra3_no_cita_el_ranking_del_lote_de_153() -> None:
         "herramientas/contenido_actividad33.py",
         "herramientas/contenido_actividad32.py",
         "docs/rubrica_ra3.md",
+        "README.md",
     ):
         texto = (RAIZ / relativo).read_text(encoding="utf-8")
         assert "0,6909" not in texto, relativo
         assert "0,6869" not in texto, relativo
+        assert "−0,0006" not in texto, relativo
     rubrica = (RAIZ / "docs" / "rubrica_ra3.md").read_text(encoding="utf-8")
     assert "0,594" in rubrica
     assert "0,5938" in rubrica
+
+
+def test_pautas_no_citan_exactitud_del_csv_sintetico() -> None:
+    """89,65 % / 88,96 % / F1 0,46 eran el lote sintético."""
+    for relativo in (
+        "README.md",
+        "herramientas/contenido_actividad21.py",
+        "herramientas/contenido_actividad22.py",
+        "herramientas/contenido_actividad24.py",
+        "herramientas/contenido_kedro.py",
+    ):
+        texto = (RAIZ / relativo).read_text(encoding="utf-8")
+        assert "89,65" not in texto, relativo
+        assert "88,96" not in texto, relativo
+    kedro = (RAIZ / "herramientas" / "contenido_kedro.py").read_text(encoding="utf-8")
+    assert "153 segmentos a caballo" not in kedro
+    nodos = (
+        RAIZ
+        / "kedro_mly1101"
+        / "src"
+        / "kedro_mly1101"
+        / "pipelines"
+        / "supervisado"
+        / "nodes.py"
+    ).read_text(encoding="utf-8")
+    assert "cerca de cero" not in nodos
+    assert "99,98" not in nodos
     ajuste = (RAIZ / "herramientas" / "contenido_actividad31.py").read_text(
         encoding="utf-8"
     )
@@ -117,3 +146,10 @@ def test_lote_v2_id_interno_es_unico_por_frame() -> None:
     assert (tres == 1).mean() < 0.15
     assert (con_id == 1).mean() == 1.0
     assert round(100 * (tres == 1).mean(), 1) == 8.2
+
+
+def test_setup_de_notebooks_no_asume_cwd_en_notebooks() -> None:
+    """En Cursor el kernel arranca en la raíz del repo, no en notebooks/."""
+    for ruta in (RAIZ / "herramientas").glob("contenido_*.py"):
+        texto = ruta.read_text(encoding="utf-8")
+        assert 'RAIZ = Path("..").resolve()' not in texto, ruta.name

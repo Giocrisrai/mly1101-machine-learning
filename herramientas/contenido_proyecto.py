@@ -106,7 +106,9 @@ if EN_COLAB:
         !git clone -q {URL_REPO}.git {{REPO}}
     RAIZ = REPO
 else:
-    RAIZ = Path("..").resolve()
+    RAIZ = Path.cwd().resolve()
+    if not (RAIZ / "src" / "waymo.py").exists():
+        RAIZ = RAIZ.parent
 
 sys.path.insert(0, str(RAIZ / "src"))
 sys.path.insert(0, str(RAIZ / "kedro_mly1101" / "src"))

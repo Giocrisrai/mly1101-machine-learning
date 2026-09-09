@@ -86,11 +86,11 @@ registró igual, sin tocar lo existente.
 
 #### Dos decisiones del pipeline supervisado que se tomaron midiendo
 
-**El objetivo no es `object_type`.** Era el candidato natural, pero se resuelve al **99,98 %** con
-cualquier partición: el generador sortea las dimensiones por tipo de objeto y basta el largo de la
-caja. Un ejercicio donde todo sale perfecto no enseña a evaluar. Se cambió a
-`detection_difficulty`, que está desbalanceado 88,9 / 11,1 y da 90 % de exactitud con **F1 de 0,46
-en la clase minoritaria**: el caso de manual de que el promedio oculta a la minoría.
+**El objetivo no es `object_type`.** Era el candidato natural, pero en el CSV sintético
+(retirado) se resolvía al **99,98 %** con cualquier partición: el generador sorteaba las
+dimensiones por tipo de objeto y bastaba el largo de la caja. Un ejercicio donde todo sale
+perfecto no enseña a evaluar. Se cambió a `detection_difficulty`. En Perception v2 el bosque
+saca 78,05 % de exactitud (peor que el dummy) y F1 de `LEVEL_2` **0,0893**.
 
 **La demostración de fuga por partición se midió antes de escribirla, y en el CSV sintético
 salió en cero** (−0,005, 153 segmentos compartidos). En Perception v2 (2026-09-08) **sí se

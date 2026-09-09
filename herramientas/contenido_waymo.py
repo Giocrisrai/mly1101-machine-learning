@@ -129,7 +129,9 @@ if EN_COLAB:
     auth.authenticate_user()          # usa la cuenta que aceptó los términos de Waymo
     print("Autenticado en Colab.")
 else:
-    RAIZ = Path("..").resolve()       # el notebook vive en notebooks/
+    RAIZ = Path.cwd().resolve()
+    if not (RAIZ / "src" / "waymo.py").exists():
+        RAIZ = RAIZ.parent
     print("Entorno local. Si no has iniciado sesión, ejecuta en el terminal:")
     print("    brew install --cask google-cloud-sdk")
     print("    gcloud auth login")
