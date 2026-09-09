@@ -138,7 +138,7 @@ datos → cómo se almacenan y manipulan → qué tan sucios están → a quién
 | [`docs/guion_clase_actividad_24.md`](docs/guion_clase_actividad_24.md) | Guion de la Actividad 2.4 (interpretación): de la matriz a la frase de negocio |
 | [`docs/rubrica_ra1.md`](docs/rubrica_ra1.md) | Pauta de las cuatro actividades del RA1, con las cifras exactas para corregir |
 | [`docs/rubrica_act_2_1.md`](docs/rubrica_act_2_1.md) · [`docs/rubrica_act_2_2.md`](docs/rubrica_act_2_2.md) · [`docs/rubrica_act_2_3.md`](docs/rubrica_act_2_3.md) · [`docs/rubrica_act_2_4.md`](docs/rubrica_act_2_4.md) · [`docs/rubrica_ra3.md`](docs/rubrica_ra3.md) | Pautas de las actividades del RA2 y del RA3 |
-| [`docs/guion_ep1.md`](docs/guion_ep1.md) | Sala de la Parcial 1 (5 h): KPI → calidad → ética; sin modelos |
+| [`docs/guion_ep1.md`](docs/guion_ep1.md) · [`guion_ep2.md`](docs/guion_ep2.md) · [`guion_ep3.md`](docs/guion_ep3.md) | Sala de las tres parciales: EP1 sin modelos; EP2 = RA2; EP3 = RA3 |
 | [`docs/formativa_1.md`](docs/formativa_1.md) · [`formativa_2.md`](docs/formativa_2.md) · [`formativa_3.md`](docs/formativa_3.md) | Cuestionarios de 1 h (RA1 / RA2 / RA3); pautas en `*_pauta.md` |
 | [`docs/evaluaciones.md`](docs/evaluaciones.md) | Parciales y EFT: cargar Telco/Housing/Spotify, pesos IE, calculadora institucional |
 | [`docs/superpowers/specs/2026-08-12-mly1101-semana01-eda-design.md`](docs/superpowers/specs/2026-08-12-mly1101-semana01-eda-design.md) | Especificación completa: decisiones de diseño, catálogo de defectos, protocolo de verificación |

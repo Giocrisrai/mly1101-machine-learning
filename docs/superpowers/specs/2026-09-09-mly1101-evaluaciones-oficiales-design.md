@@ -106,8 +106,8 @@ No sustituyen la rúbrica institucional.
 
 ## 6. Qué queda para otra pasada
 
-1. Guion de sala de EP2 y EP3 (la plantilla 15 cubre la carga; el modelado se traslada de las Act. 2.2–3.3).
-2. No copiar el notebook institucional Telco al GitHub público.
+1. No copiar el notebook institucional Telco al GitHub público.
+2. Guiones de sala EP2/EP3 y esqueleto de modelado en el notebook 15: hechos 2026-09-09.
 
 ## 7. Fuera de alcance
 

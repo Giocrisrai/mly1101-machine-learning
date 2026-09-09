@@ -212,14 +212,133 @@ print(kpi)
     md(
         """
 ---
-## Qué sigue (no lo hagas hoy si es EP1)
+## EP2 · Modelos (después de la Formativa 2)
 
-| Cuando | Celda que todavía no tocas |
-|---|---|
-| EP2 | Dos supervisados (`sklearn`) + un no supervisado. RA2 = **los dos**. |
-| EP3 | Grid/random search, un ensamble, validación cruzada. Eso es RA3, no “más k-medias”. |
-| EFT | Los doce IE. Defensa individual: cualquiera responde por cualquier parte. |
+**No ejecutes este bloque en la EP1.** RA2 = dos supervisados **y** un no supervisado
+(IE6 + IE7). El split no puede ser “al azar por fila” si hay una unidad de negocio
+(cliente, casa, álbum).
 
+Guion de sala: `docs/guion_ep2.md`.
+"""
+    ),
+    code(
+        """
+from sklearn.cluster import KMeans
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+if meta["tipo"] != "clasificacion":
+    raise SystemExit(
+        "Este esqueleto es Telco (clasificación). Housing/Spotify: dos regresores "
+        "+ un KMeans; MAE/RMSE, no exactitud. Ver docs/guion_ep2.md."
+    )
+
+trabajo = tabla.copy()
+trabajo["TotalCharges"] = pd.to_numeric(trabajo["TotalCharges"], errors="coerce")
+trabajo.loc[trabajo["tenure"] == 0, "TotalCharges"] = 0.0
+y = (trabajo["Churn"] == "Yes").astype(int)
+X = pd.get_dummies(trabajo.drop(columns=["Churn", "customerID"]), drop_first=True)
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, random_state=42, stratify=y
+)
+
+logistica = LogisticRegression(max_iter=1000, class_weight="balanced")
+bosque = RandomForestClassifier(
+    n_estimators=80, max_depth=8, random_state=42, n_jobs=-1, class_weight="balanced"
+)
+logistica.fit(X_train, y_train)
+bosque.fit(X_train, y_train)
+print("— logística —")
+print(classification_report(y_test, logistica.predict(X_test), digits=3))
+print("— bosque —")
+print(classification_report(y_test, bosque.predict(X_test), digits=3))
+
+escala = StandardScaler()
+grupos = KMeans(n_clusters=3, random_state=42, n_init=10)
+etiquetas = grupos.fit_predict(escala.fit_transform(X_train))
+print("tamaños k-medias:", pd.Series(etiquetas).value_counts().to_dict())
+""",
+        todo="""
+# EP2: dos supervisados + un no supervisado sobre TU caso.
+# Telco: no uses customerID; TotalCharges con to_numeric; stratify en Churn.
+# Housing: MAE en pesos, no solo R²; no uses PID como feature.
+# Spotify: popularity no va en X; no partas al azar pistas del mismo álbum.
+#
+# from sklearn...
+# modelo_a = ____
+# modelo_b = ____
+# grupos = ____
+""",
+    ),
+    md_docente(
+        """
+> ### 🎓 Pauta · EP2
+>
+> El esqueleto de Telco **no** es la nota máxima: es para no proyectar el notebook
+> Duoc. IE8 se juega en la frase de negocio (recall de `Yes`, no la exactitud 78 %).
+> IE7: el KMeans no predice `Churn`; tiene que aportar un segmento o un hallazgo.
+> Housing/Spotify no corren esta celda a propósito (`SystemExit`).
+"""
+    ),
+    md(
+        """
+---
+## EP3 · ¿Ganó de verdad? (después de la Formativa 3)
+
+Hiperparámetros, un ensamble, validación cruzada **solo en train**. El test se toca
+al final. Si la ganancia no supera el ruido, el default es una respuesta válida (IE12).
+
+Guion de sala: `docs/guion_ep3.md`.
+"""
+    ),
+    code(
+        """
+from sklearn.ensemble import VotingClassifier
+from sklearn.metrics import f1_score
+from sklearn.model_selection import GridSearchCV, StratifiedKFold, cross_val_score
+
+cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
+busqueda = GridSearchCV(
+    RandomForestClassifier(random_state=42, class_weight="balanced", n_jobs=-1),
+    {"n_estimators": [50, 80], "max_depth": [4, 8]},
+    scoring="f1",
+    cv=cv,
+)
+busqueda.fit(X_train, y_train)
+print("mejor CV f1:", round(busqueda.best_score_, 4), busqueda.best_params_)
+
+ensamble = VotingClassifier(
+    [("log", logistica), ("rf", busqueda.best_estimator_)],
+    voting="soft",
+)
+ensamble.fit(X_train, y_train)
+f1_cv = cross_val_score(ensamble, X_train, y_train, cv=cv, scoring="f1")
+print("ensamble CV f1: media", round(f1_cv.mean(), 4), "std", round(f1_cv.std(), 4))
+print("test f1 bosque default", round(f1_score(y_test, bosque.predict(X_test)), 4))
+print("test f1 ensamble", round(f1_score(y_test, ensamble.predict(X_test)), 4))
+""",
+        todo="""
+# EP3: GridSearchCV o RandomizedSearchCV SOLO sobre X_train.
+# Un VotingClassifier / bagging / boosting.
+# cross_val_score en train; una sola vez el test.
+# Si |ganancia| < ruido del CV, quédate con el default y justifícalo (IE12).
+""",
+    ),
+    md_docente(
+        """
+> ### 🎓 Pauta · EP3
+>
+> Si el ensamble y el bosque caen dentro del `std` del CV, **no** hay victoria.
+> Quien elige el modelo con el test (o busca hiperparámetros ahí) se lleva 0 en IE11.
+> El EFT reutiliza este mismo notebook: los doce IE, defensa individual.
+"""
+    ),
+    md(
+        """
 Copia este notebook a `15_<equipo>_evaluacion.ipynb`. El original se sobrescribe
 en el siguiente `git merge upstream/main`.
 """

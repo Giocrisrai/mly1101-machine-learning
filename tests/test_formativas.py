@@ -15,3 +15,10 @@ def test_formativas_tienen_al_menos_ocho_items_y_pauta() -> None:
         assert items >= 8, f"formativa {numero} tiene {items} ítems"
         assert "Pauta docente" in pauta
         assert "No proyectar" in pauta
+
+
+def test_guiones_de_las_tres_parciales() -> None:
+    for nombre in ("guion_ep1.md", "guion_ep2.md", "guion_ep3.md"):
+        texto = (RAIZ / "docs" / nombre).read_text(encoding="utf-8")
+        assert "defensa individual" in texto.lower() or "Defensa" in texto
+        assert "No" in texto and "Telco" in texto

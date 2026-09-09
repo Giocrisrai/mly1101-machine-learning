@@ -44,8 +44,8 @@ Las pautas D1–D5 de `docs/rubrica_*.md` siguen siendo **formativas**.
 | **Formativa 2** | 1 h | [`docs/formativa_2.md`](formativa_2.md) · pauta [`formativa_2_pauta.md`](formativa_2_pauta.md) |
 | **Formativa 3** | 1 h | [`docs/formativa_3.md`](formativa_3.md) · pauta [`formativa_3_pauta.md`](formativa_3_pauta.md) |
 | **EP1** | 5 h | Fuentes, preparación, EDA, ética. Sin modelos. Guion: [`guion_ep1.md`](guion_ep1.md) |
-| **EP2** | (pauta) | CRISP-DM, **dos** supervisados, **un** no supervisado, interpretación |
-| **EP3** | (pauta) | Hiperparámetros, ensamble, validación cruzada, justificación |
+| **EP2** | 6 h | CRISP-DM, **dos** supervisados, **un** no supervisado, interpretación. [`guion_ep2.md`](guion_ep2.md) |
+| **EP3** | 6 h | Hiperparámetros, ensamble, CV, justificación. [`guion_ep3.md`](guion_ep3.md) |
 | **EFT** | 12 h | Los doce IE; defensa individual |
 
 Plantilla de notebook (un caso, falla si falta el CSV):
