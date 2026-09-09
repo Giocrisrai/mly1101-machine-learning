@@ -111,3 +111,10 @@ def test_csv_formativo_con_il_sigue_funcionando(tmp_path: Path) -> None:
     filas = evaluar_csv(ruta)
     assert filas[0]["nota"] == 7.0
     assert filas[0].get("instrumento") is None
+
+
+def test_csv_detecta_eft_por_doce_columnas_ie() -> None:
+    filas = evaluar_csv(RAIZ / "docs" / "ejemplo_notas_eft.csv")
+    assert filas[0]["instrumento"] == "eft"
+    assert filas[0]["nombre"] == "Ana Fuentes"
+    assert filas[0]["aprueba"]

@@ -72,3 +72,89 @@ def cargar_caso(nombre: str, raiz: Path | None = None) -> pd.DataFrame:
             "  No hay CSV sintético: sin el archivo oficial no hay evaluación."
         )
     return pd.read_csv(ruta)
+
+
+# Identificadores / texto que no pueden entrar a X (fuga, cardinalidad o ID).
+_IDS: dict[str, tuple[str, ...]] = {
+    "telco": ("customerID",),
+    "housing": ("Order", "PID"),
+    "spotify": ("Unnamed: 0", "track_id", "artists", "album_name", "track_name"),
+}
+_GRUPO: dict[str, str | None] = {
+    "telco": None,
+    "housing": None,
+    "spotify": "album_name",
+}
+
+
+def matriz_xy(
+    tabla: pd.DataFrame,
+    nombre: str,
+    muestra: int | None = None,
+    semilla: int = 42,
+) -> tuple[pd.DataFrame, pd.Series, pd.Series | None]:
+    """Arma ``X``, ``y`` y un grupo opcional para el split.
+
+    No inventa filas: parte de ``tabla`` ya cargada. Imputación mínima del
+    esqueleto (mediana / ``faltante``): el equipo la justifica en la EP1.
+
+    Args:
+        tabla: CSV oficial (o un recorte de prueba).
+        nombre: ``telco``, ``housing`` o ``spotify``.
+        muestra: si se indica, recorta a esas filas (esqueleto Colab / Spotify).
+        semilla: para el recorte.
+
+    Returns:
+        ``X`` numérico sin NaN, ``y`` (0/1 en Telco; continuo en los otros) y
+        ``grupo`` (álbum en Spotify; ``None`` si el split puede ser por fila).
+    """
+    if nombre not in CASOS:
+        ruta_del_caso(nombre)
+
+    trabajo = tabla.copy()
+    objetivo = str(CASOS[nombre]["objetivo"])
+    if objetivo not in trabajo.columns:
+        raise ValueError(f"{nombre}: falta la columna objetivo {objetivo!r}")
+
+    if nombre == "telco" and "TotalCharges" in trabajo.columns:
+        cobros = pd.to_numeric(trabajo["TotalCharges"], errors="coerce")
+        if "tenure" in trabajo.columns:
+            cobros = cobros.mask(trabajo["tenure"] == 0, 0.0)
+        trabajo["TotalCharges"] = cobros
+
+    if nombre == "telco":
+        y = (trabajo[objetivo].astype(str) == "Yes").astype(int)
+    else:
+        y = pd.to_numeric(trabajo[objetivo], errors="coerce")
+
+    nombre_grupo = _GRUPO[nombre]
+    grupo = trabajo[nombre_grupo].copy() if nombre_grupo and nombre_grupo in trabajo.columns else None
+
+    drop = {objetivo, *_IDS[nombre]}
+    X = trabajo.drop(columns=[c for c in drop if c in trabajo.columns])
+
+    for col in X.columns:
+        if pd.api.types.is_numeric_dtype(X[col]) or pd.api.types.is_bool_dtype(X[col]):
+            X[col] = pd.to_numeric(X[col], errors="coerce")
+            X[col] = X[col].fillna(X[col].median())
+        else:
+            X[col] = X[col].astype("string").fillna("faltante")
+
+    X = pd.get_dummies(X, drop_first=True)
+    X = X.fillna(0)
+
+    if muestra is not None:
+        if muestra < 1:
+            raise ValueError("muestra debe ser ≥ 1")
+        n = min(muestra, len(X))
+        idx = X.sample(n=n, random_state=semilla).index
+        X = X.loc[idx]
+        y = y.loc[idx]
+        if grupo is not None:
+            grupo = grupo.loc[idx]
+
+    y.name = objetivo
+    if grupo is not None:
+        grupo.name = nombre_grupo
+    return X, y, grupo
+

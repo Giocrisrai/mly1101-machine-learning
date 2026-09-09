@@ -46,7 +46,7 @@ Las pautas D1–D5 de `docs/rubrica_*.md` siguen siendo **formativas**.
 | **EP1** | 5 h | Fuentes, preparación, EDA, ética. Sin modelos. Guion: [`guion_ep1.md`](guion_ep1.md) |
 | **EP2** | 6 h | CRISP-DM, **dos** supervisados, **un** no supervisado, interpretación. [`guion_ep2.md`](guion_ep2.md) |
 | **EP3** | 6 h | Hiperparámetros, ensamble, CV, justificación. [`guion_ep3.md`](guion_ep3.md) |
-| **EFT** | 12 h | Los doce IE; defensa individual |
+| **EFT** | 12 h | Los doce IE; defensa individual. Guion: [`guion_eft.md`](guion_eft.md) |
 
 Plantilla de notebook (un caso, falla si falta el CSV):
 `notebooks/15_alumno_evaluacion.ipynb` / `15_docente_evaluacion.ipynb`.

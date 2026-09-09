@@ -224,51 +224,66 @@ Guion de sala: `docs/guion_ep2.md`.
     code(
         """
 from sklearn.cluster import KMeans
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report
-from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.linear_model import LogisticRegression, Ridge
+from sklearn.metrics import classification_report, mean_absolute_error
+from sklearn.model_selection import GroupShuffleSplit, train_test_split
 from sklearn.preprocessing import StandardScaler
 
-if meta["tipo"] != "clasificacion":
-    raise SystemExit(
-        "Este esqueleto es Telco (clasificación). Housing/Spotify: dos regresores "
-        "+ un KMeans; MAE/RMSE, no exactitud. Ver docs/guion_ep2.md."
+es_clf = meta["tipo"] == "clasificacion"
+X, y, grupo = casos.matriz_xy(
+    tabla, CASO, muestra=8000 if CASO == "spotify" else None
+)
+print("X:", X.shape, "| y:", y.name, "| grupo:", None if grupo is None else grupo.name)
+
+if grupo is not None:
+    i_tr, i_te = next(
+        GroupShuffleSplit(n_splits=1, test_size=0.25, random_state=42).split(X, y, grupo)
+    )
+    X_train, X_test = X.iloc[i_tr], X.iloc[i_te]
+    y_train, y_test = y.iloc[i_tr], y.iloc[i_te]
+elif es_clf:
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.25, random_state=42, stratify=y
+    )
+else:
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.25, random_state=42
     )
 
-trabajo = tabla.copy()
-trabajo["TotalCharges"] = pd.to_numeric(trabajo["TotalCharges"], errors="coerce")
-trabajo.loc[trabajo["tenure"] == 0, "TotalCharges"] = 0.0
-y = (trabajo["Churn"] == "Yes").astype(int)
-X = pd.get_dummies(trabajo.drop(columns=["Churn", "customerID"]), drop_first=True)
+if es_clf:
+    lineal = LogisticRegression(max_iter=1000, class_weight="balanced")
+    bosque = RandomForestClassifier(
+        n_estimators=80, max_depth=8, random_state=42, n_jobs=-1, class_weight="balanced"
+    )
+    lineal.fit(X_train, y_train)
+    bosque.fit(X_train, y_train)
+    print("— logística —")
+    print(classification_report(y_test, lineal.predict(X_test), digits=3))
+    print("— bosque —")
+    print(classification_report(y_test, bosque.predict(X_test), digits=3))
+else:
+    lineal = Ridge(alpha=1.0)
+    bosque = RandomForestRegressor(
+        n_estimators=80, max_depth=8, random_state=42, n_jobs=-1
+    )
+    lineal.fit(X_train, y_train)
+    bosque.fit(X_train, y_train)
+    print("MAE ridge", round(mean_absolute_error(y_test, lineal.predict(X_test)), 2))
+    print("MAE bosque", round(mean_absolute_error(y_test, bosque.predict(X_test)), 2))
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.25, random_state=42, stratify=y
+etiquetas = KMeans(n_clusters=3, random_state=42, n_init=10).fit_predict(
+    StandardScaler().fit_transform(X_train)
 )
-
-logistica = LogisticRegression(max_iter=1000, class_weight="balanced")
-bosque = RandomForestClassifier(
-    n_estimators=80, max_depth=8, random_state=42, n_jobs=-1, class_weight="balanced"
-)
-logistica.fit(X_train, y_train)
-bosque.fit(X_train, y_train)
-print("— logística —")
-print(classification_report(y_test, logistica.predict(X_test), digits=3))
-print("— bosque —")
-print(classification_report(y_test, bosque.predict(X_test), digits=3))
-
-escala = StandardScaler()
-grupos = KMeans(n_clusters=3, random_state=42, n_init=10)
-etiquetas = grupos.fit_predict(escala.fit_transform(X_train))
 print("tamaños k-medias:", pd.Series(etiquetas).value_counts().to_dict())
 """,
         todo="""
-# EP2: dos supervisados + un no supervisado sobre TU caso.
-# Telco: no uses customerID; TotalCharges con to_numeric; stratify en Churn.
-# Housing: MAE en pesos, no solo R²; no uses PID como feature.
-# Spotify: popularity no va en X; no partas al azar pistas del mismo álbum.
+# EP2: casos.matriz_xy(tabla, CASO) arma X e y (sin IDs, sin el target en X).
+# Spotify: muestra=8000 en Colab; split por álbum (grupo).
+# Dos supervisados + un KMeans. Clasificación: recall de la clase cara.
+# Regresión: MAE en unidades del objetivo, no solo R².
 #
-# from sklearn...
+# X, y, grupo = casos.matriz_xy(tabla, CASO, muestra=____)
 # modelo_a = ____
 # modelo_b = ____
 # grupos = ____
@@ -278,10 +293,11 @@ print("tamaños k-medias:", pd.Series(etiquetas).value_counts().to_dict())
         """
 > ### 🎓 Pauta · EP2
 >
-> El esqueleto de Telco **no** es la nota máxima: es para no proyectar el notebook
-> Duoc. IE8 se juega en la frase de negocio (recall de `Yes`, no la exactitud 78 %).
-> IE7: el KMeans no predice `Churn`; tiene que aportar un segmento o un hallazgo.
-> Housing/Spotify no corren esta celda a propósito (`SystemExit`).
+> El esqueleto **no** es la nota máxima: es para no proyectar el notebook Duoc.
+> `matriz_xy` ya saca `customerID` / `PID` / `popularity` de X. IE8: Telco = recall
+> de `Yes`; Housing/Spotify = error en pesos o en puntos de popularidad.
+> IE7: el KMeans no predice el target; tiene que cambiar una decisión.
+> Spotify se recorta a 8.000 filas **solo en este esqueleto** (RAM de Colab).
 """
     ),
     md(
@@ -297,35 +313,56 @@ Guion de sala: `docs/guion_ep3.md`.
     ),
     code(
         """
-from sklearn.ensemble import VotingClassifier
+from sklearn.ensemble import VotingClassifier, VotingRegressor
 from sklearn.metrics import f1_score
-from sklearn.model_selection import GridSearchCV, StratifiedKFold, cross_val_score
+from sklearn.model_selection import GridSearchCV, KFold, StratifiedKFold, cross_val_score
 
-cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
+if es_clf:
+    cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
+    scoring = "f1"
+    candidato = RandomForestClassifier(
+        random_state=42, class_weight="balanced", n_jobs=-1
+    )
+else:
+    cv = KFold(n_splits=3, shuffle=True, random_state=42)
+    scoring = "neg_mean_absolute_error"
+    candidato = RandomForestRegressor(random_state=42, n_jobs=-1)
+
 busqueda = GridSearchCV(
-    RandomForestClassifier(random_state=42, class_weight="balanced", n_jobs=-1),
+    candidato,
     {"n_estimators": [50, 80], "max_depth": [4, 8]},
-    scoring="f1",
+    scoring=scoring,
     cv=cv,
 )
 busqueda.fit(X_train, y_train)
-print("mejor CV f1:", round(busqueda.best_score_, 4), busqueda.best_params_)
+print("mejor CV:", round(busqueda.best_score_, 4), busqueda.best_params_)
 
-ensamble = VotingClassifier(
-    [("log", logistica), ("rf", busqueda.best_estimator_)],
-    voting="soft",
-)
-ensamble.fit(X_train, y_train)
-f1_cv = cross_val_score(ensamble, X_train, y_train, cv=cv, scoring="f1")
-print("ensamble CV f1: media", round(f1_cv.mean(), 4), "std", round(f1_cv.std(), 4))
-print("test f1 bosque default", round(f1_score(y_test, bosque.predict(X_test)), 4))
-print("test f1 ensamble", round(f1_score(y_test, ensamble.predict(X_test)), 4))
+if es_clf:
+    ensamble = VotingClassifier(
+        [("lin", lineal), ("rf", busqueda.best_estimator_)],
+        voting="soft",
+    )
+    ensamble.fit(X_train, y_train)
+    cv_vals = cross_val_score(ensamble, X_train, y_train, cv=cv, scoring="f1")
+    print("ensamble CV f1: media", round(cv_vals.mean(), 4), "std", round(cv_vals.std(), 4))
+    print("test f1 bosque", round(f1_score(y_test, bosque.predict(X_test)), 4))
+    print("test f1 ensamble", round(f1_score(y_test, ensamble.predict(X_test)), 4))
+else:
+    ensamble = VotingRegressor(
+        [("lin", lineal), ("rf", busqueda.best_estimator_)]
+    )
+    ensamble.fit(X_train, y_train)
+    cv_vals = -cross_val_score(
+        ensamble, X_train, y_train, cv=cv, scoring="neg_mean_absolute_error"
+    )
+    print("ensamble CV MAE: media", round(cv_vals.mean(), 2), "std", round(cv_vals.std(), 2))
+    print("test MAE bosque", round(mean_absolute_error(y_test, bosque.predict(X_test)), 2))
+    print("test MAE ensamble", round(mean_absolute_error(y_test, ensamble.predict(X_test)), 2))
 """,
         todo="""
-# EP3: GridSearchCV o RandomizedSearchCV SOLO sobre X_train.
-# Un VotingClassifier / bagging / boosting.
-# cross_val_score en train; una sola vez el test.
-# Si |ganancia| < ruido del CV, quédate con el default y justifícalo (IE12).
+# EP3: búsqueda SOLO sobre X_train. Un ensamble. CV en train; test una vez.
+# Clasificación: f1. Regresión: MAE (neg_mean_absolute_error en CV).
+# Si |ganancia| < ruido del CV, quédate con el default (IE12).
 """,
     ),
     md_docente(
