@@ -175,3 +175,4 @@ Preguntas cruzadas: cada estudiante responde por cualquier parte del trabajo, no
 | Evaluaciones formativas 1, 2 y 3 | ✅ `docs/formativa_{1,2,3}.md` + `_pauta.md` |
 | Parciales 1, 2 y 3 · EFT | ✅ casos en disco (gitignored) + `15_*_evaluacion` + `calcular_nota.py --instrumento` |
 | Pipeline reproducible (`kedro_mly1101/`) | ✅ RA1, RA2 y RA3 |
+| Integraciones (Colab, Academy, Databricks, GitHub) | ✅ mapa en `docs/integraciones.md` (medido 2026-09-08/09) |

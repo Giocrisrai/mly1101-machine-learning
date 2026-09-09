@@ -284,9 +284,9 @@ nodos, no reescribe el análisis anterior**. Que `supervisado` corra después de
 `detecciones_limpias`, que el otro produce.
 
 El material docente de las Act. 2.1–2.4 y 3.1–3.3 (notebooks de alumno, solucionario y rúbrica)
-ya existe. Lo que sigue pendiente son las evaluaciones sobre los casos oficiales.
+ya existe. Las evaluaciones oficiales (formativas, EP1–EP3, EFT) viven en
+[`docs/evaluaciones.md`](../docs/evaluaciones.md) y el notebook **15**; **no** usan este grafo.
 
-Sobre llevar esto a Databricks Free Edition (Git Folder, Volume, `catalog.yml` y por qué
-`kedro run` no se muda al workspace), ver [`docs/databricks_free.md`](../docs/databricks_free.md)
-y el bloque 7 del notebook 04. Tamaños medidos y qué máquina usar:
-[`docs/recorrido_waymo.md`](../docs/recorrido_waymo.md).
+Dónde corre cada nube: [`docs/integraciones.md`](../docs/integraciones.md). Sobre Databricks
+Free Edition (Git Folder, Volume, `catalog.yml` y por qué `kedro run` no se muda al workspace):
+[`docs/databricks_free.md`](../docs/databricks_free.md) y el bloque 7 del notebook 04.

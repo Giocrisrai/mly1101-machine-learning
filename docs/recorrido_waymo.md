@@ -70,7 +70,7 @@ un tfrecord.
 
 | Máquina | Cuándo | Qué haces |
 |---|---|---|
-| **Colab** | Actividades y lote de 8 (~8 MB) | Badges del [README](../README.md). *Archivo → Guardar copia en Drive* antes de autenticar. |
+| **Colab** | Actividades y lote de 8 (~8 MB) | Badges del [README](../README.md). Copy to Drive **antes** de autenticar. **Chrome / Safari / Brave**, no el IDE embebido (`MessageError`). |
 | **CloudShell** (Academy) | Pipeline, más disco, misma cuenta AWS | `git clone` + `pip` + Kedro. **No** es una EC2. |
 | **SageMaker notebook** `ml.t3.medium` + rol `LabRole` | Jupyter con más RAM | Clonas el mismo repo. **Stop** al terminar. Sin GPU. |
 | **Databricks Free Edition** | Probar Spark sobre **el mismo** parquet | Git Folder + Volume. No es EMR. |

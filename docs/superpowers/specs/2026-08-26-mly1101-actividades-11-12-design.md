@@ -2,7 +2,10 @@
 
 **Fecha:** 2026-08-26
 **Estado:** implementado. **Superado en datos (2026-09-08):** no hay CSV sintético;
-el hilo es Perception v2 real.
+el hilo es Perception v2 real. **Superado en nubes (2026-09-08/09):** Databricks Free
+Edition verificado (Git Folder + Volume LIST 0); evaluaciones oficiales en
+`docs/evaluaciones.md`; mapa en `docs/integraciones.md`. La tabla de “pendientes” de la
+§8 es histórica: no la uses como estado del repo.
 **Extiende:** [`2026-08-12-mly1101-semana01-eda-design.md`](2026-08-12-mly1101-semana01-eda-design.md)
 
 ---

@@ -2,7 +2,7 @@
 
 **Para el alumno.** Cuando Colab o el portátil se quedan sin RAM, este es el espacio de la
 asignatura. **No es evaluación.** El lote de clase (~8 MB) sigue cabiendo en Colab; aquí corres
-el mismo repo con más máquina.
+el mismo repo con más máquina. Mapa de nubes: [`integraciones.md`](integraciones.md).
 
 Verificado en vivo el **2026-09-08** sobre el curso
 [AWS Academy Learner Lab 183052](https://awsacademy.instructure.com/courses/183052)
@@ -301,8 +301,10 @@ parquet a un Volume privado y pruebas `spark.read.parquet(…).count()`. No EMR.
 | Quiero ver Spark | Databricks Free Edition |
 | Proyecto de equipo | 14 → parquet → notebook **10**; Kedro `waymo_real` si hay ≥2 segmentos |
 
-En Colab: *Archivo → Guardar una copia en Drive* **antes** de autenticar. La cuenta de Colab
-tiene que ser la misma que aceptó Waymo.
+En Colab: *Archivo → Guardar una copia en Drive* **antes** de autenticar. Corre las celdas en
+**Chrome, Safari o Brave**. El navegador embebido del IDE suelta `MessageError` (medido
+2026-09-08). La cuenta de Colab tiene que ser la misma que aceptó Waymo. Mapa:
+[`integraciones.md`](integraciones.md).
 
 ---
 

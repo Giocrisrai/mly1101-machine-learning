@@ -20,7 +20,7 @@ programa.
 
 **Los datasets también se dividen:** las actividades usan el hilo de Waymo; las **evaluaciones
 parciales y el EFT** se rinden sobre los casos oficiales (*Telco Churn*, *House Prices*,
-*Spotify Tracks*). No mezclar.
+*Spotify Tracks*). No mezclar. Dónde corre cada nube: `docs/integraciones.md`.
 
 **El instrumento sumativo no es esta rúbrica.** Las pautas de `docs/` son formativas. Las
 evaluaciones calificadas son las tres Parciales (30/40/30 → 60 % final) y el EFT (40 %), con la

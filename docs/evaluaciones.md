@@ -50,7 +50,10 @@ Las pautas D1–D5 de `docs/rubrica_*.md` siguen siendo **formativas**.
 
 Plantilla de notebook (un caso, falla si falta el CSV):
 `notebooks/15_alumno_evaluacion.ipynb` / `15_docente_evaluacion.ipynb`.
-Carga: `casos.cargar_caso("telco")` en `src/casos.py`.
+Carga: `casos.cargar_caso` y `casos.matriz_xy` en `src/casos.py`.
+
+En Colab: clone + **sube el CSV** a `datos/evaluaciones/{telco|housing|spotify}/`.
+No pide cuenta Waymo. No uses el navegador embebido del IDE.
 
 Entrega común: Markdown + notebook ejecutable + datos + carpeta profesional.
 Presentación 10 min, preguntas cruzadas.

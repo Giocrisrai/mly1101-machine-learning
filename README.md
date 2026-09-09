@@ -26,7 +26,7 @@ el bucket ([FAQ](https://waymo.com/open/faq/)).
 | **4** | Analítica, **partir por grupo**, transformaciones (mismos nodos de Kedro), volúmenes | Mismas celdas del notebook 14 |
 | **5** | Actividades 1.1–3.3 del aula | El mismo parquet real |
 | **6** | Proyecto de equipo · pipeline | `cd kedro_mly1101 && uv run kedro run` (34 nodos) |
-| **7** | RAM / disco / S3 / Databricks | [`docs/recorrido_waymo.md`](docs/recorrido_waymo.md) · [lab AWS](docs/aws_academy_laboratorio.md) · [Databricks Free](docs/databricks_free.md) · [cuatro productos Waymo](docs/productos_waymo.md) |
+| **7** | Dónde corre (Colab, AWS, Databricks, GitHub, eval) | [`docs/integraciones.md`](docs/integraciones.md) — mapa único |
 
 En local, si ya bajaste segmentos, el paso 3 **no pide GCS de nuevo**.
 
@@ -54,9 +54,9 @@ En AWS usa **CloudShell** (no EC2). SageMaker `medium`/`large` solo si el RA3 so
 filas pide más RAM. Bucket S3 **privado** solo para no perder el parquet. Contenedores: no.
 Databricks Free Edition: Spark sobre el **mismo** parquet, Kedro no se mueve ahí. En
 2026-09-08 el Git Folder del repo público y el Volume managed
-`/Volumes/workspace/default/mly1101` se crearon en vivo. Detalle en
-[`docs/aws_academy_laboratorio.md`](docs/aws_academy_laboratorio.md) y
-[`docs/databricks_free.md`](docs/databricks_free.md).
+`/Volumes/workspace/default/mly1101` se crearon en vivo (**LIST 0 filas**: súbete el
+parquet). Auth Colab: Copy to Drive + **Chrome / Safari / Brave** (el IDE embebido suelta
+`MessageError`). Mapa: [`docs/integraciones.md`](docs/integraciones.md).
 
 ---
 
@@ -142,6 +142,7 @@ datos → cómo se almacenan y manipulan → qué tan sucios están → a quién
 | [`docs/rubrica_act_2_1.md`](docs/rubrica_act_2_1.md) · [`docs/rubrica_act_2_2.md`](docs/rubrica_act_2_2.md) · [`docs/rubrica_act_2_3.md`](docs/rubrica_act_2_3.md) · [`docs/rubrica_act_2_4.md`](docs/rubrica_act_2_4.md) · [`docs/rubrica_ra3.md`](docs/rubrica_ra3.md) | Pautas de las actividades del RA2 y del RA3 |
 | [`docs/guion_ep1.md`](docs/guion_ep1.md) · [`guion_ep2.md`](docs/guion_ep2.md) · [`guion_ep3.md`](docs/guion_ep3.md) · [`guion_eft.md`](docs/guion_eft.md) | Sala de las tres parciales y el EFT |
 | [`docs/formativa_1.md`](docs/formativa_1.md) · [`formativa_2.md`](docs/formativa_2.md) · [`formativa_3.md`](docs/formativa_3.md) | Cuestionarios de 1 h (RA1 / RA2 / RA3); pautas en `*_pauta.md` |
+| [`docs/integraciones.md`](docs/integraciones.md) | **Mapa único:** Colab, GitHub Actions, AWS Academy, Databricks, evaluaciones vs Waymo |
 | [`docs/evaluaciones.md`](docs/evaluaciones.md) | Parciales y EFT: cargar Telco/Housing/Spotify, pesos IE, calculadora institucional |
 | [`docs/superpowers/specs/2026-08-12-mly1101-semana01-eda-design.md`](docs/superpowers/specs/2026-08-12-mly1101-semana01-eda-design.md) | Especificación completa: decisiones de diseño, catálogo de defectos, protocolo de verificación |
 

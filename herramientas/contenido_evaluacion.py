@@ -42,6 +42,8 @@ uv run python herramientas/preparar_casos_oficiales.py
 
 En Colab: sube el CSV del caso a la carpeta
 `mly1101-machine-learning/datos/evaluaciones/{telco|housing|spotify}/` después del clone.
+No pide cuenta Waymo. Corre en **Chrome / Safari / Brave** (el IDE embebido no hace falta
+aquí, pero si abres el notebook 14 sí: si no, `MessageError`).
 Si el archivo no está, la celda **revienta** a propósito. No hay dataset de reemplazo.
 
 ---

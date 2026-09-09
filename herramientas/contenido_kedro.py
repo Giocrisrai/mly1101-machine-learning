@@ -11,9 +11,9 @@ El motivo es que ese proyecto no es una demostración: es la columna de ingenier
 que crecen las experiencias siguientes. Un proyecto que se crea y se borra dentro de una
 celda no sirve como base para las Act. 2.2 ni 2.3.
 
-Alcance de Databricks: **conceptual por diseño**. Exige cuenta y clúster que no se pueden
-pedir en clase. Lo que sí se muestra es el cambio exacto en ``catalog.yml``, que es el
-argumento de por qué se separó el catálogo del análisis.
+Alcance de Databricks: **medido el 2026-09-08** en Free Edition (Git Folder sin PAT +
+Volume ``/Volumes/workspace/default/mly1101``, LIST 0 filas). ``kedro run`` **no** se muda
+al workspace. Mapa único: ``docs/integraciones.md``.
 
 Regenerar tras editar:
 
@@ -71,11 +71,8 @@ distinto: qué hacer cuando los datos ya no caben en un computador.
 ### Este no es un ejemplo de juguete
 
 El proyecto que vamos a ejecutar **está en el repositorio**, en `kedro_mly1101/`. No se crea
-aquí ni se borra al cerrar el notebook: está versionado en Git y tiene 19 tests propios en
-`tests/test_pipeline_kedro.py`.
-
-Es la columna de ingeniería de la asignatura. Los pipelines de aprendizaje supervisado (Act. 2.2) y
-no supervisado (Act. 2.3) viven en este mismo proyecto, sobre el mismo dataset.
+aquí ni se borra al cerrar el notebook: está versionado en Git. Los tests del grafo están en
+`tests/test_pipeline_kedro.py` (RA2/RA3: `tests/test_pipeline_*.py`).
 """
     ),
     md(
@@ -570,7 +567,7 @@ detecciones_reales:
 
 detecciones_limpias:
   type: spark.SparkDataset
-  filepath: dbfs:/mnt/waymo/03_primary/detecciones_limpias
+  filepath: /Volumes/workspace/default/mly1101/detecciones_limpias
   file_format: delta
   save_args:
     mode: overwrite
@@ -612,6 +609,10 @@ resuelve el *dónde*; el *cómo* sigue siendo tuyo.
    **No** hagas `spark.read` de un tfrecord Motion ni montes `gs://waymo_…`.
 6. `kedro run` **no** es el entregable de Free Edition. El grafo (34 nodos) se corre en
    Colab, local o CloudShell. Aquí solo cambia *en papel* el `catalog.yml` (bloque de arriba).
+
+**Medido 2026-09-08:** Git Folder del repo público (rama `main`, sin PAT). Volume managed
+`/Volumes/workspace/default/mly1101` con **LIST 0 filas** (el parquet no va en git; súbelo
+tú). Mapa: `docs/integraciones.md`.
 
 > Colab cubre el lote de clase. Si la RAM no alcanza: [AWS Academy]({URL_AWS_ACADEMY})
 > ([módulo]({URL_AWS_ACADEMY_LAB})) — **CloudShell**, no EC2. SageMaker `large` si lanzas
@@ -944,7 +945,7 @@ completo de Machine Learning**, declarado como dependencias y ejecutado con un c
 | **RA3** · Optimización | `optimizacion` | 6 | Salidas de `supervisado` | ✅ |
 | — · Ingesta | `ingesta` | 4 | `muestra/` | ✅ |
 | — · Todo | `__default__` = `waymo_real` | 34 | v2 al modelo; camera_box y E2E a la vista | ✅ |
-| **EFT** | Integra las tres | — | Casos oficiales, no este hilo | ⏳ |
+| **EFT** | Integra las tres | — | Casos oficiales (notebook **15**), no este hilo | ✅ |
 
 Cada experiencia **añadió nodos, no reescribió el análisis previo**. Y el recorrido sobre datos
 reales no duplicó ninguno: remapeó la entrada del grafo que ya existía.

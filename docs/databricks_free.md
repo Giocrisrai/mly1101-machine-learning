@@ -2,6 +2,7 @@
 
 **Para el alumno.** Cuenta **gratis** para sentir Spark. **No es evaluación.** No reemplaza
 Colab (actividades) ni AWS Academy (más RAM del mismo repo) ni el `kedro run` local.
+Mapa de todas las nubes: [`integraciones.md`](integraciones.md).
 
 Community Edition se retiró en 2025. Usa
 [Databricks Free Edition](https://www.databricks.com/learn/free-edition).
