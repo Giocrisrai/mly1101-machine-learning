@@ -56,8 +56,12 @@ Plantilla de notebook (un caso, falla si falta el CSV):
 Carga: `casos.cargar_caso` y `casos.matriz_xy` en `src/casos.py`.
 Spotify con `muestra=` recorta **álbumes enteros** (no parte discos: el split de la EP2 lo prohíbe).
 
-En Colab: clone + **sube el CSV** a `datos/evaluaciones/{telco|housing|spotify}/`.
-No pide cuenta Waymo. No uses el navegador embebido del IDE.
+En Colab: el notebook 15 crea `datos/evaluaciones/{telco|housing|spotify}/`.
+Sube el CSV del caso ahí. No pide cuenta Waymo. No uses el navegador embebido del IDE.
+
+RAM (medido 2026-09-09): Telco X 7.043×30 (~2 MB) · Housing 2.930×276 (~6 MB) ·
+Spotify 113.999×127 (~116 MB). **Colab free alcanza los tres.** El recorte a 8.000
+filas en Spotify es para que EP2+EP3 terminen en segundos, no porque la matriz no quepa.
 
 Entrega común: Markdown + notebook ejecutable + datos + carpeta profesional.
 Presentación 10 min, preguntas cruzadas.

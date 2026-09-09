@@ -8,7 +8,9 @@ datos/crudos/
 
 # Casos oficiales de las parciales y el EFT (Telco / Housing / Spotify).
 # Coordinación los entrega en EV PARCIALES MLY1101.zip; no se redistribuyen.
-datos/evaluaciones/
+# El README de la carpeta sí va a git: sin él el clone no tiene el path para Colab.
+datos/evaluaciones/**
+!datos/evaluaciones/README.md
 
 # Python
 __pycache__/

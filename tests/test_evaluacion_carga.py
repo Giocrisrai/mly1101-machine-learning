@@ -71,8 +71,11 @@ def test_notebook_alumno_no_filtra_la_pauta() -> None:
     assert "TODO 1" in texto
     assert "matriz_xy" in texto
     assert "SystemExit" not in texto
+    assert "mkdir" in texto
     docente = (RAIZ / "notebooks" / "15_docente_evaluacion.ipynb").read_text(encoding="utf-8")
     assert "álbumes enteros" in docente
+    assert "make_pipeline" in docente
+    assert "GroupKFold" in docente
 
 
 def test_matriz_telco_quita_id_y_pasa_totalcharges_a_numero() -> None:
@@ -134,6 +137,29 @@ def test_matriz_spotify_no_deja_popularity_ni_ids_en_x() -> None:
     assert y.tolist() == [10, 90]
     assert grupo is not None
     assert list(grupo) == ["Alb1", "Alb1"]
+
+
+def test_spotify_album_nan_no_rompe_el_split() -> None:
+    tabla = pd.DataFrame(
+        {
+            "Unnamed: 0": [0, 1, 2],
+            "track_id": ["t1", "t2", "t3"],
+            "artists": ["A", "A", "A"],
+            "album_name": ["Alb1", None, "Alb2"],
+            "track_name": ["s1", "s2", "s3"],
+            "popularity": [10, 20, 30],
+            "danceability": [0.2, 0.3, 0.4],
+            "energy": [0.1, 0.2, 0.3],
+            "track_genre": ["rock", "rock", "rock"],
+        }
+    )
+    X, y, grupo = casos.matriz_xy(tabla, "spotify")
+    assert grupo is not None
+    assert int(grupo.isna().sum()) == 0
+    assert len(X) == 2
+    from sklearn.model_selection import GroupShuffleSplit
+
+    next(GroupShuffleSplit(n_splits=1, test_size=0.5, random_state=0).split(X, y, grupo))
 
 
 def test_muestra_telco_corta_por_fila() -> None:
@@ -220,3 +246,17 @@ def test_spotify_oficial_muestra_no_parte_albumes() -> None:
     originales = tabla["album_name"].value_counts()
     for album, n in grupo.value_counts().items():
         assert int(n) == int(originales[album])
+
+
+def test_spotify_oficial_grupo_sin_nan_en_tabla_completa() -> None:
+    ruta = casos.ruta_del_caso("spotify", RAIZ)
+    if not ruta.exists():
+        pytest.skip("sin zip institucional (spotify)")
+    tabla = casos.cargar_caso("spotify", RAIZ)
+    X, y, grupo = casos.matriz_xy(tabla, "spotify")
+    assert grupo is not None
+    assert int(grupo.isna().sum()) == 0
+    assert X.shape == (113999, 127)
+    from sklearn.model_selection import GroupShuffleSplit
+
+    next(GroupShuffleSplit(n_splits=1, test_size=0.25, random_state=42).split(X, y, grupo))

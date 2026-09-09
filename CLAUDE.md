@@ -174,7 +174,7 @@ es sobre `google.cloud.storage`.
 | RA2 · Act. 2.1 CRISP-DM | ✅ completa (notebooks, pauta, `src/crispdm.py`) |
 | RA2 · Act. 2.4 Interpretación y métricas | ✅ completa (notebooks, pauta, `src/interpretacion.py`) |
 | RA3 · Act. 3.1, 3.2 y 3.3 | ✅ completas y verificadas |
-| Evaluaciones formativas, parciales y EFT | ✅ formativas 1–3 + plantilla `15_*_evaluacion` + calculadora IE + CSV de ejemplo ep1–ep3/eft. Spotify recorta por álbum. Hub: `docs/integraciones.md`. CSV oficiales **no** en git |
+| Evaluaciones formativas, parciales y EFT | ✅ formativas 1–3 + plantilla `15_*_evaluacion` + calculadora IE + CSV de ejemplo ep1–ep3/eft. Spotify recorta por álbum. Hub: `docs/integraciones.md`. CSV oficiales **no** en git. Colab free **alcanza** los tres casos (Spotify X ~116 MB; medido 2026-09-09) |
 | Plantilla de proyecto de equipo | ✅ ejecuta de extremo a extremo |
 | Pipeline Kedro (`kedro_mly1101/`) | ✅ `__default__` = `waymo_real` = 34 nodos (ingesta 4 + análisis 30) |
 | RA2 · Act. 2.2 y 2.3 (notebooks, pautas, pipeline) | ✅ completas y verificadas |

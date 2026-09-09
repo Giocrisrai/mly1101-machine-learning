@@ -108,7 +108,10 @@ import casos
 
 print("Colab:", EN_COLAB)
 print("Casos:", ", ".join(casos.CASOS))
+for nombre in casos.CASOS:
+    (RAIZ / "datos" / "evaluaciones" / nombre).mkdir(parents=True, exist_ok=True)
 print("Carpeta de evaluaciones:", RAIZ / "datos" / "evaluaciones")
+print("Si cargar_caso falla: sube el CSV oficial a la carpeta de tu caso (no está en GitHub).")
 """
     ),
     md(
@@ -230,6 +233,7 @@ from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.metrics import classification_report, mean_absolute_error
 from sklearn.model_selection import GroupShuffleSplit, train_test_split
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 es_clf = meta["tipo"] == "clasificacion"
@@ -244,28 +248,34 @@ if grupo is not None:
     )
     X_train, X_test = X.iloc[i_tr], X.iloc[i_te]
     y_train, y_test = y.iloc[i_tr], y.iloc[i_te]
+    grupos_train = grupo.iloc[i_tr]
 elif es_clf:
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.25, random_state=42, stratify=y
     )
+    grupos_train = None
 else:
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.25, random_state=42
     )
+    grupos_train = None
 
 if es_clf:
-    lineal = LogisticRegression(max_iter=1000, class_weight="balanced")
+    lineal = make_pipeline(
+        StandardScaler(),
+        LogisticRegression(max_iter=1000, class_weight="balanced"),
+    )
     bosque = RandomForestClassifier(
         n_estimators=80, max_depth=8, random_state=42, n_jobs=-1, class_weight="balanced"
     )
     lineal.fit(X_train, y_train)
     bosque.fit(X_train, y_train)
-    print("— logística —")
+    print("— logística (con escala) —")
     print(classification_report(y_test, lineal.predict(X_test), digits=3))
     print("— bosque —")
     print(classification_report(y_test, bosque.predict(X_test), digits=3))
 else:
-    lineal = Ridge(alpha=1.0)
+    lineal = make_pipeline(StandardScaler(), Ridge(alpha=1.0))
     bosque = RandomForestRegressor(
         n_estimators=80, max_depth=8, random_state=42, n_jobs=-1
     )
@@ -300,7 +310,9 @@ print("tamaños k-medias:", pd.Series(etiquetas).value_counts().to_dict())
 > de `Yes`; Housing/Spotify = error en pesos o en puntos de popularidad.
 > IE7: el KMeans no predice el target; tiene que cambiar una decisión.
 > Spotify se recorta por **álbumes enteros** (tope 8.000 filas) **solo en este
-> esqueleto** (RAM de Colab): partir un disco invalidaría el split por grupo.
+> esqueleto** (Colab free aguanta las 114 mil: el tope es por tiempo, no por RAM).
+> Una fila del zip no tiene `album_name`: `matriz_xy` la descarta o el split revienta.
+> La logística va en `make_pipeline(StandardScaler(), …)`; sin escala no converge.
 """
     ),
     md(
@@ -318,16 +330,24 @@ Guion de sala: `docs/guion_ep3.md`.
         """
 from sklearn.ensemble import VotingClassifier, VotingRegressor
 from sklearn.metrics import f1_score
-from sklearn.model_selection import GridSearchCV, KFold, StratifiedKFold, cross_val_score
+from sklearn.model_selection import GridSearchCV, GroupKFold, KFold, StratifiedKFold, cross_val_score
+
+if grupos_train is not None:
+    cv = GroupKFold(n_splits=3)
+    kw_cv = {"groups": grupos_train}
+elif es_clf:
+    cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
+    kw_cv = {}
+else:
+    cv = KFold(n_splits=3, shuffle=True, random_state=42)
+    kw_cv = {}
 
 if es_clf:
-    cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
     scoring = "f1"
     candidato = RandomForestClassifier(
         random_state=42, class_weight="balanced", n_jobs=-1
     )
 else:
-    cv = KFold(n_splits=3, shuffle=True, random_state=42)
     scoring = "neg_mean_absolute_error"
     candidato = RandomForestRegressor(random_state=42, n_jobs=-1)
 
@@ -337,7 +357,7 @@ busqueda = GridSearchCV(
     scoring=scoring,
     cv=cv,
 )
-busqueda.fit(X_train, y_train)
+busqueda.fit(X_train, y_train, **kw_cv)
 print("mejor CV:", round(busqueda.best_score_, 4), busqueda.best_params_)
 
 if es_clf:
@@ -346,7 +366,9 @@ if es_clf:
         voting="soft",
     )
     ensamble.fit(X_train, y_train)
-    cv_vals = cross_val_score(ensamble, X_train, y_train, cv=cv, scoring="f1")
+    cv_vals = cross_val_score(
+        ensamble, X_train, y_train, cv=cv, scoring="f1", **kw_cv
+    )
     print("ensamble CV f1: media", round(cv_vals.mean(), 4), "std", round(cv_vals.std(), 4))
     print("test f1 bosque", round(f1_score(y_test, bosque.predict(X_test)), 4))
     print("test f1 ensamble", round(f1_score(y_test, ensamble.predict(X_test)), 4))
@@ -356,7 +378,7 @@ else:
     )
     ensamble.fit(X_train, y_train)
     cv_vals = -cross_val_score(
-        ensamble, X_train, y_train, cv=cv, scoring="neg_mean_absolute_error"
+        ensamble, X_train, y_train, cv=cv, scoring="neg_mean_absolute_error", **kw_cv
     )
     print("ensamble CV MAE: media", round(cv_vals.mean(), 2), "std", round(cv_vals.std(), 2))
     print("test MAE bosque", round(mean_absolute_error(y_test, bosque.predict(X_test)), 2))

@@ -126,13 +126,18 @@ def matriz_xy(
             cobros = cobros.mask(trabajo["tenure"] == 0, 0.0)
         trabajo["TotalCharges"] = cobros
 
+    nombre_grupo = _GRUPO[nombre]
+    if nombre_grupo and nombre_grupo in trabajo.columns:
+        # Una fila nula rompe GroupShuffleSplit (ValueError: Input contains NaN).
+        trabajo = trabajo.loc[trabajo[nombre_grupo].notna()].copy()
+        grupo = trabajo[nombre_grupo].copy()
+    else:
+        grupo = None
+
     if nombre == "telco":
         y = (trabajo[objetivo].astype(str) == "Yes").astype(int)
     else:
         y = pd.to_numeric(trabajo[objetivo], errors="coerce")
-
-    nombre_grupo = _GRUPO[nombre]
-    grupo = trabajo[nombre_grupo].copy() if nombre_grupo and nombre_grupo in trabajo.columns else None
 
     drop = {objetivo, *_IDS[nombre]}
     X = trabajo.drop(columns=[c for c in drop if c in trabajo.columns])
@@ -170,13 +175,14 @@ def _recortar(
         idx = X.sample(n=min(n, len(X)), random_state=semilla).index
         return X.loc[idx], y.loc[idx], None
 
+    conteo = grupo.value_counts(dropna=True)
     rng = np.random.RandomState(semilla)
-    albumes = np.array(grupo.dropna().unique(), copy=True)
+    albumes = np.array(conteo.index, copy=True)
     rng.shuffle(albumes)
     elegidos: list = []
     filas = 0
     for album in albumes:
-        k = int((grupo == album).sum())
+        k = int(conteo.loc[album])
         if elegidos and filas + k > n:
             break
         elegidos.append(album)
