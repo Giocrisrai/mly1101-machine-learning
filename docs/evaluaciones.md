@@ -25,6 +25,9 @@ Niveles de la pauta: **100 / 80 / 60 / 30 / 0**. Exigencia 60 % → nota 4,0.
 ```bash
 uv run python herramientas/calcular_nota.py --instrumento ep1 --ie 80 60 100 60
 uv run python herramientas/calcular_nota.py --csv docs/ejemplo_notas_ep1.csv
+uv run python herramientas/calcular_nota.py --csv docs/ejemplo_notas_ep2.csv
+uv run python herramientas/calcular_nota.py --csv docs/ejemplo_notas_ep3.csv
+uv run python herramientas/calcular_nota.py --csv docs/ejemplo_notas_eft.csv
 uv run python herramientas/calcular_nota.py --instrumento ep2 --ie 80 80 60 80
 uv run python herramientas/calcular_nota.py --instrumento ep3 --ie 60 80 80 80
 uv run python herramientas/calcular_nota.py --instrumento eft --ie \
@@ -51,6 +54,7 @@ Las pautas D1–D5 de `docs/rubrica_*.md` siguen siendo **formativas**.
 Plantilla de notebook (un caso, falla si falta el CSV):
 `notebooks/15_alumno_evaluacion.ipynb` / `15_docente_evaluacion.ipynb`.
 Carga: `casos.cargar_caso` y `casos.matriz_xy` en `src/casos.py`.
+Spotify con `muestra=` recorta **álbumes enteros** (no parte discos: el split de la EP2 lo prohíbe).
 
 En Colab: clone + **sube el CSV** a `datos/evaluaciones/{telco|housing|spotify}/`.
 No pide cuenta Waymo. No uses el navegador embebido del IDE.

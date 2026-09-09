@@ -104,10 +104,11 @@ No sustituyen la rúbrica institucional.
 - `.gitignore` → `datos/evaluaciones/`
 - Spec y `docs/evaluaciones.md`
 
-## 6. Qué queda para otra pasada
+## 6. Cerrado (regla permanente)
 
-1. No copiar el notebook institucional Telco al GitHub público.
-2. `matriz_xy` cubre Telco / Housing / Spotify (2026-09-09). Guion EFT escrito.
+No copiar el notebook institucional Telco al GitHub público. El resto del andamiaje
+está en el repo: `matriz_xy` de los tres casos (Spotify recorta por álbum), guiones
+EP1–EP3 + EFT, CSV de ejemplo por instrumento, plantilla `15_*_evaluacion`.
 
 ## 7. Fuera de alcance
 

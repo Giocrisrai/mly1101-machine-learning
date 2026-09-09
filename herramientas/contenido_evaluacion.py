@@ -281,7 +281,7 @@ print("tamaños k-medias:", pd.Series(etiquetas).value_counts().to_dict())
 """,
         todo="""
 # EP2: casos.matriz_xy(tabla, CASO) arma X e y (sin IDs, sin el target en X).
-# Spotify: muestra=8000 en Colab; split por álbum (grupo).
+# Spotify: muestra=8000 recorta álbumes enteros (no parte discos).
 # Dos supervisados + un KMeans. Clasificación: recall de la clase cara.
 # Regresión: MAE en unidades del objetivo, no solo R².
 #
@@ -299,7 +299,8 @@ print("tamaños k-medias:", pd.Series(etiquetas).value_counts().to_dict())
 > `matriz_xy` ya saca `customerID` / `PID` / `popularity` de X. IE8: Telco = recall
 > de `Yes`; Housing/Spotify = error en pesos o en puntos de popularidad.
 > IE7: el KMeans no predice el target; tiene que cambiar una decisión.
-> Spotify se recorta a 8.000 filas **solo en este esqueleto** (RAM de Colab).
+> Spotify se recorta por **álbumes enteros** (tope 8.000 filas) **solo en este
+> esqueleto** (RAM de Colab): partir un disco invalidaría el split por grupo.
 """
     ),
     md(

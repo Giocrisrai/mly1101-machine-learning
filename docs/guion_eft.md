@@ -51,5 +51,6 @@ Si recortas, recorta un gráfico. **No** recortes defensa ni ética.
 | IE11 | Hiperparámetros elegidos con el conjunto de prueba. |
 | IE12 | *“Ganó por 0,01”* sin ruido. |
 
-Calculadora de un equipo: `docs/ejemplo_notas_ep1.csv` es solo EP1; para el EFT
-arma un CSV con IE1…IE12.
+Calculadora de un equipo: [`ejemplo_notas_ep1.csv`](ejemplo_notas_ep1.csv) (IE1–IE4),
+[`ejemplo_notas_ep2.csv`](ejemplo_notas_ep2.csv), [`ejemplo_notas_ep3.csv`](ejemplo_notas_ep3.csv)
+y [`ejemplo_notas_eft.csv`](ejemplo_notas_eft.csv) (los doce IE).

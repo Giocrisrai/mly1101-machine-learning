@@ -154,6 +154,9 @@ La rúbrica se convierte a nota con la escala chilena de exigencia 60 %:
 python herramientas/calcular_nota.py 3 4 2 3 3          # IL1 IL2 IL3 IL4 IL5 → 5,2
 python herramientas/calcular_nota.py --csv docs/ejemplo_notas.csv   # el curso completo
 python herramientas/calcular_nota.py --csv docs/ejemplo_notas_ep1.csv  # IE1–IE4
+python herramientas/calcular_nota.py --csv docs/ejemplo_notas_ep2.csv  # IE5–IE8
+python herramientas/calcular_nota.py --csv docs/ejemplo_notas_ep3.csv  # IE9–IE12
+python herramientas/calcular_nota.py --csv docs/ejemplo_notas_eft.csv  # IE1–IE12
 python herramientas/calcular_nota.py --instrumento ep1 --ie 80 60 100 60  # pauta institucional
 ```
 

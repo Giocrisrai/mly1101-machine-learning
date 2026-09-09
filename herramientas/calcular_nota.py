@@ -28,10 +28,14 @@ Uso:
     python herramientas/calcular_nota.py 3 4 3 2 4 --exigencia 0.5
     python herramientas/calcular_nota.py --csv notas.csv  # curso completo
     python herramientas/calcular_nota.py --csv docs/ejemplo_notas_ep1.csv
+    python herramientas/calcular_nota.py --csv docs/ejemplo_notas_ep2.csv
+    python herramientas/calcular_nota.py --csv docs/ejemplo_notas_ep3.csv
+    python herramientas/calcular_nota.py --csv docs/ejemplo_notas_eft.csv
     python herramientas/calcular_nota.py --instrumento ep1 --ie 80 60 100 60
 
 El CSV formativo debe tener cabecera ``nombre,IL1,IL2,IL3,IL4,IL5``.
-El CSV institucional, ``nombre,IE1,…`` (EP1 = IE1–IE4; EFT = IE1–IE12).
+El CSV institucional, ``nombre,IE1,…`` (EP1 = IE1–IE4; EP2 = IE5–IE8;
+EP3 = IE9–IE12; EFT = IE1–IE12).
 Si no pasas ``--instrumento``, se infiere por las columnas.
 """
 

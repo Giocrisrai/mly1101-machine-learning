@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 RAIZ_POR_DEFECTO = Path(__file__).resolve().parents[1]
@@ -101,7 +102,10 @@ def matriz_xy(
     Args:
         tabla: CSV oficial (o un recorte de prueba).
         nombre: ``telco``, ``housing`` o ``spotify``.
-        muestra: si se indica, recorta a esas filas (esqueleto Colab / Spotify).
+        muestra: tope de filas (esqueleto Colab). Telco y Housing recortan
+            filas al azar. Spotify recorta **álbumes enteros** hasta no
+            superar el tope (si el primer álbum ya es más grande, se
+            conserva: partirlo invalidaría el ``GroupShuffleSplit``).
         semilla: para el recorte.
 
     Returns:
@@ -146,15 +150,39 @@ def matriz_xy(
     if muestra is not None:
         if muestra < 1:
             raise ValueError("muestra debe ser ≥ 1")
-        n = min(muestra, len(X))
-        idx = X.sample(n=n, random_state=semilla).index
-        X = X.loc[idx]
-        y = y.loc[idx]
-        if grupo is not None:
-            grupo = grupo.loc[idx]
+        X, y, grupo = _recortar(X, y, grupo, muestra, semilla)
 
     y.name = objetivo
     if grupo is not None:
         grupo.name = nombre_grupo
     return X, y, grupo
+
+
+def _recortar(
+    X: pd.DataFrame,
+    y: pd.Series,
+    grupo: pd.Series | None,
+    n: int,
+    semilla: int,
+) -> tuple[pd.DataFrame, pd.Series, pd.Series | None]:
+    """Recorta sin partir la unidad de split (álbum en Spotify)."""
+    if grupo is None:
+        idx = X.sample(n=min(n, len(X)), random_state=semilla).index
+        return X.loc[idx], y.loc[idx], None
+
+    rng = np.random.RandomState(semilla)
+    albumes = np.array(grupo.dropna().unique(), copy=True)
+    rng.shuffle(albumes)
+    elegidos: list = []
+    filas = 0
+    for album in albumes:
+        k = int((grupo == album).sum())
+        if elegidos and filas + k > n:
+            break
+        elegidos.append(album)
+        filas += k
+        if filas >= n:
+            break
+    mask = grupo.isin(elegidos)
+    return X.loc[mask], y.loc[mask], grupo.loc[mask]
 

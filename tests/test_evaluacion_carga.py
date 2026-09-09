@@ -71,6 +71,8 @@ def test_notebook_alumno_no_filtra_la_pauta() -> None:
     assert "TODO 1" in texto
     assert "matriz_xy" in texto
     assert "SystemExit" not in texto
+    docente = (RAIZ / "notebooks" / "15_docente_evaluacion.ipynb").read_text(encoding="utf-8")
+    assert "álbumes enteros" in docente
 
 
 def test_matriz_telco_quita_id_y_pasa_totalcharges_a_numero() -> None:
@@ -134,7 +136,24 @@ def test_matriz_spotify_no_deja_popularity_ni_ids_en_x() -> None:
     assert list(grupo) == ["Alb1", "Alb1"]
 
 
-def test_muestra_recorta_sin_inventar_filas() -> None:
+def test_muestra_telco_corta_por_fila() -> None:
+    tabla = pd.DataFrame(
+        {
+            "customerID": list("abcde"),
+            "tenure": [1, 2, 3, 4, 5],
+            "MonthlyCharges": [10.0] * 5,
+            "TotalCharges": ["10", "20", "30", "40", "50"],
+            "gender": ["Female"] * 5,
+            "Churn": ["No", "Yes", "No", "Yes", "No"],
+        }
+    )
+    X, y, grupo = casos.matriz_xy(tabla, "telco", muestra=3, semilla=0)
+    assert len(X) == 3
+    assert len(y) == 3
+    assert grupo is None
+
+
+def test_muestra_spotify_no_parte_albumes() -> None:
     tabla = pd.DataFrame(
         {
             "Unnamed: 0": range(20),
@@ -148,6 +167,56 @@ def test_muestra_recorta_sin_inventar_filas() -> None:
             "track_genre": ["pop"] * 20,
         }
     )
-    X, y, _grupo = casos.matriz_xy(tabla, "spotify", muestra=8, semilla=0)
-    assert len(X) == 8
-    assert len(y) == 8
+    X, y, grupo = casos.matriz_xy(tabla, "spotify", muestra=8, semilla=0)
+    assert 5 <= len(X) <= 10
+    assert len(y) == len(X)
+    assert grupo is not None
+    for album in grupo.unique():
+        assert int((grupo == album).sum()) == 5
+
+
+def test_muestra_conserva_el_primer_album_aunque_supere_n() -> None:
+    tabla = pd.DataFrame(
+        {
+            "Unnamed: 0": range(6),
+            "track_id": [f"t{i}" for i in range(6)],
+            "artists": ["A"] * 6,
+            "album_name": ["unico"] * 6,
+            "track_name": [f"s{i}" for i in range(6)],
+            "popularity": list(range(6)),
+            "danceability": [0.5] * 6,
+            "energy": [0.5] * 6,
+            "track_genre": ["pop"] * 6,
+        }
+    )
+    X, y, grupo = casos.matriz_xy(tabla, "spotify", muestra=3, semilla=0)
+    assert len(X) == 6
+    assert grupo is not None
+    assert grupo.nunique() == 1
+
+
+@pytest.mark.parametrize("nombre,forma", [("telco", (7043, 30)), ("housing", (2930, 276))])
+def test_matriz_oficial_sin_nan_si_esta_el_csv(nombre: str, forma: tuple[int, int]) -> None:
+    ruta = casos.ruta_del_caso(nombre, RAIZ)
+    if not ruta.exists():
+        pytest.skip(f"sin zip institucional ({nombre})")
+    X, y, _grupo = casos.matriz_xy(casos.cargar_caso(nombre, RAIZ), nombre)
+    assert X.shape == forma
+    assert X.isna().sum().sum() == 0
+    assert str(casos.CASOS[nombre]["objetivo"]) not in X.columns
+    assert len(y) == forma[0]
+
+
+def test_spotify_oficial_muestra_no_parte_albumes() -> None:
+    ruta = casos.ruta_del_caso("spotify", RAIZ)
+    if not ruta.exists():
+        pytest.skip("sin zip institucional (spotify)")
+    tabla = casos.cargar_caso("spotify", RAIZ)
+    X, y, grupo = casos.matriz_xy(tabla, "spotify", muestra=8000, semilla=42)
+    assert grupo is not None
+    assert X.isna().sum().sum() == 0
+    assert "popularity" not in X.columns
+    assert len(X) <= 8000 or grupo.nunique() == 1
+    originales = tabla["album_name"].value_counts()
+    for album, n in grupo.value_counts().items():
+        assert int(n) == int(originales[album])

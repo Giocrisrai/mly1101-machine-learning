@@ -113,6 +113,20 @@ def test_csv_formativo_con_il_sigue_funcionando(tmp_path: Path) -> None:
     assert filas[0].get("instrumento") is None
 
 
+def test_csv_detecta_ep2_por_columnas_ie() -> None:
+    filas = evaluar_csv(RAIZ / "docs" / "ejemplo_notas_ep2.csv")
+    assert filas[0]["instrumento"] == "ep2"
+    assert filas[0]["nombre"] == "Ana Fuentes"
+    assert filas[0]["aprueba"]
+
+
+def test_csv_detecta_ep3_por_columnas_ie() -> None:
+    filas = evaluar_csv(RAIZ / "docs" / "ejemplo_notas_ep3.csv")
+    assert filas[0]["instrumento"] == "ep3"
+    assert filas[0]["nombre"] == "Ana Fuentes"
+    assert filas[0]["aprueba"]
+
+
 def test_csv_detecta_eft_por_doce_columnas_ie() -> None:
     filas = evaluar_csv(RAIZ / "docs" / "ejemplo_notas_eft.csv")
     assert filas[0]["instrumento"] == "eft"
