@@ -77,10 +77,9 @@ Problema → Datos → Exploración → Preprocesamiento → Modelamiento → Ev
 nota final; el EFT, el **40 %** restante. Cómo cargar los CSV y cómo notar con IE:
 [`docs/evaluaciones.md`](docs/evaluaciones.md).
 
-> **Los notebooks de actividad usan un hilo de detecciones LiDAR (Perception v2).** El lote
-> se arma en el paso 2–3 de arriba. Las Act. 1.1–3.3 y el **proyecto** leen el mismo parquet.
-> Las **parciales y el EFT** se rinden sobre los casos oficiales: *Telco Customer Churn*,
-> *House Prices* o *Spotify Tracks*.
+> **Las actividades son Waymo (Perception v2).** El lote se arma en el paso 2–3. Telco /
+> Housing / Spotify no son “la otra práctica”: son el instrumento Duoc de las **parciales
+> y el EFT**, la forma inicial de tarea. No se mezclan con el parquet.
 
 ---
 
@@ -399,8 +398,8 @@ El diccionario y los conteos están en [`datos/README.md`](datos/README.md). El 
 segmento. `kedro run` (34 nodos) es el ciclo completo sobre esa tabla. `camera_box` y E2E se
 inventarian; **no** entran al modelo.
 
-Las evaluaciones parciales y el EFT usan los casos oficiales (*Telco Churn*, *House Prices*,
-*Spotify Tracks*), no este hilo.
+Las parciales y el EFT usan el instrumento que entrega Duoc (*Telco Churn*, *House Prices*,
+*Spotify Tracks*): fue la forma inicial de tarea. No es este hilo de Perception v2.
 
 ---
 

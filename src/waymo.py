@@ -81,6 +81,33 @@ TUTORIALES_OFICIALES: dict[str, dict[str, str]] = {
 MUESTRAS_OFICIALES_GITHUB = (
     "https://github.com/waymo-research/waymo-open-dataset/tree/master/tutorial"
 )
+# Carpeta tutorial/ del repo oficial (leída 2026-09-09). No copiar los .ipynb.
+TUTORIALES_REPO_OFICIAL: tuple[str, ...] = (
+    "tutorial.ipynb",
+    "tutorial_v2.ipynb",
+    "tutorial_local.ipynb",
+    "tutorial_motion.ipynb",
+    "tutorial_vision_based_e2e_driving.ipynb",
+    "tutorial_camera_only.ipynb",
+    "tutorial_keypoints.ipynb",
+    "tutorial_maps.ipynb",
+    "tutorial_2d_pvps.ipynb",
+    "tutorial_3d_semseg.ipynb",
+    "tutorial_object_asset.ipynb",
+    "tutorial_occupancy_flow.ipynb",
+    "tutorial_sim_agents.ipynb",
+    "tutorial_scenario_gen.ipynb",
+    "tutorial_womd_camera.ipynb",
+    "tutorial_womd_lidar.ipynb",
+)
+TUTORIALES_EN_CLASE: frozenset[str] = frozenset(
+    {
+        "tutorial.ipynb",
+        "tutorial_v2.ipynb",
+        "tutorial_motion.ipynb",
+        "tutorial_vision_based_e2e_driving.ipynb",
+    }
+)
 VIEWER_PARQUET_V2 = {
     "url": "https://egolens.org",
     "repo": "https://github.com/egolens/egolens",

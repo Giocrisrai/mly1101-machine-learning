@@ -127,9 +127,11 @@ dataset de las actividades:
 Los datasets vienen en `EV PARCIALES MLY1101.zip` y en el anexo del EFT, junto con un **notebook
 institucional resuelto** de Telco Churn para el docente.
 
-> **Decisión de este repositorio (2026-08-27):** las **actividades** conservan el hilo único del
-> dataset de detecciones LiDAR tipo Waymo; las **evaluaciones** usan los casos oficiales. Que el
-> caso de aprendizaje y el de evaluación sean distintos es deliberado: obliga a demostrar que el
+> **Decisión de este repositorio (2026-08-27):** Duoc entrega Telco / Housing / Spotify como
+> forma inicial de tarea. Este curso **no** las usa en clase: las actividades y `kedro run`
+> van sobre Perception v2. Las parciales y el EFT siguen en esos casos oficiales porque
+> son el instrumento de coordinación, no porque sean un segundo hilo pedagógico. Que el
+> caso de aprendizaje y el de evaluación sean distintos también obliga a demostrar que el
 > método se traslada, en vez de reproducir un ejercicio memorizado.
 
 ---

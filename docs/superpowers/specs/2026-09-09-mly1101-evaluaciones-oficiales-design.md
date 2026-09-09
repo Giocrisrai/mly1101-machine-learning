@@ -6,8 +6,9 @@
 - **Fuentes oficiales (no versionar):** `EV PARCIALES MLY1101.zip`, `EFT_MLY1101_*.zip`
   (coordinación, 2026-07-22/23)
 
-> Las Act. 1.1–3.3 y `kedro run` siguen en Perception v2. Las evaluaciones **no** mezclan
-> Waymo. El método se traslada a Telco / Housing / Spotify.
+> Las Act. 1.1–3.3 y `kedro run` son Perception v2 (el hilo que elegimos). Telco /
+> Housing / Spotify son el instrumento Duoc de las parciales y el EFT —la forma inicial
+> de tarea—, no un segundo curso. El método se traslada el día de la evaluación.
 
 ---
 

@@ -18,9 +18,19 @@ indicadores cada uno**, y no coincide con la intuición:
 Los dos están en el **RA2**; el RA3 es optimización. Antes de citar un RA o un IL, mirar el
 programa.
 
-**Los datasets también se dividen:** las actividades usan el hilo de Waymo; las **evaluaciones
-parciales y el EFT** se rinden sobre los casos oficiales (*Telco Churn*, *House Prices*,
-*Spotify Tracks*). No mezclar. Dónde corre cada nube: `docs/integraciones.md`.
+**Waymo es el curso. Telco / Housing / Spotify no son “otro Waymo”.** Esos tres CSV
+fueron la forma inicial de tarea que entrega Duoc (zip de coordinación). Este material
+eligió Perception v2 para las Act. 1.1–3.3 y `kedro run` porque queríamos un hilo
+distinto. Los CSV oficiales **siguen existiendo solo como instrumento sumativo**
+(parciales y EFT): no se reescriben las actividades sobre ellos, no se les arma un
+pipeline Kedro, no se mezclan con detecciones LiDAR. Dónde corre cada nube:
+`docs/integraciones.md`.
+
+**El error que ya se cometió:** tratar Telco/Housing/Spotify como el desafío pedagógico
+o como un segundo dataset de clase. Son la pauta institucional. El aprendizaje vive en
+Waymo. El método se *traslada* el día de la parcial, no se ensaya en paralelo todo el
+semestre. El repo oficial de Waymo tiene 16 tutoriales (`src/waymo.py::TUTORIALES_REPO_OFICIAL`);
+solo 4 se enlazan. Mapa: `docs/productos_waymo.md`. No copiar sus `.ipynb`.
 
 **El instrumento sumativo no es esta rúbrica.** Las pautas de `docs/` son formativas. Las
 evaluaciones calificadas son las tres Parciales (30/40/30 → 60 % final) y el EFT (40 %), con la

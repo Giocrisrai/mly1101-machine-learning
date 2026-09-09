@@ -24,8 +24,10 @@ CELDAS_EVALUACION: list[dict] = [
 # MLY1101 · Plantilla de evaluación
 ## Parciales 1–3 y EFT · casos oficiales
 
-Este notebook **no** usa Perception v2. Las Act. 1.1–3.3 y `kedro run` siguen en
-Waymo. Aquí el equipo trabaja **un** caso institucional y lo mantiene hasta el EFT.
+Este notebook **no** es el hilo del curso. Las Act. 1.1–3.3 y `kedro run` son Waymo
+(Perception v2). Telco / Housing / Spotify los entrega Duoc para las parciales y el
+EFT: un equipo elige **un** caso institucional y lo mantiene hasta el EFT. No mezcles
+detecciones LiDAR aquí.
 
 | Caso | Archivo | Problema | Objetivo |
 |---|---|---|---|

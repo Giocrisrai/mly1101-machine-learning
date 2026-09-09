@@ -17,8 +17,12 @@ def test_existe_el_mapa_unico() -> None:
         "MessageError",
         "datos/evaluaciones",
         "LIST 0 filas",
+        "Instrumento Duoc",
     ):
         assert fragmento in texto, fragmento
+    evals = (RAIZ / "docs" / "evaluaciones.md").read_text(encoding="utf-8")
+    assert "forma inicial" in evals
+    assert "Perception v2" in evals
 
 
 def test_kedro_readme_no_deja_evaluaciones_pendientes() -> None:

@@ -1,8 +1,9 @@
 # Evaluaciones oficiales · MLY1101
 
-**No es el hilo Waymo.** Las Act. 1.1–3.3 y `kedro run` usan Perception v2. Las tres
-parciales y el EFT se rinden sobre **un** caso: Telco Churn, House Prices (Ames) o
-Spotify Tracks.
+**No es el hilo del curso.** Telco, House Prices (Ames) y Spotify Tracks son el
+instrumento que entrega Duoc (zip de coordinación): fueron la forma inicial de tarea.
+Las Act. 1.1–3.3 y `kedro run` se fueron a Perception v2 a propósito. Las tres
+parciales y el EFT se rinden sobre **un** de esos casos oficiales, no sobre Waymo.
 
 Los CSV y las pautas PDF los entrega la coordinación (`EV PARCIALES MLY1101.zip`,
 anexo del EFT). **No están en este repositorio.**

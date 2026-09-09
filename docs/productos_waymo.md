@@ -18,7 +18,7 @@ Lo que **sí** se hace con esa información, sin el video:
 | “Bajar un JPEG para el informe” | No. Un `camera_image` pesa **~320 MB por segmento**. La ficha de fuentes cita `camera_box`. |
 
 Act. 1.1–3.3 y `kedro run` siguen siendo **solo** v2. Telco / House Prices / Spotify
-son evaluaciones, otro hilo.
+son el instrumento Duoc de las parciales y el EFT, no un segundo hilo de clase.
 
 ---
 
@@ -74,8 +74,31 @@ la licencia **prohíbe redistribuir**. El alumno abre el Colab de ellos.
 | [Colab Perception v2](https://colab.research.google.com/github/waymo-research/waymo-open-dataset/blob/master/tutorial/tutorial_v2.ipynb) | Parquet modular (Dask), el mismo formato del lote | Enlace. El curso usa pandas. |
 | [Colab Motion](https://colab.research.google.com/github/waymo-research/waymo-open-dataset/blob/master/tutorial/tutorial_motion.ipynb) | Un ejemplo del tutorial; un shard real sigue siendo ~1 GB | Enlace. En clase: `vehicle_pose`. |
 | [Colab E2E](https://colab.research.google.com/github/waymo-research/waymo-open-dataset/blob/master/tutorial/tutorial_vision_based_e2e_driving.ipynb) | Un frame si ya tienes el tfrecord (~1,6 GB) | Enlace. En clase: JSON 479. |
-| [Muestras en GitHub](https://github.com/waymo-research/waymo-open-dataset/tree/master/tutorial) | `frames`, `frames_with_maps.tfrecord` (los del Colab) | Enlace. **No** al repo del curso. |
+| [Muestras en GitHub](https://github.com/waymo-research/waymo-open-dataset/tree/master/tutorial) | `frames`, `frames_with_maps.tfrecord`, `frame_with_keypoints.tfrecord` | Enlace. **No** al repo del curso. |
 | [EgoLens](https://egolens.org) ([código](https://github.com/egolens/egolens)) | Viewer OMSCS: arrastras parquet v2 **local** | Útil si alguien ya bajó `camera_image`. No resuelve los 320 MB. |
+
+El repo oficial ([waymo-research/waymo-open-dataset](https://github.com/waymo-research/waymo-open-dataset), carpeta `tutorial/`, leído 2026-09-09) tiene **16** notebooks. MLY1101 **no los copia** (licencia + TensorFlow + challenges). De cada uno, qué se aprovecha:
+
+| Tutorial oficial | Qué enseña Waymo | En este curso |
+|---|---|---|
+| `tutorial.ipynb` | 2 frames protobuf, JPEG, cajas, nube 3D, métricas C++/TF | **Enlace.** El gesto (un cuadro) está en el notebook 14 etapa F, **sin** JPEG. |
+| `tutorial_v2.ipynb` | Parquet modular, joins objeto/frame/escena, API `v2`, Dask. Muestra `lidar_box`, `camera_box`, `camera_image`, `lidar`. **No usa `stats`.** | **Enlace.** El lote de clase es ese formato. Nosotros: pandas + `lidar_box`+`stats` (el RF). No unimos filas 2D↔3D. No bajamos `camera_image` ni `lidar`. |
+| `tutorial_local.ipynb` | Mismo que el de 2 frames, kernel local + `compute_detection_metrics` (mAP) | No. MLY1101 no es un challenge de detección. |
+| `tutorial_motion.ipynb` | Decodificar Motion + entrenar un modelo TF | **Enlace.** Un shard real ~1 GB. En clase: `vehicle_pose` + `speed_mps`. |
+| `tutorial_vision_based_e2e_driving.ipynb` | Cargar/visualizar/submit E2E (challenge 2025) | **Enlace.** En clase: JSON 479 clusters, no el tfrecord 1,6 GB. |
+| `tutorial_camera_only.ipynb` | Labels 3D sincronizados a cámara (challenge 2022) | No. Pide imágenes. |
+| `tutorial_keypoints.ipynb` | Keypoints humanos | No. |
+| `tutorial_maps.ipynb` | Alinear nube a mapa (`frames_with_maps.tfrecord`) | No. Es Perception v1. |
+| `tutorial_2d_pvps.ipynb` | Panóptica 2D de video | No. |
+| `tutorial_3d_semseg.ipynb` | Semántica 3D de la nube | No. Pide `lidar`. |
+| `tutorial_object_asset.ipynb` | Assets 3D (parches de vehículo/peatón, v2.0.0) | No. Otro recorte del bucket. |
+| `tutorial_occupancy_flow.ipynb` | Occupancy/flow sobre Motion + submit | No. Challenge, TensorFlow. |
+| `tutorial_sim_agents.ipynb` | Sim Agents challenge 2025 | No. |
+| `tutorial_scenario_gen.ipynb` | Scenario Gen challenge 2025 | No. |
+| `tutorial_womd_camera.ipynb` | Tokens de cámara en WOMD + codebook `.npy` | No. |
+| `tutorial_womd_lidar.ipynb` | Nubes comprimidas en WOMD | No. |
+
+Lo que **sí** tomamos de `tutorial_v2` (sin copiar celdas): el dataset es **tablas parquet por componente**; se baja solo lo que cabe. `stats` (clima, hora, ciudad) no aparece en ese Colab y **sí** entra a nuestra tabla de 530.396 filas: es un componente real de v2, no un invento.
 
 Lo que **aplicamos aquí** (notebook 14, etapa F): el mismo gesto —ver **un**
 cuadro— con las tablas que sí caben. `recorte_de_un_frame` +

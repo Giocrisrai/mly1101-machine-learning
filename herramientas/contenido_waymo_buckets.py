@@ -515,7 +515,13 @@ No copiamos esos binarios (licencia: no redistribuir). Si quieres ver JPEG de ve
 | Esta celda | Cajas 2D del lote, sin JPEG |
 | [Colab percepción · 2 frames](https://colab.research.google.com/github/waymo-research/waymo-open-dataset/blob/master/tutorial/tutorial.ipynb) | Foto + cajas, dos instantes, TensorFlow |
 | [Colab Perception v2](https://colab.research.google.com/github/waymo-research/waymo-open-dataset/blob/master/tutorial/tutorial_v2.ipynb) | El mismo parquet modular |
+| [Colab Motion](https://colab.research.google.com/github/waymo-research/waymo-open-dataset/blob/master/tutorial/tutorial_motion.ipynb) | Un ejemplo TF; un shard real ~1 GB |
+| [Colab E2E](https://colab.research.google.com/github/waymo-research/waymo-open-dataset/blob/master/tutorial/tutorial_vision_based_e2e_driving.ipynb) | Challenge 2025; en clase usamos el JSON 479 |
 | [EgoLens](https://egolens.org) | Arrastras parquet **local**. JPEG solo si bajaste `camera_image` |
+
+El repo oficial tiene **16** notebooks en `tutorial/`. Solo esos cuatro entran
+como enlace. Los otros 12 (semseg, keypoints, Sim Agents, WOMD, …) son challenges
+con TensorFlow y tfrecord: no se copian. Mapa: `docs/productos_waymo.md`.
 """
     ),
     code(

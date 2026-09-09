@@ -252,6 +252,21 @@ def test_los_tutoriales_oficiales_apuntan_a_colab_de_waymo() -> None:
         assert producto["pagina"] == waymo.PAGINA_DESCARGA
 
 
+def test_los_dieciseis_tutoriales_oficiales_estan_en_la_guia() -> None:
+    """El repo Waymo tiene 16 notebooks; MLY1101 solo enlaza 4. No copiar el resto."""
+    assert len(waymo.TUTORIALES_REPO_OFICIAL) == 16
+    assert waymo.TUTORIALES_EN_CLASE <= set(waymo.TUTORIALES_REPO_OFICIAL)
+    assert len(waymo.TUTORIALES_EN_CLASE) == 4
+    guia = (RAIZ / "docs" / "productos_waymo.md").read_text(encoding="utf-8")
+    for nombre in waymo.TUTORIALES_REPO_OFICIAL:
+        assert f"`{nombre}`" in guia, nombre
+    fuente = (RAIZ / "herramientas" / "contenido_waymo_buckets.py").read_text(
+        encoding="utf-8"
+    )
+    assert "productos_waymo.md" in fuente
+    assert "16" in fuente
+
+
 def test_descargar_camera_box_pide_el_parquet_2d_no_la_imagen(
     monkeypatch, tmp_path: Path
 ) -> None:

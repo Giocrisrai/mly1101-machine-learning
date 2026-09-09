@@ -2,12 +2,14 @@
 
 Una sola tabla. Si un README, un notebook o un lab dice otra cosa, **gana este archivo**.
 
-Hay **dos hilos de datos**. No se mezclan.
+Hay **dos orígenes de datos**. No se mezclan y no son dos versiones del mismo
+proyecto: Waymo es lo que diseñamos para aprender; Telco / Housing / Spotify es lo
+que Duoc ya tenía como instrumento de las parciales y el EFT.
 
-| Hilo | Qué es | Dónde vive | Qué notebooks |
+| Origen | Qué es | Dónde vive | Qué notebooks |
 |---|---|---|---|
-| **Actividades + Kedro** | Perception v2 (`lidar_box` + `stats`) | `datos/waymo_real/` gitignored | 14, 10, 00, 01–13, 04 |
-| **Parciales y EFT** | Telco / Housing / Spotify | `datos/evaluaciones/` gitignored | **15** |
+| **Curso (actividades + Kedro)** | Perception v2 (`lidar_box` + `stats`) | `datos/waymo_real/` gitignored | 14, 10, 00, 01–13, 04 |
+| **Instrumento Duoc (parciales y EFT)** | Telco / Housing / Spotify | `datos/evaluaciones/` gitignored | **15** |
 
 Sin el archivo en disco, el código **falla** y dice cómo obtenerlo. No hay CSV sintético.
 
@@ -80,7 +82,7 @@ No montes `gs://waymo_…`.
 
 ---
 
-## Evaluaciones (otro hilo)
+## Evaluaciones (instrumento Duoc, no el curso)
 
 ```bash
 uv run python herramientas/preparar_casos_oficiales.py
