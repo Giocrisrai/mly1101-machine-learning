@@ -5,20 +5,20 @@
 Si se pudiera, el equipo de percepción sabría de antemano en qué situaciones no
 conviene confiar en el sensor.
 
-Se descartó clasificar ``object_type``, que parecía el objetivo natural: sobre
-este dataset se resuelve al 99,98 % con cualquier partición, porque el generador
-sortea las dimensiones **por tipo de objeto** y basta el largo de la caja para
-acertar. Un ejercicio donde todo sale perfecto no enseña a evaluar.
+Se descartó clasificar ``object_type``, que parecía el objetivo natural: el sensor
+ya etiqueta el tipo. Un ejercicio donde el tipo sale perfecto no enseña a evaluar.
 
 ``detection_difficulty`` sí tiene sustancia, y por dos motivos:
 
-1. **Está desbalanceado** — 88,9 % ``LEVEL_1`` contra 11,1 % ``LEVEL_2``. El
-   modelo alcanza cerca del 90 % de exactitud con un F1-macro de 0,65: el caso
-   de manual de que *el promedio global oculta a la minoría*.
+1. **Está desbalanceado** — 87,67 % ``LEVEL_1`` contra 12,33 % ``LEVEL_2``. El
+   bosque saca 78,05 % de exactitud (peor que el dummy 81,72 %) con F1 de
+   ``LEVEL_2`` **0,0893**: el caso de manual de que *el promedio global oculta
+   a la minoría*.
 2. **Permite medir una fuga de verdad.** La etiqueta se deriva de
    ``num_lidar_points``, así que incluir esa variable entre las predictoras
-   infla la métrica. El nodo ``comparar_fuga_de_variable`` lo mide en vez de
-   afirmarlo.
+   infla la métrica (F1-macro 0,4822 → 0,5368). El nodo
+   ``comparar_fuga_de_variable`` lo mide en vez de afirmarlo. Partir al azar
+   por fila también se nota: F1-macro 0,4822 → 0,9427.
 """
 
 from __future__ import annotations
@@ -76,12 +76,11 @@ def particionar(tabla: pd.DataFrame, config: dict) -> pd.DataFrame:
     ``GroupShuffleSplit`` garantiza que un segmento entero cae de un solo lado.
 
     Honestidad sobre este dataset concreto: el nodo ``comparar_particiones``
-    mide el efecto y sale **cerca de cero**, porque el generador sortea cada
-    detección de forma independiente dentro del segmento. Partir por grupo sigue
-    siendo lo correcto —en datos reales de Waymo los fotogramas consecutivos
-    siguen al mismo objeto y la dependencia sí existe—, pero aquí es una decisión
-    de diseño, no una que se justifique midiendo. Eso también hay que saber
-    decirlo.
+    mide el efecto y **sí se nota**. En Perception v2 partir al azar deja los 40
+    segmentos a caballo y el F1-macro salta de 0,4822 a 0,9427 (``LEVEL_2`` de
+    0,0893 a 0,9007): los fotogramas consecutivos siguen al mismo objeto.
+    Partir por grupo no es una decisión de diseño abstracta; aquí también se
+    justifica midiendo.
 
     Devuelve la misma tabla con una columna ``particion`` añadida, en vez de dos
     DataFrames: así el reparto queda auditable fila a fila y se puede comprobar
@@ -199,15 +198,13 @@ def comparar_particiones(
 ) -> pd.DataFrame:
     """Entrena con las dos particiones y mide la diferencia.
 
-    **Sobre este dataset la diferencia es prácticamente nula**, y decirlo es parte
-    del ejercicio. La columna ``segmentos_compartidos`` muestra que la fuga existe
-    estructuralmente —153 segmentos a caballo contra 0— pero no mueve la métrica,
-    porque el generador sortea cada detección de forma independiente.
+    **Sobre Perception v2 la diferencia es enorme**, y decirlo es parte del
+    ejercicio. La columna ``segmentos_compartidos`` muestra que la fuga deja los
+    40 segmentos a caballo (contra 0 al partir por grupo) y el F1-macro salta de
+    0,4822 a 0,9427: los fotogramas consecutivos siguen al mismo objeto.
 
-    La conclusión que se busca no es "partir por grupo da igual", sino algo más
-    incómodo y más útil: **un riesgo que no se manifiesta en tus datos de prueba
-    sigue siendo un riesgo**. La partición por grupo se justifica por cómo se
-    generaron los datos, no por la diferencia que se mide hoy.
+    La conclusión que se busca no es "partir por grupo da igual", sino la opuesta:
+    **en datos con trayectoria, partir al azar mide memoria, no generalización**.
     """
     filas = []
     for nombre, marcada in [

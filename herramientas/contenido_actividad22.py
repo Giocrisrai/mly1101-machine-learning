@@ -71,11 +71,11 @@ accionable sobre la propia incertidumbre del sistema.
 
 ### Por qué no clasificamos el tipo de objeto
 
-Parecía lo natural, y es lo que casi todos proponen. Lo probamos: **se resuelve al 99,98 %**
-con cualquier configuración. El generador sortea las dimensiones por tipo de objeto, así que
-basta el largo de la caja para acertar.
+Parecía lo natural, y es lo que casi todos proponen. El sensor **ya etiqueta** `vehicle`,
+`pedestrian`, `sign` y `cyclist`. Anticipar `detection_difficulty` es otra pregunta: saber
+de antemano en qué detecciones no conviene confiar.
 
-Un ejercicio donde todo sale perfecto no enseña nada sobre evaluación. Y aprender a evaluar
+Un ejercicio donde el tipo de objeto sale perfecto no enseña a evaluar. Y aprender a evaluar
 es exactamente lo que se evalúa hoy.
 
 ---
@@ -84,10 +84,11 @@ es exactamente lo que se evalúa hoy.
 
 > **Un modelo no se reporta con una cifra.**
 
-Vas a entrenar un modelo que alcanza casi un 90 % de exactitud. También vas a descubrir que
-un modelo que responde **siempre lo mismo, sin mirar los datos**, alcanza un 88,96 %.
+Vas a entrenar un bosque que saca **78 %** de exactitud. También vas a descubrir que un modelo
+que responde **siempre lo mismo, sin mirar los datos**, saca **82 %**. El bosque *pierde* en
+exactitud. El F1 de `LEVEL_2` queda en **0,0893**.
 
-Esos dos números juntos son la sesión completa.
+Esos números juntos son la sesión completa.
 
 ---
 
@@ -502,8 +503,8 @@ comparacion
 
 *(doble clic aquí y escribe)*
 
-La diferencia entre las dos particiones es prácticamente nula. Entonces, ¿da igual cómo se
-parta? Justifica tu respuesta.
+La diferencia de F1-macro entre las dos particiones es enorme (mira la tabla). Entonces,
+¿conviene partir al azar, que “sale mejor”? Justifica tu respuesta.
 """
     ),
     md_docente(
@@ -512,31 +513,26 @@ parta? Justifica tu respuesta.
 >
 > **Cifras medidas:** por grupo, 384.280 filas de entrenamiento (72,5 %) en **30 segmentos** y
 > 146.116 de prueba en **10**, con **0 compartidos**. Al azar, **40 segmentos compartidos** —
-> todos.
+> todos. F1-macro **0,4822 → 0,9427**; F1 de `LEVEL_2` **0,0893 → 0,9007**.
 >
-> **El TODO 6 es una trampa deliberada, y hay que sostenerla.** La diferencia de métrica puede
-> ser chica o nula. Alguien va a decir, con toda lógica, *"entonces da igual"*.
+> **El TODO 6 es una trampa deliberada, y hay que sostenerla.** La partición al azar *se ve*
+> mejor. Alguien va a decir, con toda lógica, *"entonces partamos al azar"*.
 >
 > **No des la respuesta enseguida. Deja que lo defiendan.** Y después:
 >
-> *"Miren la columna `segmentos_compartidos`. La fuga está ahí: 40 contra 0. Lo que no
-> aparece es su efecto. ¿Por qué?"*
+> *"Miren la columna `segmentos_compartidos`. La fuga está ahí: 40 contra 0. El F1 de 0,94 no
+> es un modelo bueno: es memoria del mismo segmento."*
 >
-> En v2 los fotogramas consecutivos **sí** siguen al mismo objeto. Aunque la métrica no se
-> mueva, partir al azar mezcla el mismo segmento en train y test.
+> En v2 los fotogramas consecutivos **sí** siguen al mismo objeto. Partir al azar mezcla la
+> misma trayectoria en train y test.
 >
-> **La respuesta correcta es "no da igual", y el argumento no es la métrica:**
+> **La respuesta correcta es "no conviene el azar", y el argumento es la métrica Y el diseño:**
 >
-> > Un riesgo que no se manifiesta en tus datos de prueba sigue siendo un riesgo. La partición
-> > por grupo se justifica por **cómo se generaron los datos**, no por la diferencia que se mide
-> > hoy. Si eliges tu método por el resultado que te da, no estás midiendo: estás buscando la
-> > respuesta que querías.
+> > En datos con trayectoria, partir al azar mide memoria, no generalización. Un F1 de 0,94
+> > con 40 segmentos a caballo no se puede llevar a producción.
 >
-> **Este es el momento más valioso de la sesión para un alumno bueno.** Le estás enseñando que
-> la evidencia empírica no siempre alcanza, y que hay decisiones que se toman por diseño.
->
-> **Criterio de logro:** obtiene 0 segmentos compartidos, reconoce que la diferencia es nula y
-> **aun así** defiende la partición por grupo con un argumento de diseño, no de métrica.
+> **Criterio de logro:** obtiene 0 segmentos compartidos, reconoce que el azar infla la métrica
+> porque filtra el mismo segmento, y justifica el split por grupo.
 """
     ),
     # ======================================================================

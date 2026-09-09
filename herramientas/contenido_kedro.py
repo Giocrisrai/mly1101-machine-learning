@@ -645,7 +645,7 @@ que uno consume lo que el otro produce. Eso es el proceso completo de Machine Le
 como un grafo:
 
 ```
-CSV crudo → calidad → preprocesamiento → detecciones_limpias.parquet → supervisado → métricas
+Perception v2 → calidad → preprocesamiento → detecciones_limpias.parquet → supervisado → métricas
 ```
 
 ### La pregunta que responde
@@ -656,10 +656,9 @@ CSV crudo → calidad → preprocesamiento → detecciones_limpias.parquet → s
 Si se pudiera, el equipo de percepción sabría de antemano en qué situaciones no conviene confiar
 en el sensor.
 
-**Se descartó clasificar `object_type`**, que parecía lo natural. Sobre este dataset se resuelve
-al 99,98 % con cualquier partición, porque el generador sortea las dimensiones **por tipo de
-objeto** y basta el largo de la caja para acertar. Un ejercicio donde todo sale perfecto no
-enseña nada sobre evaluación.
+**Se descartó clasificar `object_type`**, que parecía lo natural. El sensor ya etiqueta el tipo;
+la pregunta útil es anticipar `detection_difficulty`. Un ejercicio donde el tipo sale perfecto
+no enseña nada sobre evaluación.
 """
     ),
     code(
@@ -676,16 +675,16 @@ print(pd.read_csv(PROYECTO / "data" / "07_model_output" / "matriz_confusion.csv"
         """
 ### Mira la fila que nadie mira
 
-La exactitud ronda el **90 %**. Suena bien. Ahora mira la fila de `LEVEL_2`:
+La exactitud ronda el **78 %**. Suena razonable. Ahora mira la fila de `LEVEL_2`:
 
 | | Precisión | Recall | F1 |
 |---|---|---|---|
-| `LEVEL_1` (88,9 % de los datos) | 0,93 | 0,96 | 0,94 |
-| **`LEVEL_2` (11,1 %)** | **0,54** | **0,40** | **0,46** |
+| `LEVEL_1` (87,67 % de los datos) | 0,8173 | 0,9419 | 0,8752 |
+| **`LEVEL_2` (12,33 %)** | **0,1847** | **0,0588** | **0,0893** |
 
-Un recall de 0,40 significa que **el modelo se pierde el 60 % de las detecciones difíciles**, que
-son exactamente las que queríamos anticipar. El 90 % de exactitud se lo debe casi entero a acertar
-la clase mayoritaria, que es la fácil.
+Un recall de 0,0588 significa que **el modelo se pierde el 94 % de las detecciones difíciles**,
+que son exactamente las que queríamos anticipar. El 78 % de exactitud se lo debe casi entero a
+acertar la clase mayoritaria, que es la fácil. Y aun así **pierde** contra el dummy (81,72 %).
 
 > *Un promedio global oculta a la minoría.* Es la misma idea del bloque de sesgo de la Actividad
 > 1.1, ahora con un modelo entrenado delante y una cifra que la demuestra.
@@ -719,30 +718,31 @@ La etiqueta `detection_difficulty` **la asigna el sensor a partir del número de
 Incluir esa columna entre las variables predictoras no es informativo: es contarle al modelo la
 respuesta con otras palabras.
 
-El F1-macro sube de **0,70 a 0,75**. El modelo parece mejor y no sirve para nada, porque en el
-momento en que quisieras predecir la dificultad ya tendrías la dificultad.
+El F1-macro sube de **0,4822 a 0,5368** (+0,0546). El modelo parece mejor y no sirve para nada,
+porque en el momento en que quisieras predecir la dificultad ya tendrías la dificultad.
 
 Es el error más común en la práctica y el más difícil de ver: **no hay ningún síntoma, solo un
 resultado sospechosamente bueno**.
 
-### La segunda no se nota, y eso también hay que saber decirlo
+### La segunda sí se nota, y en Perception v2 se nota mucho
 
-Partir el dataset al azar por fila deja **153 segmentos a caballo** entre entrenamiento y prueba,
-contra 0 al partir por segmento. La fuga existe, es medible en segmentos compartidos… y la
-métrica **no se mueve** (−0,005).
+Partir el dataset al azar por fila deja **los 40 segmentos a caballo** entre entrenamiento y
+prueba, contra 0 al partir por segmento. La fuga existe, es medible en segmentos compartidos…
+y la métrica **explota**: F1-macro 0,4822 → **0,9427**; F1 de `LEVEL_2` 0,0893 → **0,9007**.
 
-No es un fallo del ejercicio: es una propiedad de este dataset. El generador sortea cada detección
-de forma independiente dentro del segmento, así que la dependencia entre filas que la fuga
-explotaría **no existe aquí**. En datos reales de Waymo, donde los fotogramas consecutivos siguen
-al mismo objeto, sí existe.
+No es un fallo del ejercicio: es una propiedad de los fotogramas reales. Los frames consecutivos
+siguen al mismo objeto, así que una fila de prueba puede ser el gemelo temporal de una de
+entrenamiento. En el CSV sintético (retirado) esa dependencia no existía y la métrica no se
+movía (−0,005). Aquí sí.
 
-> La conclusión no es *"partir por grupo da igual"*. Es una más incómoda y más útil: **un riesgo
-> que no se manifiesta en tus datos de prueba sigue siendo un riesgo.** La partición por grupo se
-> justifica por cómo se generaron los datos, no por la diferencia que se mide hoy.
+> La conclusión no es *"partir por grupo da igual"*. Es la opuesta y más útil: **en datos con
+> trayectoria, partir al azar mide memoria, no generalización.** La partición por grupo se
+> justifica por cómo se generaron los datos, y en este lote **también** por la diferencia que
+> se mide.
 
-Y de paso, la lección de método: el pipeline **midió** las dos, y una salió en cero. Medir y
-reportar un cero es parte del trabajo; elegir solo las mediciones que confirman lo que ibas a
-decir es sesgo de confirmación, el mismo del que se habla en la Actividad 1.1.
+Y de paso, la lección de método: el pipeline **midió** las dos fugas, y las dos se notan. Medir
+y reportar el tamaño del efecto es parte del trabajo; afirmar la fuga sin cifra es el error que
+esta sesión previene.
 """
     ),
     md(

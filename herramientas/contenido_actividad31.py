@@ -314,17 +314,17 @@ entre pliegues de la primera. ¿Puedes afirmar que la primera es mejor?
         """
 > ### 🎓 Pauta docente — Bloque 2
 >
-> **Cifras medidas** (12 combinaciones, 5 pliegues, `f1_macro`):
+> **Cifras medidas** (12 combinaciones, 5 pliegues, `f1_macro`, Perception v2):
 >
 > | Rango | F1-macro | Desv. | `n_estimators` | `max_depth` | `min_samples_leaf` | `max_features` |
 > |---|---|---|---|---|---|---|
-> | 1 | **0,6964** | 0,0091 | 400 | 16 | 1 | sqrt |
-> | 2 | 0,6933 | 0,0076 | 50 | sin límite | 1 | log2 |
-> | 3 | 0,6922 | 0,0078 | 100 | 4 | 20 | sqrt |
-> | 4 | 0,6917 | 0,0085 | 100 | 12 | 5 | 0,5 |
+> | 1 | **0,5893** | 0,0190 | 100 | 12 | 50 | sqrt |
+> | 2 | 0,5887 | 0,0289 | 50 | 12 | 50 | log2 |
+> | 3 | 0,5830 | 0,0510 | 100 | 6 | 50 | log2 |
+> | 4 | 0,5795 | 0,0189 | 200 | 16 | 50 | log2 |
 >
-> **Respuesta al TODO 4:** la diferencia entre la 1.ª y la 2.ª es **0,0031**; la desviación entre
-> pliegues de la 1.ª es **0,0091**, casi tres veces mayor. **No hay evidencia de que la primera
+> **Respuesta al TODO 4:** la diferencia entre la 1.ª y la 2.ª es **0,0006**; la desviación entre
+> pliegues de la 1.ª es **0,0190**, treinta veces mayor. **No hay evidencia de que la primera
 > sea mejor.** El "ranking" ordena ruido.
 >
 > Es la primera vez en el curso que se cuestiona un ranking, y conviene decirlo así:
@@ -332,9 +332,9 @@ entre pliegues de la primera. ¿Puedes afirmar que la primera es mejor?
 > > *Que scikit-learn te devuelva las configuraciones ordenadas no significa que ese orden
 > > signifique algo. Ordenar siempre se puede; distinguir, no siempre.*
 >
-> **Fíjate además en el desorden del ranking:** 50 árboles sin límite de profundidad queda
-> segundo, y 100 árboles con profundidad 4 queda tercero. No hay un patrón claro, que es
-> exactamente lo que se espera cuando las diferencias son ruido.
+> **El patrón que sí aparece:** las cuatro primeras tienen `min_samples_leaf=50`. La de 400
+> árboles y profundidad 16 con hoja 1 queda 11.ª (0,5214). Más capacidad sin regularizar no
+> gana. Entre la 1.ª y la 2.ª, igual, el ranking no distingue.
 >
 > **Criterio de logro:** compara la diferencia contra la desviación y concluye que no son
 > distinguibles.

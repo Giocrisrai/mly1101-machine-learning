@@ -92,12 +92,12 @@ caja. Un ejercicio donde todo sale perfecto no enseña a evaluar. Se cambió a
 `detection_difficulty`, que está desbalanceado 88,9 / 11,1 y da 90 % de exactitud con **F1 de 0,46
 en la clase minoritaria**: el caso de manual de que el promedio oculta a la minoría.
 
-**La demostración de fuga por partición se midió antes de escribirla, y salió en cero.** Se
-mantiene el nodo, pero el material lo declara: en este dataset sintético cada detección se sortea
-de forma independiente dentro del segmento, así que la dependencia que la fuga explotaría no
-existe (−0,005, con 153 segmentos compartidos contra 0). Se añadió en su lugar una fuga que **sí**
-se manifiesta: incluir `num_lidar_points`, del que se deriva la etiqueta, infla el F1-macro de
-0,7025 a 0,7543. Presentar una demostración de un efecto inexistente habría sido engañoso.
+**La demostración de fuga por partición se midió antes de escribirla, y en el CSV sintético
+salió en cero** (−0,005, 153 segmentos compartidos). En Perception v2 (2026-09-08) **sí se
+nota**: 40 segmentos a caballo, F1-macro 0,4822 → 0,9427. El material vigente declara la cifra
+real, no la del generador. Se añadió además una fuga que **sí** se manifiesta también en
+variables: incluir `num_lidar_points`, del que se deriva la etiqueta, infla el F1-macro de
+0,4822 a 0,5368 (v2). Presentar una demostración de un efecto inexistente habría sido engañoso.
 
 Los nodos reutilizan `src/eda.py` sin reimplementar nada; `src/kedro_mly1101/__init__.py` añade
 la carpeta `src/` del repositorio al `sys.path` porque es lo primero que Kedro importa.
@@ -149,9 +149,11 @@ exige señalar dónde está la evidencia de cada criterio.
 
 ---
 
-## 5. Cifras verificadas contra el CSV publicado
+## 5. Cifras históricas (CSV sintético, 2026-08-26) — no usar como pauta
 
-Medidas el 2026-08-26 sobre `detecciones_waymo_like.csv` (semilla 42, 40.680 filas).
+Medidas el 2026-08-26 sobre `detecciones_waymo_like.csv` (semilla 42, 40.680 filas). Ese archivo
+**ya no existe**. La pauta vigente es Perception v2 (530.396 filas, 40 segmentos): ver
+[`docs/rubrica_ra1.md`](../../../rubrica_ra1.md) y `CLAUDE.md`.
 
 | Magnitud | Valor |
 |---|---|

@@ -183,9 +183,9 @@ pandas, así que funcionan en Colab **sin instalar Kedro**.
 
 ### Los dos momentos que cargan cada sesión
 
-**Act. 2.2 — el baseline.** Los alumnos entrenan un bosque aleatorio que alcanza un **89,65 %** de
+**Act. 2.2 — el baseline.** Los alumnos entrenan un bosque aleatorio que alcanza un **78,05 %** de
 exactitud. Después descubren que un modelo que **responde siempre lo mismo, sin mirar los datos**,
-saca **88,96 %**. Siete décimas de diferencia. Y sin embargo el F1-macro pasa de 0,47 a 0,70.
+saca **81,72 %**. El bosque *pierde* en exactitud. El F1 de `LEVEL_2` queda en **0,0893**.
 
 > Dos métricas sobre el mismo modelo, con conclusiones opuestas. Esa es la sesión.
 
@@ -196,8 +196,8 @@ legítimos que en la Actividad 1.3 se aprendió a *no* eliminar. Aparecen solos,
 > Si en la Actividad 1.3 hubieran hecho caso al criterio IQR y eliminado los atípicos, este
 > grupo no existiría.
 
-**Act. 2.4 — de cada 100.** El F1 de 0,46 no entra a una reunión. Traducido: **de cada 100
-detecciones difíciles, el modelo pierde 60.** Esa es la frase que la organización puede usar.
+**Act. 2.4 — de cada 100.** El F1 de 0,0893 no entra a una reunión. Traducido: **de cada 100
+detecciones difíciles, el modelo pierde 94.** Esa es la frase que la organización puede usar.
 
 ---
 
@@ -215,17 +215,14 @@ Pauta común: [`docs/rubrica_ra3.md`](docs/rubrica_ra3.md).
 
 | Actividad | Lo que se intenta | Lo que se mide | Conclusión |
 |---|---|---|---|
-| 3.1 | Ajustar 12 configuraciones | **−0,0006** de F1-macro | El ajuste no mejora nada |
-| 3.2 | Combinar tres modelos | **−0,0040**, y más lento | El ensamble tampoco |
-| 3.3 | Distinguir cuál es mejor | Diferencias **< ruido (0,0079)** | No se puede distinguir |
+| 3.1 | Ajustar hiperparámetros | **+0,0789** de F1-macro (0,5104 → 0,5893) | La búsqueda **sí** supera el ruido (0,0424) |
+| 3.2 | Combinar tres modelos | GB **0,594** · ensamble **0,5938** | No distinguible: el ensamble no suma |
+| 3.3 | Elegir el mejor | F1 `LEVEL_2` sigue en **0,0893** | Subir el macro no salva a la clase difícil |
 
-**La conclusión no es que estas técnicas no sirvan.** Es que atacan la **varianza**, y aquí el
-cuello de botella es el **sesgo**: la información necesaria no está en las variables. Saberlo con
-evidencia vale más que sospecharlo — y es lo que permite dejar de gastar tiempo por la vía
-equivocada.
+**La conclusión del RA3 no es "el ajuste no sirve".** El macro se mueve; `LEVEL_2` no. Elegir
+"el mejor" sin mirar la clase difícil es el error de la exactitud, otra vez.
 
-> Un alumno que reporte *"mejoré el modelo ajustando hiperparámetros"* no ha entendido la
-> experiencia, por bien ejecutado que esté el código.
+> Un alumno que reporte solo *"mejoré el F1-macro"* no ha cerrado la experiencia.
 
 ---
 

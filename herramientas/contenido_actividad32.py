@@ -162,10 +162,10 @@ comparacion
 > > *El modelo que peor funciona te dice algo sobre el problema, no solo sobre sí mismo. Que la
 > > regresión logística fracase es información: la relación es no lineal.*
 >
-> **Fíjate también en la desviación del árbol: 0,0166**, el doble que la del bosque. Es varianza
-> pura: un solo árbol depende mucho de qué datos le tocaron. El bosque, que promedia 200,
-> estabiliza. **Ese contraste es la demostración de para qué sirve el bagging**, y está en la
-> tabla antes de haber hablado del ensamble.
+> **Fíjate también en la desviación del árbol: 0,0542**, mayor que la del bosque (0,0375) y
+> que la del boosting (0,0282). Es varianza pura: un solo árbol depende mucho de qué datos le
+> tocaron. El bosque, que promedia muchos, estabiliza. **Ese contraste es la demostración de
+> para qué sirve el bagging**, y está en la tabla antes de haber hablado del ensamble.
 >
 > **Criterio de logro:** compara contra el baseline **y** contra el modelo lineal, y extrae de
 > ahí una conclusión sobre la naturaleza del problema.
@@ -303,20 +303,20 @@ El ensamble combina árbol, bosque y boosting. No mejoró. Da una explicación, 
 > tipo de frontera y **se equivocan en las mismas detecciones**.
 >
 > Un ensamble funciona cuando sus miembros cometen errores **poco correlacionados**. Aquí están
-> muy correlacionados, así que promediar no cancela casi nada. Y encima el árbol simple, que es
-> el peor de los tres (0,6708), arrastra el promedio hacia abajo.
+> muy correlacionados, así que promediar no cancela casi nada. Y encima el bosque y el árbol
+> (~0,55) quedan detrás del boosting (0,594): arrastran el promedio hacia abajo.
 >
 > > *Un ensamble no es "más modelos". Es más modelos **distintos**. Si todos miran por la misma
 > > ventana, promediarlos no amplía la vista.*
 >
 > **Si alguien propone la mejora correcta**, reconócela: incluir la **regresión logística** en la
 > votación aportaría un tipo de error distinto. En este caso probablemente empeoraría el promedio
-> porque su desempeño es muy bajo (0,4847), pero el razonamiento es el bueno. Se puede probar en
+> porque su desempeño es muy bajo (0,5056), pero el razonamiento es el bueno. Se puede probar en
 > vivo si hay tiempo.
 >
-> **El otro remate**: el modelo que gana es el que ya teníamos desde la Actividad 2.2. Dos
-> sesiones del RA3 —ajuste y ensamble— y el modelo no ha mejorado. **Eso también es un
-> resultado**, y saberlo con evidencia vale más que sospecharlo.
+> **El otro remate**: el modelo que gana es el gradient boosting, no el bosque de la 2.2. Dos
+> sesiones del RA3 —ajuste y ensamble— y el F1 de `LEVEL_2` sigue en **0,0893**. **Eso también
+> es un resultado**, y saberlo con evidencia vale más que sospecharlo.
 >
 > **Criterio de logro:** identifica que la diferencia no supera el ruido, considera el costo, y
 > explica el fracaso por la correlación entre los modelos combinados.
@@ -406,7 +406,7 @@ print(f"Brecha                    : {en_entrenamiento - en_validacion:.4f}")
 > ### 🎓 Pauta docente — Bloque 4
 >
 > **Cifra medida:** con `max_depth=12` la brecha entre entrenamiento y validación es
-> considerable —el bosque memoriza bastante—, pero **la validación se queda estancada en ~0,69
+> considerable —el bosque memoriza bastante—, pero **la validación se queda estancada en ~0,59
 > para todos los modelos y todas las configuraciones probadas en las dos sesiones anteriores**.
 >
 > **Ese estancamiento es la clave del diagnóstico.** Si el problema fuera solo varianza,

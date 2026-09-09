@@ -40,7 +40,7 @@ dos cosas para que la asignatura pudiera recorrer el proceso completo:
 ## 3. Arquitectura
 
 ```
-                    ┌── detecciones_crudas (CSV sintético) ──┐
+                    ┌── (CSV sintético retirado 2026-09-08) ──┐
                     │                                         │
 waymo_muestra ──► ingesta ──► detecciones_reales ─────────────┤
 (40 segmentos                                                 │
@@ -91,8 +91,8 @@ que dice `descargar_waymo.py --muestra 40`, en vez de apañarlo con una partici�
 
 ## 5. Resultados medidos (2026-09-08, leídos de `data/waymo/` y del parquet)
 
-Sobre 40 segmentos reales, 530.396 detecciones. El CSV de la pauta (40.680) va en la columna
-de al lado **solo para contrastar**; no es Waymo.
+Sobre 40 segmentos reales, 530.396 detecciones. La columna de al lado es el **CSV sintético
+retirado** (2026-08-26); no es Waymo ni pauta vigente.
 
 | | CSV del repo | Waymo v2 |
 |---|---|---|

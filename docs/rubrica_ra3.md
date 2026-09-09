@@ -31,7 +31,7 @@ Las tres sesiones producen el **mismo resultado incómodo**, y esa repetición e
 
 | Actividad | Lo que se intenta | Lo que se mide | Conclusión |
 |---|---|---|---|
-| 3.1 | Ajustar hiperparámetros | **+0,0789** de F1-macro (0,5104 → 0,5893) | La búsqueda **sí** supera el ruido (0,0282) |
+| 3.1 | Ajustar hiperparámetros | **+0,0789** de F1-macro (0,5104 → 0,5893) | La búsqueda **sí** supera el ruido (0,0424) |
 | 3.2 | Combinar modelos | GB **0,594** · ensamble **0,5938** | No distinguible: el ensamble no suma |
 | 3.3 | Elegir el mejor | F1 `LEVEL_2` sigue en **0,0893** | Subir el macro no salva a la clase difícil |
 
@@ -68,7 +68,7 @@ Las tres sesiones producen el **mismo resultado incómodo**, y esa repetición e
 | **1** | No compara contra los valores por defecto |
 
 **Cifras de referencia (v2, 2026-09-08):** por defecto **0,5104** → búsqueda **0,5893** ·
-ganancia **+0,0789** (supera ruido 0,0282).
+ganancia **+0,0789** (supera ruido 0,0424).
 
 ---
 
@@ -81,8 +81,9 @@ ganancia **+0,0789** (supera ruido 0,0282).
 | **2** | Compara medias sin considerar costo ni ruido |
 | **1** | Concluye que el ensamble es mejor, o no incluye baseline |
 
-**Cifras de referencia:** bosque **0,6909** · ensamble **0,6869** · boosting 0,6804 · árbol 0,6708
-(desv. **0,0166**, el doble) · logística **0,4847** · baseline 0,4705.
+**Cifras de referencia:** boosting **0,594** · ensamble **0,5938** · árbol 0,5586 · bosque
+**0,5544** (desv. 0,0375) · logística **0,5056** · baseline 0,4728. El árbol es el de más
+varianza (0,0542).
 
 > La regresión logística apenas supera al baseline: **el problema no es linealmente separable**.
 > Reconocerlo es nivel destacado.
@@ -98,11 +99,12 @@ ganancia **+0,0789** (supera ruido 0,0282).
 | **2** | Elige por la media más alta, sin considerar dispersión ni costo |
 | **1** | Reporta un único número por modelo |
 
-**Cifras de referencia:** bosque y ensamble **no son distinguibles** (0,0040 < 0,0079). Boosting
-pierde 0,0105 pero es ~3,5× más rápido. El árbol es el más interpretable y el más barato.
+**Cifras de referencia:** boosting y ensamble **no son distinguibles** (0,0002 < 0,0282). El
+bosque sí lo es (cae 0,0396) y cuesta ~14× el boosting. El árbol es el más interpretable.
 
-> ⚠️ **Elegir el ensamble no es defendible:** pierde en las cuatro dimensiones. Si el informe lo
-> elige *"porque es más avanzado"*, ahí está el error que la experiencia previene.
+> ⚠️ **Elegir el ensamble no es defendible:** misma media que el boosting, mucho más lento y
+> menos interpretable. Si el informe lo elige *"porque es más avanzado"*, ahí está el error que
+> la experiencia previene.
 
 ---
 
@@ -121,16 +123,16 @@ pierde 0,0105 pero es ~3,5× más rápido. El árbol es el más interpretable y 
 
 1. **¿Hay dispersión en las tablas?** Sin ella no hay comparación, solo un ranking de ruido. Es
    lo primero y lo más discriminante.
-2. **¿El informe afirma haber mejorado el modelo?** Con estos datos es falso. Es el error central
-   que las tres sesiones previenen.
+2. **¿El informe vende el F1-macro como si `LEVEL_2` estuviera resuelto?** El macro subió; las
+   difíciles siguen en 0,0893. Es el error central que las tres sesiones previenen.
 3. **¿La justificación de la elección usa las cuatro dimensiones?** Si solo habla de la métrica,
    no cumple el IL3.4 por completa que esté la tabla.
 4. **¿Declara los límites?** Casi nadie lo escribe, y es lo que el EFT evalúa en la defensa.
 
 ## Retroalimentación sugerida
 
-1. *"Tu mejor modelo saca 0,69 y el segundo 0,687. ¿Con qué evidencia afirmas que es mejor?"*
-2. *"Dices que el ajuste mejoró el modelo. ¿Cuánto, comparado con la variabilidad entre pliegues?"*
+1. *"Tu mejor modelo saca 0,594 y el segundo 0,5938. ¿Con qué evidencia afirmas que es mejor?"*
+2. *"Dices que el ajuste resolvió el modelo. El macro subió: ¿y `LEVEL_2`?"*
 3. *"Elegiste el modelo más complejo. Si tuviera que responder en milisegundos, ¿elegirías igual?"*
 
 ---

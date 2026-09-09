@@ -86,6 +86,26 @@ def test_ensamble_autochequeo_no_exige_perder_contra_el_bosque() -> None:
     assert 'isin(["bosque_aleatorio", "ensamble_votacion"])' not in fuente
 
 
+def test_ra3_no_cita_el_ranking_del_lote_de_153() -> None:
+    """En v2 gana gradient boosting 0,594; bosque 0,6909 era el lote viejo."""
+    for relativo in (
+        "herramientas/contenido_actividad33.py",
+        "herramientas/contenido_actividad32.py",
+        "docs/rubrica_ra3.md",
+    ):
+        texto = (RAIZ / relativo).read_text(encoding="utf-8")
+        assert "0,6909" not in texto, relativo
+        assert "0,6869" not in texto, relativo
+    rubrica = (RAIZ / "docs" / "rubrica_ra3.md").read_text(encoding="utf-8")
+    assert "0,594" in rubrica
+    assert "0,5938" in rubrica
+    ajuste = (RAIZ / "herramientas" / "contenido_actividad31.py").read_text(
+        encoding="utf-8"
+    )
+    assert "0,6964" not in ajuste
+    assert "0,5893" in ajuste
+
+
 @pytest.mark.skipif(
     not PARQUET_V2.exists(),
     reason="requiere Perception v2 en datos/waymo_real/",

@@ -49,8 +49,8 @@ elección la haces tú, con criterios que la métrica no contiene.
 Alguien reporta 0,847 contra 0,843 y concluye que el primero es mejor. Si la variabilidad entre
 particiones es 0,012, esa diferencia es ruido: con otra semilla se habría invertido el orden.
 
-Hoy vas a aprender a hacer esa comparación bien. Y vas a descubrir que el modelo que llevas
-usando desde la Actividad 2.2 **no es distinguible** del ensamble que construiste ayer.
+Hoy vas a aprender a hacer esa comparación bien. Y vas a descubrir que el ensamble **no se
+distingue** del gradient boosting, y que el bosque de la Actividad 2.2 queda atrás.
 
 ---
 
@@ -166,7 +166,7 @@ print("   que el otro no está respaldado. Cualquiera de los dos es defendible."
 
 *(doble clic aquí y escribe)*
 
-1. El bosque saca más media que el ensamble. ¿Puedes afirmar que es mejor? ¿Por qué?
+1. El boosting saca más media que el ensamble. ¿Puedes afirmar que es mejor? ¿Por qué?
 2. Si dos modelos son indistinguibles, **¿con qué criterio eliges?**
 3. Alguien te muestra una comparación de modelos sin desviaciones, solo medias. ¿Qué le pides?
 """
@@ -175,24 +175,24 @@ print("   que el otro no está respaldado. Cualquiera de los dos es defendible."
         """
 > ### 🎓 Pauta docente — Bloque 1 ⭐⭐
 >
-> **Cifras medidas:**
+> **Cifras medidas** (`robustez_modelos.csv`, Perception v2):
 >
 > | Modelo | Media | Diferencia vs mejor | Ruido del mejor | ¿Distinguible? |
 > |---|---|---|---|---|
-> | Bosque aleatorio | 0,6909 | — | 0,0079 | — |
-> | Ensamble por votación | 0,6869 | 0,0040 | 0,0079 | **No** |
-> | Gradient boosting | 0,6804 | 0,0105 | 0,0079 | Sí |
-> | Árbol | 0,6708 | 0,0201 | 0,0079 | Sí |
-> | Regresión logística | 0,4847 | 0,2062 | 0,0079 | Sí |
-> | Baseline | 0,4705 | 0,2204 | 0,0079 | Sí |
+> | Gradient boosting | **0,594** | — | 0,0282 | — |
+> | Ensamble por votación | **0,5938** | 0,0002 | 0,0282 | **No** |
+> | Árbol | 0,5586 | 0,0354 | 0,0282 | Sí |
+> | Bosque aleatorio | 0,5544 | 0,0396 | 0,0282 | Sí |
+> | Regresión logística | 0,5056 | 0,0884 | 0,0282 | Sí |
+> | Baseline | 0,4728 | 0,1212 | 0,0282 | Sí |
 >
-> **El gráfico de barras de error es la herramienta de la sesión.** Las barras del bosque y del
-> ensamble se solapan; las del boosting ya no. Se ve antes de leer ninguna tabla.
+> **El gráfico de barras de error es la herramienta de la sesión.** Las barras del boosting y del
+> ensamble se solapan; las del bosque ya no. Se ve antes de leer ninguna tabla.
 >
 > **Respuestas esperadas:**
 >
-> 1. **No.** La diferencia (0,0040) es la mitad del ruido (0,0079). Con otra semilla el orden
->    podría invertirse. Lo correcto es decir *"son indistinguibles con esta evidencia"*.
+> 1. **No.** La diferencia (0,0002) es dos órdenes menor que el ruido (0,0282). Con otra semilla
+>    el orden podría invertirse. Lo correcto es decir *"son indistinguibles con esta evidencia"*.
 > 2. **Con los criterios que no son la métrica:** costo de cómputo, interpretabilidad, facilidad
 >    de mantener, latencia en producción. Ese es el bloque 3, y es el corazón del IL3.4.
 > 3. **Las desviaciones, o el esquema de validación.** Una tabla de medias sin dispersión no
@@ -203,7 +203,7 @@ print("   que el otro no está respaldado. Cualquiera de los dos es defendible."
 > Lo riguroso sería una prueba pareada sobre los pliegues o intervalos de confianza. La regla
 > basta para frenar la conclusión apresurada, que es el 90 % del problema en la práctica.
 >
-> **Criterio de logro:** interpreta el solapamiento, concluye que bosque y ensamble son
+> **Criterio de logro:** interpreta el solapamiento, concluye que boosting y ensamble son
 > indistinguibles, e identifica que la elección se traslada a criterios no métricos.
 """
     ),
@@ -428,15 +428,15 @@ milisegundos dentro del vehículo?
         """
 > ### 🎓 Pauta docente — Bloque 3 ⭐⭐
 >
-> **Cifras medidas:**
+> **Cifras medidas** (`seleccion_de_modelo.csv`, Perception v2):
 >
 > | Modelo | Media | Desv. | ¿Distinguible? | Segundos | Veces más lento | Interpretabilidad |
 > |---|---|---|---|---|---|---|
-> | Bosque aleatorio | 0,6909 | 0,0079 | — | 4,5 | **15,0×** | media |
-> | Ensamble | 0,6869 | 0,0085 | No | 5,9 | 19,7× | **baja** |
-> | Gradient boosting | 0,6804 | 0,0085 | Sí | 1,3 | 4,3× | media |
-> | Árbol | 0,6708 | 0,0166 | Sí | 0,3 | **1,0×** | **alta** |
-> | Regresión logística | 0,4847 | 0,0049 | Sí | 0,3 | 1,0× | alta |
+> | Gradient boosting | **0,594** | 0,0282 | — | 5,2 | **7,4×** | media |
+> | Ensamble | **0,5938** | 0,0334 | No | 74,7 | 106,7× | **baja** |
+> | Árbol | 0,5586 | 0,0542 | Sí | 2,5 | **3,6×** | **alta** |
+> | Bosque aleatorio | 0,5544 | 0,0375 | Sí | 70,6 | 100,9× | media |
+> | Regresión logística | 0,5056 | 0,0724 | Sí | 2,1 | 3,0× | alta |
 >
 > ⚠️ **Los segundos varían entre máquinas**; las medias y las desviaciones, no. Al corregir, el
 > orden de costo es lo que importa, no el valor absoluto.
@@ -444,18 +444,17 @@ milisegundos dentro del vehículo?
 > **No hay una única respuesta correcta, y hay que decirlo.** Lo que se evalúa es el argumento.
 > Tres defensas válidas:
 >
-> - **Bosque aleatorio.** Mejor media, estabilidad buena (0,0079, la mitad que el árbol), y el
->   ensamble no le gana. El costo de 4,5 s es irrelevante si se entrena una vez al día.
->   **Es la respuesta más común y es correcta.**
-> - **Gradient boosting.** Pierde 0,0105 —distinguible, pero pequeño— y es **3,5 veces más
->   rápido** que el bosque. Si el reentrenamiento es frecuente o los datos crecen, es la
->   decisión de ingeniería. **Nivel destacado** si argumenta el intercambio.
-> - **Árbol de decisión.** Pierde 0,0201 y tiene el doble de varianza, pero **se puede dibujar y
->   explicar a un comité**. Defendible si el requisito es auditabilidad —banca, salud—.
+> - **Gradient boosting.** Mejor media (indistinguible del ensamble), ~14× más rápido que el
+>   bosque y que el ensamble. **Es la respuesta más común y es correcta.**
+> - **Árbol de decisión.** Pierde de forma distinguible y tiene más varianza, pero **se puede
+>   dibujar y explicar a un comité**. Defendible si el requisito es auditabilidad —banca, salud—.
 >   **Destacado** si nombra ese contexto.
+> - **Bosque aleatorio.** Ya no gana la media: es distinguible a la baja frente al boosting y
+>   cuesta casi tanto como el ensamble. Solo es defendible con un argumento extra (p. ej. que
+>   ya está en producción desde la 2.2).
 >
-> **El ensamble no es defendible.** Peor media, más varianza, más lento y menos interpretable.
-> Pierde en las cuatro columnas. Si alguien lo elige "porque es más avanzado", ahí está la
+> **El ensamble no es defendible.** Misma media que el boosting, más lento y menos interpretable.
+> Pierde en costo e interpretabilidad. Si alguien lo elige "porque es más avanzado", ahí está la
 > lección.
 >
 > **La pregunta de control** cambia la respuesta y por eso está: en tiempo real dentro del
@@ -510,8 +509,8 @@ más se repiten. Prepara tu respuesta.
 > 4. Es el sesgo de muestreo de la Actividad 1.4: el censo de Waymo son **793 segmentos soleados
 >    de 798**. El modelo no tiene nada que decir sobre lluvia. Hay que **acotar el dominio de uso
 >    y declararlo**, y monitorizar la deriva.
-> 5. La diferencia contra el baseline (**+0,23 de F1-macro**) es real: veintiocho veces el ruido.
->    Las diferencias entre los modelos buenos, en cambio, están **dentro** del ruido.
+> 5. La diferencia contra el baseline (**+0,12 de F1-macro**, 0,594 vs 0,4728) es real: unas
+>    cuatro veces el ruido. Boosting y ensamble, en cambio, están **dentro** del ruido.
 >
 > **Fíjate en que las cinco respuestas recorren toda la asignatura:** RA1 (sesgo de muestreo),
 > RA2 (partición y evaluación por clase) y RA3 (validación y selección). Ese recorrido es
