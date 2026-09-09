@@ -6,9 +6,11 @@ Existe porque **las credenciales funcionan distinto en cada entorno**:
   **no** al CLI: ``gsutil`` responde *"You are attempting to access protected
   data with no configured credentials"*. Hay que usar el cliente Python
   ``google.cloud.storage``.
-- En **local**, tras ``gcloud auth login`` funciona ``gsutil``, y el cliente
-  Python en cambio pediría credenciales por defecto (``gcloud auth
-  application-default login``), que es un paso extra.
+- En **local**, ``gcloud auth login`` habilita ``gsutil``. Si corriste
+  ``gcloud auth application-default login`` (ADC), el cliente Python
+  ``google.cloud.storage`` autentica aunque ``gcloud auth list`` esté vacío
+  **o** liste una cuenta con el token caducado. ADC gana: no se pide
+  ``gcloud auth login`` de nuevo.
 
 El curso usa Perception **v2** (parquet). ``CATALOGO_BUCKETS`` documenta también
 Motion, End-to-End camera y Perception v1.4.3: se listan y se baja un objeto
@@ -22,6 +24,7 @@ de entorno sin necesidad de credenciales.
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -254,6 +257,66 @@ def en_colab() -> bool:
     return "google.colab" in sys.modules
 
 
+def hay_adc() -> bool:
+    """True si hay Application Default Credentials (el login que abre el navegador de ADC)."""
+    env = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+    if env and Path(env).expanduser().exists():
+        return True
+    return (
+        Path.home() / ".config" / "gcloud" / "application_default_credentials.json"
+    ).exists()
+
+
+def hay_cuenta_gcloud() -> bool:
+    """True si `gcloud auth list` muestra alguna cuenta (no ADC)."""
+    gcloud = shutil.which("gcloud")
+    if not gcloud:
+        return False
+    resultado = subprocess.run(
+        [gcloud, "auth", "list", "--format=value(account)"],
+        capture_output=True,
+        text=True,
+    )
+    return bool(resultado.stdout.strip())
+
+
+def usar_cliente_python() -> bool:
+    """Colab, o local con ADC (aunque `gcloud auth list` muestre una cuenta)."""
+    if en_colab():
+        return True
+    return hay_adc()
+
+
+def exigir_credenciales_gcs() -> str:
+    """``python`` o ``gsutil``, o error que dice qué login falta."""
+    if usar_cliente_python():
+        return "python"
+    if hay_cuenta_gcloud() and shutil.which("gsutil"):
+        return "gsutil"
+    raise RuntimeError(
+        "No hay credenciales para Google Cloud Storage.\n"
+        "  Opción A:  gcloud auth login\n"
+        "  Opción B:  gcloud auth application-default login\n"
+        "  Usa la MISMA cuenta con la que aceptaste los términos en\n"
+        f"  {PAGINA_DESCARGA}"
+    )
+
+
+def _importar_gcs():
+    """Cliente Python de GCS. El extra `waymo` no está en el entorno base."""
+    try:
+        from google.api_core import exceptions
+        from google.cloud import storage
+    except ImportError as error:
+        raise RuntimeError(
+            "Falta el extra `waymo` (google-cloud-storage).\n"
+            "  uv sync --extra waymo\n"
+            "Eso usa las Application Default Credentials "
+            "(gcloud auth application-default login)."
+        ) from error
+    return storage, exceptions
+
+
 def ruta_gcs(componente: str, segmento: str) -> str:
     """Ruta del objeto dentro del bucket, sin el prefijo gs://."""
     return f"{SPLIT}/{componente}/{segmento}.parquet"
@@ -272,8 +335,7 @@ def _descargar_con_cliente_python(componente: str, segmento: str, destino: Path)
             suele estar abierto con una cuenta personal, mientras que los
             términos de Waymo se aceptaron con otra.
     """
-    from google.api_core import exceptions
-    from google.cloud import storage
+    storage, exceptions = _importar_gcs()
 
     bucket = storage.Client(project="mly1101").bucket(BUCKET)
     try:
@@ -320,7 +382,7 @@ def descargar(componente: str, segmento: str, carpeta: Path, forzar: bool = Fals
     if destino.exists() and not forzar:
         return destino
 
-    if en_colab():
+    if usar_cliente_python():
         _descargar_con_cliente_python(componente, segmento, destino)
     else:
         _descargar_con_gsutil(componente, segmento, destino)
@@ -406,7 +468,7 @@ def listar_objetos(bucket: str, prefijo: str = "", limite: int = 8) -> list[dict
     paginar terabytes: se mira un prefijo, se elige un archivo, y recién ahí se
     copia.
     """
-    if en_colab():
+    if usar_cliente_python():
         return _listar_con_cliente_python(bucket, prefijo, limite)
     return _listar_con_gsutil(bucket, prefijo, limite)
 
@@ -449,7 +511,7 @@ def descargar_objeto(
                 "tamano_maximo_mb=None."
             )
 
-    if en_colab():
+    if usar_cliente_python():
         _copiar_blob_python(bucket, blob, destino)
     else:
         _copiar_blob_gsutil(bucket, blob, destino)
@@ -583,7 +645,9 @@ def _error_gsutil(stderr: str) -> RuntimeError:
     if "reauthentication" in bajo or "cannot prompt" in bajo:
         return RuntimeError(
             "gcloud pide volver a iniciar sesión (el token caducó).\n"
-            "  Ejecuta en tu terminal:  gcloud auth login\n"
+            "  Opción A:  gcloud auth login\n"
+            "  Opción B:  gcloud auth application-default login\n"
+            "             y  uv sync --extra waymo\n"
             "  Usa la MISMA cuenta con la que aceptaste los términos en "
             "https://waymo.com/open/download/"
         )
@@ -608,8 +672,7 @@ def _listar_con_gsutil(bucket: str, prefijo: str, limite: int) -> list[dict]:
 
 
 def _listar_con_cliente_python(bucket: str, prefijo: str, limite: int) -> list[dict]:
-    from google.api_core import exceptions
-    from google.cloud import storage
+    storage, exceptions = _importar_gcs()
 
     try:
         blobs = storage.Client(project="mly1101").list_blobs(
@@ -633,8 +696,8 @@ def _listar_con_cliente_python(bucket: str, prefijo: str, limite: int) -> list[d
 
 def _tamano_blob(bucket: str, blob: str) -> int:
     """Tamaño en bytes de un objeto, sin descargarlo."""
-    if en_colab():
-        from google.cloud import storage
+    if usar_cliente_python():
+        storage, _ = _importar_gcs()
 
         remoto = storage.Client(project="mly1101").bucket(bucket).get_blob(blob)
         if remoto is None:
@@ -648,8 +711,7 @@ def _tamano_blob(bucket: str, blob: str) -> int:
 
 
 def _copiar_blob_python(bucket: str, blob: str, destino: Path) -> None:
-    from google.api_core import exceptions
-    from google.cloud import storage
+    storage, exceptions = _importar_gcs()
 
     try:
         storage.Client(project="mly1101").bucket(bucket).blob(blob).download_to_filename(

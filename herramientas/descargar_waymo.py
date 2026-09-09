@@ -7,7 +7,8 @@ imágenes ni nubes de puntos, que son los componentes pesados.
 Requisitos previos (una sola vez):
 
     brew install --cask google-cloud-sdk
-    gcloud auth login          # con la cuenta que aceptó los términos en
+    gcloud auth login          # o: gcloud auth application-default login
+                               # misma cuenta que aceptó los términos en
                                # https://waymo.com/open/download/
 
 Uso:
@@ -44,65 +45,57 @@ def _ejecutar(comando: list[str]) -> subprocess.CompletedProcess:
     return subprocess.run(comando, capture_output=True, text=True)
 
 
-def _comprobar_requisitos() -> str:
-    """Devuelve la ruta de gsutil o termina con un mensaje accionable."""
-    gsutil = shutil.which("gsutil")
-    if not gsutil:
-        sys.exit(
-            "No se encontró gsutil.\n"
-            "  Instálalo con:  brew install --cask google-cloud-sdk\n"
-            "  Si ya está instalado, abre una terminal nueva para que entre en el PATH."
-        )
-    cuentas = _ejecutar(["gcloud", "auth", "list", "--format=value(account)"])
-    if not cuentas.stdout.strip():
-        sys.exit(
-            "No hay ninguna cuenta autenticada en gcloud.\n"
-            "  Ejecuta:  gcloud auth login\n"
-            "  Usa la MISMA cuenta con la que aceptaste los términos en\n"
-            "  https://waymo.com/open/download/"
-        )
-    print(f"Cuenta activa: {cuentas.stdout.strip().splitlines()[0]}")
+def _comprobar_requisitos() -> str | None:
+    """Comprueba login de GCS. Devuelve gsutil si hay cuenta gcloud; si no, ADC."""
     import waymo
 
+    try:
+        via = waymo.exigir_credenciales_gcs()
+    except RuntimeError as error:
+        sys.exit(str(error))
+    if via == "python":
+        print("Credenciales: Application Default Credentials (cliente Python).")
+    else:
+        cuentas = _ejecutar(["gcloud", "auth", "list", "--format=value(account)"])
+        print(f"Cuenta activa: {cuentas.stdout.strip().splitlines()[0]}")
     try:
         waymo.listar_objetos(waymo.BUCKET, "training/lidar_box/", limite=1)
     except RuntimeError as error:
         sys.exit(str(error))
-    return gsutil
+    return shutil.which("gsutil")
 
 
-def listar_segmentos(gsutil: str, cantidad: int = 5) -> list[str]:
+def listar_segmentos(cantidad: int = 5) -> list[str]:
     """Lista los primeros segmentos disponibles del componente lidar_box."""
-    resultado = _ejecutar([gsutil, "ls", f"{BUCKET}/lidar_box/"])
-    if resultado.returncode != 0:
-        error = resultado.stderr.strip()
-        if "AccessDenied" in error or "401" in error:
-            sys.exit(
-                "Acceso denegado al bucket de Waymo.\n"
-                "  Suele significar que la cuenta autenticada no es la misma con la que\n"
-                "  aceptaste los términos en https://waymo.com/open/download/\n\n"
-                f"  Respuesta de gsutil:\n  {error}"
-            )
-        sys.exit(f"No se pudo listar el bucket:\n{error}")
-    rutas = [linea for linea in resultado.stdout.splitlines() if linea.endswith(".parquet")]
-    return [Path(ruta).stem for ruta in rutas[:cantidad]]
+    import waymo
+
+    objetos = waymo.listar_objetos(waymo.BUCKET, "training/lidar_box/", limite=cantidad)
+    nombres = []
+    for objeto in objetos:
+        stem = Path(objeto["nombre"]).stem
+        if stem:
+            nombres.append(stem)
+    if not nombres:
+        sys.exit(
+            "Acceso denegado o listado vacío del bucket de Waymo.\n"
+            "  Suele significar que la cuenta autenticada no es la misma con la que\n"
+            "  aceptaste los términos en https://waymo.com/open/download/"
+        )
+    return nombres[:cantidad]
 
 
-def descargar(gsutil: str, segmento: str) -> None:
+def descargar(segmento: str) -> None:
     """Copia lidar_box y stats del segmento indicado a datos/waymo_real/."""
+    import waymo
+
     DESTINO.mkdir(parents=True, exist_ok=True)
-    for componente in COMPONENTES:
-        origen = f"{BUCKET}/{componente}/{segmento}.parquet"
-        destino = DESTINO / f"{componente}.parquet"
-        print(f"Descargando {componente}…")
-        resultado = _ejecutar([gsutil, "cp", origen, str(destino)])
-        if resultado.returncode != 0:
-            sys.exit(f"Falló la descarga de {componente}:\n{resultado.stderr.strip()}")
+    rutas = waymo.descargar_segmento(segmento, DESTINO)
+    for componente, destino in rutas.items():
         print(f"  {destino.relative_to(RAIZ)}  ({destino.stat().st_size / 1024**2:.1f} MB)")
     (DESTINO / "SEGMENTO.txt").write_text(segmento + "\n", encoding="utf-8")
 
 
-def descargar_muestra(gsutil: str, segmentos: list[str], solo_stats: bool = False) -> Path:
+def descargar_muestra(segmentos: list[str], solo_stats: bool = False) -> Path:
     """Descarga varios segmentos para el análisis de sesgo de muestreo.
 
     Cada segmento queda en ``datos/waymo_real/muestra/{nombre}/``. Se usa desde
@@ -115,6 +108,8 @@ def descargar_muestra(gsutil: str, segmentos: list[str], solo_stats: bool = Fals
             segmento en vez de ~1 MB). Suficiente para caracterizar clima,
             hora y ubicación sobre muchos segmentos a bajo costo.
     """
+    import waymo
+
     muestra = DESTINO / "muestra"
     for numero, segmento in enumerate(segmentos, start=1):
         carpeta = muestra / segmento
@@ -125,12 +120,10 @@ def descargar_muestra(gsutil: str, segmentos: list[str], solo_stats: bool = Fals
             print(f"[{numero}/{len(segmentos)}] {segmento[:28]}… ya estaba")
             continue
         for componente in pendientes:
-            resultado = _ejecutar(
-                [gsutil, "cp", f"{BUCKET}/{componente}/{segmento}.parquet",
-                 str(carpeta / f"{componente}.parquet")]
-            )
-            if resultado.returncode != 0:
-                print(f"   ⚠️ falló {componente} de {segmento}: {resultado.stderr.strip()[:90]}")
+            try:
+                waymo.descargar(componente, segmento, carpeta)
+            except RuntimeError as error:
+                print(f"   ⚠️ falló {componente} de {segmento}: {str(error)[:90]}")
         peso = sum(f.stat().st_size for f in carpeta.glob("*.parquet")) / 1024**2
         print(f"[{numero}/{len(segmentos)}] {segmento[:28]}…  {peso:.2f} MB")
     return muestra
@@ -248,12 +241,12 @@ def main() -> None:
             print(f"\nTabla única: {ruta.relative_to(RAIZ)}")
             print("Pipeline: cd kedro_mly1101 && uv run kedro run --pipeline waymo_real")
             return
-        gsutil = _comprobar_requisitos()
+        _comprobar_requisitos()
         cantidad = args.muestra
-        disponibles = listar_segmentos(gsutil, cantidad=cantidad)
+        disponibles = listar_segmentos(cantidad=cantidad)
         peso = "~23 KB" if args.solo_stats else "~1 MB"
         print(f"\nDescargando {len(disponibles)} segmentos ({peso} cada uno)…")
-        muestra = descargar_muestra(gsutil, disponibles, solo_stats=args.solo_stats)
+        muestra = descargar_muestra(disponibles, solo_stats=args.solo_stats)
         print(f"Datos en: {muestra.relative_to(RAIZ)}")
         if not args.solo_stats:
             tabla, informe, ruta = waymo.cargar_o_preparar(DESTINO, n=args.muestra)
@@ -262,15 +255,20 @@ def main() -> None:
         print("\nListo. Pipeline: cd kedro_mly1101 && uv run kedro run --pipeline waymo_real")
         return
 
-    gsutil = _comprobar_requisitos()
+    _comprobar_requisitos()
 
     if args.censo_stats:
+        gsutil = shutil.which("gsutil")
+        if not gsutil:
+            sys.exit(
+                "El censo de stats usa gsutil -m. Instálalo o baja con --muestra 40."
+            )
         descargar_censo_stats(gsutil)
         print("\nListo. Ahora puedes ejecutar:  python herramientas/analizar_sesgo_waymo.py")
         return
 
     cantidad = args.muestra if args.muestra else 5
-    disponibles = listar_segmentos(gsutil, cantidad=cantidad)
+    disponibles = listar_segmentos(cantidad=cantidad)
 
     if args.listar:
         print(f"\nSegmentos disponibles (primeros {len(disponibles)}):")
@@ -280,7 +278,7 @@ def main() -> None:
 
     segmento = args.segmento or disponibles[0]
     print(f"\nSegmento: {segmento}")
-    descargar(gsutil, segmento)
+    descargar(segmento)
     print("\nListo. Ahora puedes ejecutar:  pytest tests/test_mapeo_waymo.py -v")
 
 

@@ -109,8 +109,10 @@ notebook `14_opcional_waymo_buckets.ipynb` lista esos buckets, baja las tablas c
 > Python** `google.cloud.storage` en Colab, y `gsutil` solo en local. Esa decisión vive en
 > `src/waymo.py` y está cubierta por tests.
 >
-> En local no ocurre ninguna de las tres: basta `gcloud auth login` una vez, con la cuenta
-> correcta.
+> En local no ocurre ninguna de las tres. Basta `gcloud auth login` **o**
+> `gcloud auth application-default login` (ADC) una vez, con la cuenta correcta. ADC no llena
+> `gcloud auth list` y gana aunque esa lista muestre una cuenta con el token caducado.
+> Para la vía ADC: `uv sync --extra waymo`.
 """
     ),
     code(
@@ -135,6 +137,7 @@ else:
     print("Entorno local. Si no has iniciado sesión, ejecuta en el terminal:")
     print("    brew install --cask google-cloud-sdk")
     print("    gcloud auth login")
+    print("    # o, si ya corriste application-default login, no hace falta otro")
 
 sys.path.insert(0, str(RAIZ / "src"))
 DESTINO = RAIZ / "datos" / "waymo_real"     # en .gitignore: no se redistribuye

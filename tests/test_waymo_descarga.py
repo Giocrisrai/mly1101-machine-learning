@@ -67,6 +67,7 @@ def test_en_colab_usa_el_cliente_python(monkeypatch, tmp_path: Path) -> None:
 def test_en_local_usa_gsutil(monkeypatch, tmp_path: Path) -> None:
     llamadas = []
     monkeypatch.setattr(waymo, "en_colab", lambda: False)
+    monkeypatch.setattr(waymo, "usar_cliente_python", lambda: False)
     monkeypatch.setattr(waymo, "_descargar_con_cliente_python",
                         lambda c, s, d: llamadas.append("python"))
     monkeypatch.setattr(waymo, "_descargar_con_gsutil",
@@ -74,6 +75,46 @@ def test_en_local_usa_gsutil(monkeypatch, tmp_path: Path) -> None:
 
     waymo.descargar("stats", SEGMENTO, tmp_path)
     assert llamadas == ["gsutil"]
+
+
+def test_en_local_con_adc_usa_el_cliente_python(monkeypatch, tmp_path: Path) -> None:
+    """ADC autentica al cliente Python aunque `gcloud auth list` esté vacío."""
+    llamadas = []
+    monkeypatch.setattr(waymo, "en_colab", lambda: False)
+    monkeypatch.setattr(waymo, "usar_cliente_python", lambda: True)
+    monkeypatch.setattr(
+        waymo,
+        "_descargar_con_cliente_python",
+        lambda c, s, d: (llamadas.append("python"), d.write_bytes(b"x")),
+    )
+    monkeypatch.setattr(waymo, "_descargar_con_gsutil", lambda c, s, d: llamadas.append("gsutil"))
+
+    waymo.descargar("stats", SEGMENTO, tmp_path)
+    assert llamadas == ["python"]
+
+
+def test_exigir_credenciales_acepta_adc(monkeypatch) -> None:
+    monkeypatch.setattr(waymo, "en_colab", lambda: False)
+    monkeypatch.setattr(waymo, "hay_adc", lambda: True)
+    monkeypatch.setattr(waymo, "hay_cuenta_gcloud", lambda: False)
+    assert waymo.exigir_credenciales_gcs() == "python"
+
+
+def test_adc_gana_aunque_gcloud_liste_una_cuenta(monkeypatch) -> None:
+    """El token de `gcloud auth login` puede estar caducado y ADC vigente."""
+    monkeypatch.setattr(waymo, "en_colab", lambda: False)
+    monkeypatch.setattr(waymo, "hay_adc", lambda: True)
+    monkeypatch.setattr(waymo, "hay_cuenta_gcloud", lambda: True)
+    assert waymo.usar_cliente_python() is True
+    assert waymo.exigir_credenciales_gcs() == "python"
+
+
+def test_exigir_credenciales_falla_sin_login_ni_adc(monkeypatch) -> None:
+    monkeypatch.setattr(waymo, "en_colab", lambda: False)
+    monkeypatch.setattr(waymo, "hay_adc", lambda: False)
+    monkeypatch.setattr(waymo, "hay_cuenta_gcloud", lambda: False)
+    with pytest.raises(RuntimeError, match="application-default login"):
+        waymo.exigir_credenciales_gcs()
 
 
 def test_no_vuelve_a_descargar_si_ya_existe(monkeypatch, tmp_path: Path) -> None:
@@ -90,6 +131,7 @@ def test_no_vuelve_a_descargar_si_ya_existe(monkeypatch, tmp_path: Path) -> None
 def test_forzar_vuelve_a_descargar(monkeypatch, tmp_path: Path) -> None:
     llamadas = []
     monkeypatch.setattr(waymo, "en_colab", lambda: False)
+    monkeypatch.setattr(waymo, "usar_cliente_python", lambda: False)
     monkeypatch.setattr(waymo, "_descargar_con_gsutil",
                         lambda c, s, d: (llamadas.append("gsutil"), d.write_bytes(b"nuevo")))
     (tmp_path / "stats.parquet").write_bytes(b"viejo")
@@ -100,6 +142,7 @@ def test_forzar_vuelve_a_descargar(monkeypatch, tmp_path: Path) -> None:
 
 def test_crea_la_carpeta_de_destino(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(waymo, "en_colab", lambda: False)
+    monkeypatch.setattr(waymo, "usar_cliente_python", lambda: False)
     monkeypatch.setattr(waymo, "_descargar_con_gsutil", lambda c, s, d: d.write_bytes(b"x"))
     destino = tmp_path / "nueva" / "carpeta"
 
@@ -115,6 +158,7 @@ def test_el_error_de_gsutil_se_propaga_con_mensaje(monkeypatch, tmp_path: Path) 
 
 def test_descargar_segmento_baja_los_dos_componentes(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(waymo, "en_colab", lambda: False)
+    monkeypatch.setattr(waymo, "usar_cliente_python", lambda: False)
     monkeypatch.setattr(waymo, "_descargar_con_gsutil", lambda c, s, d: d.write_bytes(b"x" * 10))
 
     rutas = waymo.descargar_segmento(SEGMENTO, tmp_path)
@@ -334,6 +378,7 @@ def test_listar_en_colab_usa_el_cliente_python(monkeypatch) -> None:
 def test_listar_en_local_usa_gsutil(monkeypatch) -> None:
     llamadas = []
     monkeypatch.setattr(waymo, "en_colab", lambda: False)
+    monkeypatch.setattr(waymo, "usar_cliente_python", lambda: False)
     monkeypatch.setattr(waymo, "_listar_con_cliente_python", lambda *a: llamadas.append("python"))
     monkeypatch.setattr(
         waymo,
@@ -408,6 +453,7 @@ def test_descargar_objeto_rechaza_archivos_grandes(monkeypatch, tmp_path: Path) 
 
 def test_descargar_objeto_permite_forzar_un_archivo_grande(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(waymo, "en_colab", lambda: False)
+    monkeypatch.setattr(waymo, "usar_cliente_python", lambda: False)
     monkeypatch.setattr(waymo, "_tamano_blob", lambda *a: 800 * 1024 * 1024)
     monkeypatch.setattr(waymo, "_copiar_blob_gsutil", lambda b, n, d: d.write_bytes(b"ok"))
 
