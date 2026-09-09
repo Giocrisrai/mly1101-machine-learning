@@ -106,8 +106,10 @@ Usa **porcentaje de logro** sobre indicadores ponderados:
 | Desempeño no logrado | 0 % |
 
 El EFT tiene **12 indicadores de evaluación (IE1–IE12)** con ponderaciones propias (IE1–IE4 al
-5 %, IE5 al 10 %, y así). Las pautas de `docs/rubrica_*.md` de este repositorio son
+5 %, IE5–IE12 al 10 %). Las pautas de `docs/rubrica_*.md` de este repositorio son
 **formativas** y usan otra escala; no sustituyen al instrumento institucional.
+La calculadora suma ambos: `calcular_nota.py` (D1–D5) y
+`calcular_nota.py --instrumento eft` (IE).
 
 ---
 
@@ -170,6 +172,6 @@ Preguntas cruzadas: cada estudiante responde por cualquier parte del trabajo, no
 | Act 2.2 · 2.3 | ✅ notebooks alumno + docente, verificados |
 | Act 2.4 (interpretación) | ✅ notebooks alumno + docente, pauta formativa |
 | Act 3.1 · 3.2 · 3.3 (todo el RA3) | ✅ notebooks alumno + docente, verificados |
-| Evaluaciones formativas 1, 2 y 3 | ⏳ |
-| Parciales 1, 2 y 3 · EFT | ⏳ — deben construirse sobre los casos oficiales |
+| Evaluaciones formativas 1, 2 y 3 | ✅ `docs/formativa_{1,2,3}.md` + `_pauta.md` |
+| Parciales 1, 2 y 3 · EFT | ✅ casos en disco (gitignored) + `15_*_evaluacion` + `calcular_nota.py --instrumento` |
 | Pipeline reproducible (`kedro_mly1101/`) | ✅ RA1, RA2 y RA3 |

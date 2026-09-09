@@ -101,8 +101,15 @@ En la sesión verificada:
 
 **No dejes el lab encendido de un día para otro.** End Lab apaga el cómputo (EC2, notebooks).
 Un bucket S3 **privado** suele sobrevivir hasta un **Reset** o hasta que el presupuesto llega
-a 50/50. CloudShell guarda ~1 GB en `$HOME`, no es backup. Drive o fork **privado** para lo
-que quieras al cierre del curso. El parquet de Waymo **no** va a un bucket público ni a GitHub.
+a 50/50. CloudShell guarda ~1 GB en `$HOME`, no es backup. **No bajes Motion ni Perception v1**
+ahí: un shard ya satura el disco. Drive o fork **privado** para lo que quieras al cierre del
+curso. El parquet de Waymo **no** va a un bucket público ni a GitHub.
+
+CloudShell usa el editor ACE: pega comandos en la consola **del navegador de verdad**
+(Chrome / Safari / Brave). *Actions → Run command* abre otro entorno y un modal que en
+navegadores embebidos a veces no cierra. Verificado 2026-09-08: `python3` está; el clone
+`git clone --depth 1 https://github.com/Giocrisrai/mly1101-machine-learning.git ~/mly1101`
+cabe. No hace falta para el lote de clase (Colab alcanza).
 
 ---
 

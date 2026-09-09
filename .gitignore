@@ -6,6 +6,10 @@ datos/waymo_real/
 # No hay CSV de pauta. No vuelvas a versionar uno.
 datos/crudos/
 
+# Casos oficiales de las parciales y el EFT (Telco / Housing / Spotify).
+# Coordinación los entrega en EV PARCIALES MLY1101.zip; no se redistribuyen.
+datos/evaluaciones/
+
 # Python
 __pycache__/
 *.py[cod]

@@ -69,10 +69,11 @@ Problema → Datos → Exploración → Preprocesamiento → Modelamiento → Ev
 | **RA1** | Ingeniería de Datos y Análisis Exploratorio | 1.1 Fuentes (6) · 1.2 Estructuras (6) · 1.3 EDA (6) · 1.4 Ética (5) | ✅ las cuatro |
 | **RA2** | Implementación y Análisis de Modelos de ML | 2.1 CRISP-DM (6) · 2.2 Supervisado (6) · 2.3 No supervisado (12) · 2.4 Interpretación (5) | ✅ las cuatro |
 | **RA3** | Optimización y Ensamble de Modelos Avanzados | 3.1 Hiperparámetros (6) · 3.2 Ensamble (6) · 3.3 Robustez (11) | ✅ las tres |
-| — | **Evaluación Final Transversal** | 12 h · 40 % de la nota final | ⏳ |
+| — | **Evaluación Final Transversal** | 12 h · 40 % de la nota final | 📐 spec + casos en disco |
 
 **108 horas · 4 SCT.** Las evaluaciones parciales ponderan 30 / 40 / 30 y suman el **60 %** de la
-nota final; el EFT, el **40 %** restante.
+nota final; el EFT, el **40 %** restante. Cómo cargar los CSV y cómo notar con IE:
+[`docs/evaluaciones.md`](docs/evaluaciones.md).
 
 > **Los notebooks de actividad usan un hilo de detecciones LiDAR (Perception v2).** El lote
 > se arma en el paso 2–3 de arriba. Las Act. 1.1–3.3 y el **proyecto** leen el mismo parquet.
@@ -102,6 +103,7 @@ datos → cómo se almacenan y manipulan → qué tan sucios están → a quién
 | `14_opcional_waymo_buckets.ipynb` | **Empieza por aquí**: lote liviano, grupos, cajas 2D y un fotograma **sin** JPEG | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/14_opcional_waymo_buckets.ipynb) |
 | `00_opcional_waymo_real.ipynb` | EDA profundo sobre un segmento real (un segmento no alcanza para train/test) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/00_opcional_waymo_real.ipynb) |
 | `10_proyecto_equipo_plantilla.ipynb` | El equipo la copia; si ya corriste el 14, usa el parquet real | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/10_proyecto_equipo_plantilla.ipynb) |
+| `15_alumno_evaluacion.ipynb` | **Parciales y EFT** (Telco / Housing / Spotify, no Waymo). Falla si falta el CSV oficial | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/15_alumno_evaluacion.ipynb) |
 | `04_opcional_kedro_databricks.ipynb` | Quien quiera ver el análisis como pipeline ([`kedro_mly1101/`](kedro_mly1101/)) | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Giocrisrai/mly1101-machine-learning/blob/main/notebooks/04_opcional_kedro_databricks.ipynb) |
 
 > **El número del archivo no coincide con el de la actividad.** El notebook de EDA se publicó
@@ -136,6 +138,9 @@ datos → cómo se almacenan y manipulan → qué tan sucios están → a quién
 | [`docs/guion_clase_actividad_24.md`](docs/guion_clase_actividad_24.md) | Guion de la Actividad 2.4 (interpretación): de la matriz a la frase de negocio |
 | [`docs/rubrica_ra1.md`](docs/rubrica_ra1.md) | Pauta de las cuatro actividades del RA1, con las cifras exactas para corregir |
 | [`docs/rubrica_act_2_1.md`](docs/rubrica_act_2_1.md) · [`docs/rubrica_act_2_2.md`](docs/rubrica_act_2_2.md) · [`docs/rubrica_act_2_3.md`](docs/rubrica_act_2_3.md) · [`docs/rubrica_act_2_4.md`](docs/rubrica_act_2_4.md) · [`docs/rubrica_ra3.md`](docs/rubrica_ra3.md) | Pautas de las actividades del RA2 y del RA3 |
+| [`docs/guion_ep1.md`](docs/guion_ep1.md) | Sala de la Parcial 1 (5 h): KPI → calidad → ética; sin modelos |
+| [`docs/formativa_1.md`](docs/formativa_1.md) · [`formativa_2.md`](docs/formativa_2.md) · [`formativa_3.md`](docs/formativa_3.md) | Cuestionarios de 1 h (RA1 / RA2 / RA3); pautas en `*_pauta.md` |
+| [`docs/evaluaciones.md`](docs/evaluaciones.md) | Parciales y EFT: cargar Telco/Housing/Spotify, pesos IE, calculadora institucional |
 | [`docs/superpowers/specs/2026-08-12-mly1101-semana01-eda-design.md`](docs/superpowers/specs/2026-08-12-mly1101-semana01-eda-design.md) | Especificación completa: decisiones de diseño, catálogo de defectos, protocolo de verificación |
 
 ### Evaluar las entregas
@@ -145,6 +150,8 @@ La rúbrica se convierte a nota con la escala chilena de exigencia 60 %:
 ```bash
 python herramientas/calcular_nota.py 3 4 2 3 3          # IL1 IL2 IL3 IL4 IL5 → 5,2
 python herramientas/calcular_nota.py --csv docs/ejemplo_notas.csv   # el curso completo
+python herramientas/calcular_nota.py --csv docs/ejemplo_notas_ep1.csv  # IE1–IE4
+python herramientas/calcular_nota.py --instrumento ep1 --ie 80 60 100 60  # pauta institucional
 ```
 
 El modo CSV entrega también el promedio del curso y el porcentaje de aprobación. Si tu sede usa

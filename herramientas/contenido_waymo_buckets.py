@@ -73,7 +73,9 @@ misma tabla es la de las actividades 1.1–3.3.
    Esa página **es** el catálogo: Perception v2 / v1, Motion y E2E cámara. Cada uno abre
    un bucket de GCS (terabytes). **No pulses descargar el dataset.**
 2. Colab: misma cuenta (avatar) y *Archivo → Guardar una copia en Drive* **antes** de
-   autenticarte. No uses `!gsutil` en Colab.
+   autenticarte. No uses `!gsutil` en Colab. Corre la celda en **Chrome, Safari o Brave**:
+   en el navegador embebido del IDE el *Allow* abre otra pestaña y la celda cae en
+   `MessageError` (comprobado 2026-09-08).
 3. Local: `gcloud auth login` con esa misma cuenta.
 
 | En esa página | Bucket | En este curso |

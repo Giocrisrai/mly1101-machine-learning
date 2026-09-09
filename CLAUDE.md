@@ -60,6 +60,7 @@ estructural.
    | `contenido_kedro.py` | `04_opcional_kedro_databricks` | opcional |
    | `contenido_waymo.py` | `00_opcional_waymo_real` | opcional |
    | `contenido_waymo_buckets.py` | `14_opcional_waymo_buckets` | opcional |
+   | `contenido_evaluacion.py` | `15_alumno_evaluacion` + `15_docente_evaluacion` | EP/EFT (casos oficiales) |
 
    El número del archivo **no** coincide con el de la actividad: el notebook de EDA se publicó
    primero como `01` y sus enlaces de Colab ya circulan.
@@ -112,7 +113,7 @@ estructural.
 
 ```bash
 uv sync                                        # entorno reproducible (pyproject.toml + uv.lock)
-uv run pytest                                  # 228 tests (esta máquina, extras + muestra)
+uv run pytest                                  # suite local (extras + muestra + casos oficiales si están)
 cd kedro_mly1101 && uv run kedro run && cd ..  # 34 nodos, Perception v2 real
 # equivalente: uv run kedro run --pipeline waymo_real
 uv run python herramientas/construir_notebooks.py   # regenera todos los notebooks
@@ -122,12 +123,14 @@ for nb in 02_docente_fuentes 03_docente_estructuras 01_docente_solucionario \
           07_docente_etica 12_docente_crispdm 05_docente_supervisado 06_docente_no_supervisado \
           13_docente_interpretacion \
           08_docente_hiperparametros 09_docente_ensamble 11_docente_seleccion \
-          10_proyecto_equipo_plantilla 04_opcional_kedro_databricks; do
+          10_proyecto_equipo_plantilla 04_opcional_kedro_databricks \
+          15_docente_evaluacion; do
   uv run python -m jupyter nbconvert --to notebook --execute --stdout \
       --output-dir=/tmp notebooks/$nb.ipynb > /dev/null && echo "$nb OK"
 done
 
 # 00_opcional_waymo_real y 14_opcional_waymo_buckets necesitan cuenta Waymo: no van en este bucle.
+# 15_docente_evaluacion necesita el zip institucional en datos/evaluaciones/ (gitignored).
 
 # Ningún notebook de alumno puede filtrar la pauta (todos deben dar 0):
 grep -c "Pauta docente" notebooks/*alumno*.ipynb notebooks/10_proyecto*.ipynb
@@ -171,14 +174,14 @@ es sobre `google.cloud.storage`.
 | RA2 · Act. 2.1 CRISP-DM | ✅ completa (notebooks, pauta, `src/crispdm.py`) |
 | RA2 · Act. 2.4 Interpretación y métricas | ✅ completa (notebooks, pauta, `src/interpretacion.py`) |
 | RA3 · Act. 3.1, 3.2 y 3.3 | ✅ completas y verificadas |
-| Evaluaciones formativas, parciales y EFT | ⏳ pendientes, sobre los casos oficiales |
+| Evaluaciones formativas, parciales y EFT | ✅ formativas 1–3 + plantilla `15_*_evaluacion` + calculadora IE (2026-09-09). CSV **no** en git |
 | Plantilla de proyecto de equipo | ✅ ejecuta de extremo a extremo |
 | Pipeline Kedro (`kedro_mly1101/`) | ✅ `__default__` = `waymo_real` = 34 nodos (ingesta 4 + análisis 30) |
 | RA2 · Act. 2.2 y 2.3 (notebooks, pautas, pipeline) | ✅ completas y verificadas |
 | Datos reales de Waymo (`waymo_real`) | medido 2026-09-08: 530.396 detecciones v2 · 407.267 `camera_box` · 479 secuencias E2E. El RF **solo** ve v2. `kedro run --pipeline waymo_real` **34/34**. F1 `LEVEL_2` = 0,0893 (mismos números que 09:09) |
-| Notebook opcional de Kedro y Databricks | ✅ `04_opcional_kedro_databricks` ejecutó local (nbconvert, 191,9 s). Free Edition en vivo 2026-09-08: Git Folder del repo público (rama `main`, sin PAT) + Volume managed `workspace.default.mly1101` (`/Volumes/workspace/default/mly1101`, vacío; no subir parquet al repo). `kedro run` **no** se muda al workspace |
-| Notebook opcional de buckets Waymo (Motion / E2E / v1) | ✅ `14_opcional_waymo_buckets`: lote + tablas chicas + **fotograma sin JPEG** (`recorte_de_un_frame`); v1/Motion/video se listan; Colabs oficiales de Waymo enlazados. Guía: `docs/productos_waymo.md`. Kedro `ingesta` traduce `camera_box`; Databricks Spark = parquet v2 |
-| EFT | ⏳ pendiente |
+| Notebook opcional de Kedro y Databricks | ✅ `04_opcional_kedro_databricks` ejecutó local (nbconvert, 191,9 s). Free Edition en vivo 2026-09-08: Git Folder del repo público (rama `main`, sin PAT) + Volume managed `workspace.default.mly1101` (`/Volumes/workspace/default/mly1101`, **LIST 0 filas** en 5,8 s; parquet no va en git). SQL warehouse *Serverless Starter Warehouse*. `kedro run` **no** se muda al workspace |
+| Notebook opcional de buckets Waymo (Motion / E2E / v1) | ✅ `14_opcional_waymo_buckets`: lote + tablas chicas + **fotograma sin JPEG** (`recorte_de_un_frame`); v1/Motion/video se listan; Colabs oficiales de Waymo enlazados. Guía: `docs/productos_waymo.md`. Kedro `ingesta` traduce `camera_box`; Databricks Spark = parquet v2. **Auth Colab:** Copy to Drive + Chrome/Safari/Brave; el navegador embebido del IDE suelta `MessageError` (medido 2026-09-08) |
+| EFT | ✅ mismos 12 IE; plantilla `15_*_evaluacion`; CSV gitignored; no copiar el notebook Duoc de Telco |
 
 ### Cifras medidas (esta máquina, 2026-09-08) — no redondear de memoria
 

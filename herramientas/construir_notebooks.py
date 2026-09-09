@@ -18,6 +18,7 @@ Genera, para la Semana 1 completa:
 | 3.2 · IL3.2 | ``09_alumno_ensamble`` / ``09_docente_*``   | ``contenido_actividad32``  |
 | 3.3 · IL3.3/3.4 | ``11_alumno_seleccion`` / ``11_doc_*``  | ``contenido_actividad33``  |
 | transversal | ``10_proyecto_equipo_plantilla``           | ``contenido_proyecto``     |
+| evaluaciones | ``15_alumno_evaluacion`` / ``15_docente_*`` | ``contenido_evaluacion`` |
 | opcional    | ``04_opcional_kedro_databricks``           | ``contenido_kedro``        |
 | opcional    | ``00_opcional_waymo_real``                 | ``contenido_waymo``        |
 | opcional    | ``14_opcional_waymo_buckets``              | ``contenido_waymo_buckets``|
@@ -50,6 +51,7 @@ from contenido_actividad24 import CELDAS_ACT24  # noqa: E402
 from contenido_actividad31 import CELDAS_ACT31  # noqa: E402
 from contenido_actividad32 import CELDAS_ACT32  # noqa: E402
 from contenido_actividad33 import CELDAS_ACT33  # noqa: E402
+from contenido_evaluacion import CELDAS_EVALUACION  # noqa: E402
 from contenido_kedro import CELDAS_KEDRO  # noqa: E402
 from contenido_proyecto import CELDAS_PROYECTO  # noqa: E402
 from contenido_semana01 import CELDAS, URL_REPO  # noqa: E402
@@ -181,6 +183,9 @@ def main() -> None:
         construir(CELDAS_ACT33, "11_docente_seleccion.ipynb", para_docente=True),
         # Plantilla del proyecto de equipo (una sola versión, sin solucionario)
         construir(CELDAS_PROYECTO, "10_proyecto_equipo_plantilla.ipynb", para_docente=False),
+        # Plantilla de evaluación (casos oficiales, no Waymo)
+        construir(CELDAS_EVALUACION, "15_alumno_evaluacion.ipynb", para_docente=False),
+        construir(CELDAS_EVALUACION, "15_docente_evaluacion.ipynb", para_docente=True),
         # Opcional — Kedro ejecutable y Databricks conceptual
         construir(CELDAS_KEDRO, "04_opcional_kedro_databricks.ipynb", para_docente=False),
         # Opcional — datos reales de Waymo
