@@ -228,11 +228,11 @@ Los tres corregidos, y los tres vale la pena tener escritos porque volverán a a
 
 ### 6.3 Limitaciones que persisten
 
-| Limitación | Estado |
+| Limitación | Estado (2026-09-09) |
 |---|---|
-| Ningún notebook nuevo se ha ejecutado **en Colab** | ⏳ pendiente; el 01 sí, el 2026-08-16 |
-| El bloque de Databricks no está verificado contra una cuenta real | Es conceptual por diseño |
-| La lectura por URL del TODO 2 de la Act. 1.1 depende de que el repositorio sea público | Mitigado: la celda cae al CSV local si falla |
+| Auth Waymo en el navegador embebido del IDE | `MessageError`. Colab: Copy to Drive + Chrome/Safari/Brave. |
+| Databricks Free Edition | Verificado 2026-09-08: Git Folder sin PAT; Volume `LIST 0` (parquet no va en git). **No** es conceptual. `kedro run` no se muda al workspace. |
+| CSV sintético / pauta | **No hay.** Act. 1.1 afirma que `datos/crudos/detecciones_waymo_like.csv` no existe. |
 | Los tiempos medidos varían por máquina | Los `assert` comprueban el orden de magnitud, no el valor |
 
 ---

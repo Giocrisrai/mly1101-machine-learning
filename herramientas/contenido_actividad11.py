@@ -1001,9 +1001,11 @@ es "no sé", no la uses todavía.
         """
 > ### 🎓 Pauta docente — TODO 10 y bloque 6
 >
-> **Respuesta:** de noche falta el 4,08 % de las velocidades; de día, el 1,47 %; al amanecer o
-> atardecer, el 0,91 %. La noche pierde **4,5 veces** más filas que el amanecer, y unas 2,8 veces
-> más que el día.
+> **Respuesta (lote v2):** `speed_mps` llega con **0 % nulos**. El autochequeo lo deja en verde
+> porque `dropna()` no cambia la composición. El sesgo medible de este parquet es **100 % sunny**
+> y `cyclist` **0,45 %**. La cadena "de noche el LiDAR falla más → un dropna borra noche" es el
+> contrafactual que deben saber razonar; no improvises sobre este lote las cifras del de 153
+> segmentos (noche 4,08 % contra 0,91 % al amanecer).
 >
 > **La cadena de razonamiento que se busca:** de noche el LiDAR recibe menos puntos → la
 > velocidad se estima peor → se registra como faltante más seguido → un `dropna()` elimina

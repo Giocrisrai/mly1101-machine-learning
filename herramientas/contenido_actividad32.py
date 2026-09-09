@@ -91,8 +91,8 @@ ensamble más complejo gana lo suficiente para justificar lo que cuesta?*
 > | 4 · Sesgo o varianza | 25 | Diagnosticar cuál es el problema aquí |
 > | Cierre | 15 | Informe |
 >
-> **El bloque 3 es el que sostiene la sesión.** El ensamble por votación queda **por debajo** del
-> bosque solo (0,6869 contra 0,6909) y encima tarda más. No lo adelantes.
+> **El bloque 3 es el que sostiene la sesión.** El ensamble por votación **no se distingue** del
+> mejor modelo solo (0,5938 contra 0,594) y encima tarda más. No lo adelantes.
 """
     ),
     md("---\n## Preparación del entorno"),
@@ -224,30 +224,30 @@ cualquiera de los tres: cada uno se equivoca en cosas distintas y el voto cancel
     ),
     code(
         """
-duelo = comparacion[comparacion["modelo"].isin(["bosque_aleatorio", "ensamble_votacion"])]
-print(duelo.to_string(index=False), "\\n")
-
-mejor_solo = duelo[duelo["modelo"] == "bosque_aleatorio"].iloc[0]
-ensamble = duelo[duelo["modelo"] == "ensamble_votacion"].iloc[0]
+individuales = comparacion[comparacion["modelo"] != "ensamble_votacion"]
+mejor_solo = individuales.loc[individuales["media"].idxmax()]
+ensamble = comparacion.loc[comparacion["modelo"] == "ensamble_votacion"].iloc[0]
 
 diferencia = ensamble["media"] - mejor_solo["media"]
 sobrecosto = ensamble["segundos"] / mejor_solo["segundos"]
 
+print(f"Mejor individual      : {mejor_solo['modelo']} ({mejor_solo['media']:.4f})")
+print(f"Ensamble              : {ensamble['media']:.4f}")
 print(f"Diferencia en F1-macro : {diferencia:+.4f}")
 print(f"Ruido entre pliegues   : {mejor_solo['desv_entre_pliegues']:.4f}")
 print(f"Sobrecosto en tiempo   : {sobrecosto:.2f}×")
 """,
         """
 # TODO 5: ¿el ensamble le gana al mejor modelo individual?
-duelo = comparacion[comparacion["modelo"].isin(["bosque_aleatorio", "ensamble_votacion"])]
-print(duelo.to_string(index=False), "\\n")
-
-mejor_solo = duelo[duelo["modelo"] == "bosque_aleatorio"].iloc[0]
-ensamble = duelo[duelo["modelo"] == "____"].iloc[0]
+individuales = comparacion[comparacion["modelo"] != "ensamble_votacion"]
+mejor_solo = individuales.loc[individuales["media"].idxmax()]
+ensamble = comparacion.loc[comparacion["modelo"] == "____"].iloc[0]
 
 diferencia = ensamble["media"] - mejor_solo["media"]
 sobrecosto = ensamble["segundos"] / mejor_solo["segundos"]
 
+print(f"Mejor individual      : {mejor_solo['modelo']} ({mejor_solo['media']:.4f})")
+print(f"Ensamble              : {ensamble['media']:.4f}")
 print(f"Diferencia en F1-macro : {diferencia:+.4f}")
 print(f"Ruido entre pliegues   : {mejor_solo['desv_entre_pliegues']:.4f}")
 print(f"Sobrecosto en tiempo   : {sobrecosto:.2f}×")
@@ -255,14 +255,13 @@ print(f"Sobrecosto en tiempo   : {sobrecosto:.2f}×")
     ),
     code(
         """
-# Autochequeo
-assert diferencia < 0, "revisa: el ensamble debería quedar POR DEBAJO del bosque solo"
+# Autochequeo — v2: el ensamble no se distingue del mejor individual (GB).
 assert abs(diferencia) < mejor_solo["desv_entre_pliegues"], (
-    "y la diferencia debería ser menor que el ruido entre pliegues"
+    "la diferencia debería ser menor que el ruido entre pliegues"
 )
-print("✅ El ensamble quedó por debajo del bosque, y la diferencia es menor")
-print("   que el ruido: no hay evidencia de que ninguno sea mejor.")
-print(f"   Pero el ensamble tarda {sobrecosto:.0%} de lo que tarda el bosque.")
+print(f"✅ vs {mejor_solo['modelo']}: diferencia {diferencia:+.4f} < ruido {mejor_solo['desv_entre_pliegues']:.4f}")
+print("   no hay evidencia de que el ensamble sea mejor.")
+print(f"   Pero el ensamble tarda {sobrecosto:.1f}× lo que tarda el mejor solo.")
 print()
 print("   Mismo desempeño demostrable, más costo, menos interpretable.")
 """

@@ -54,9 +54,9 @@ def test_auth_colab_documentada_en_el_notebook_14() -> None:
     assert "Chrome" in fuente
 
 
-def test_ci_existe() -> None:
-    yml = RAIZ / ".github" / "workflows" / "ci.yml"
-    assert yml.is_file()
-    texto = yml.read_text(encoding="utf-8")
-    assert "uv run pytest" in texto
-    assert "construir_notebooks.py" in texto
+def test_spec_antigua_ya_no_deja_databricks_conceptual() -> None:
+    texto = (
+        RAIZ / "docs" / "superpowers" / "specs" / "2026-08-26-mly1101-actividades-11-12-design.md"
+    ).read_text(encoding="utf-8")
+    assert "conceptual por diseño" not in texto
+    assert "cae al CSV local" not in texto

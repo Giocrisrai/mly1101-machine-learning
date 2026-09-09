@@ -779,16 +779,18 @@ resultados
 ganancia_exactitud = reporte["accuracy"] - reporte_tonto["accuracy"]
 ganancia_f1 = reporte["macro avg"]["f1-score"] - reporte_tonto["macro avg"]["f1-score"]
 
-assert ganancia_exactitud < 0.02, (
-    "revisa: la ganancia en exactitud debería ser pequeñísima. ¿Partiste por grupo?"
+assert ganancia_exactitud < 0, (
+    "revisa: el bosque debería perder en exactitud contra el dummy. ¿Partiste por grupo?"
 )
-assert ganancia_f1 > 0.15, "revisa: en F1-macro la ganancia sí debería ser grande"
+assert 0 < ganancia_f1 < 0.08, (
+    "revisa: en v2 el F1-macro apenas se mueve; un salto grande era del lote de 153"
+)
 print(f"✅ Ganancia en exactitud: {ganancia_exactitud:+.4f}  ({ganancia_exactitud*100:+.2f} puntos)")
 print(f"   Ganancia en F1-macro : {ganancia_f1:+.4f}")
 print()
 print("   Dos métricas sobre el MISMO modelo, con conclusiones opuestas.")
-print("   Una dice que no sirvió de nada. La otra, que mejoró muchísimo.")
-print("   El bloque 5 explica cuál tiene razón.")
+print("   La exactitud dice que perdiste. El F1-macro, que apenas aprendiste de la minoría.")
+print("   El bloque 5 explica cuál tiene razón y por qué las dos se quedan cortas.")
 """
     ),
     md(

@@ -216,15 +216,16 @@ assert set(limpio["object_type"].unique()) == {"vehicle", "pedestrian", "cyclist
 **De la Actividad 1.4 se suma la evidencia principal de esta dimensión:** la ficha del dataset,
 con el grupo subrepresentado cuantificado, la cadena sesgo → decisión → consecuencia, la
 combinación de columnas que permite reidentificar y la sección *"usos para los que este dataset
-no sirve"*. Cifras de referencia: `dropna(speed_mps)` borra el **1,93 %** del dataset pero el
-**4,08 %** de las detecciones nocturnas contra el **0,91 %** del amanecer; y `segment_id` +
-`timestamp_micros` + `object_type` deja el **75,5 %** de las combinaciones con una sola fila.
+no sirve"*. Cifras de referencia (lote v2): `speed_mps` llega con **0 nulos** —el sesgo medible
+es **100 % sunny** y `cyclist` **0,45 %**—; `segment_id` + `timestamp_micros` + `object_type`
+deja el **8,2 %** de las combinaciones con una sola fila, y añadir `id_interno` las deja en
+**100 %**. Un peatón de este lote tiene mediana **120,5** frames: eso es una trayectoria.
 
 **De la Actividad 1.1 se suman dos evidencias más:** la lista de chequeo de privacidad de la ficha de
 fuentes (licencia verificada, no supuesta; riesgo de reidentificación revisado) y el TODO 10, que
 exige encadenar sesgo → decisión técnica → consecuencia sobre un grupo concreto. La cifra de
-referencia es que de noche falta el 4,08 % de las velocidades contra el 0,91 % al amanecer: un
-factor de 4,5.
+referencia en este lote es el **0,45 %** de ciclistas y el **100 %** sunny, no un `dropna()`
+sobre nulos que aquí no existen.
 
 **Ideas que corresponde reconocer como correctas:**
 - Un promedio global oculta a las minorías: 97 % de exactitud global puede convivir con 60 % en

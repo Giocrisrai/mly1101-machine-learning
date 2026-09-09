@@ -145,7 +145,7 @@ y si esa ganancia supera la variabilidad entre pliegues.
 > | Cierre | 10 | Informe de ajuste |
 >
 > **El bloque 3 es el que sostiene la sesión y no se recorta.** La búsqueda sube el F1-macro
-> **+0,0789** (0,5104 → 0,5893) y **sí** supera el ruido (0,0282). No lo adelantes. El remate
+> **+0,0789** (0,5104 → 0,5893) y **sí** supera el ruido (0,0424). No lo adelantes. El remate
 > es que `LEVEL_2` sigue en **0,0893**.
 """
     ),
@@ -374,12 +374,12 @@ ruido = ganancia.loc[0, "desv_entre_pliegues"]
 print(f"Ganancia del ajuste : {delta:+.4f}")
 print(f"Ruido entre pliegues: {ruido:.4f}")
 print()
-assert abs(delta) < ruido, (
-    "revisa: la ganancia debería quedar por debajo del ruido entre pliegues"
+assert delta > ruido, (
+    "revisa: en v2 la ganancia del ajuste debería superar el ruido entre pliegues"
 )
-print("✅ La ganancia del ajuste es MENOR que la variabilidad entre pliegues.")
-print("   Traducido: 12 configuraciones, 60 entrenamientos, y no hay evidencia")
-print("   de haber mejorado nada.")
+print("✅ La ganancia del ajuste es MAYOR que la variabilidad entre pliegues.")
+print("   Traducido: 12 configuraciones y el macro sí se mueve.")
+print("   El remate está en LEVEL_2: el F1 de las difíciles sigue en 0,0893.")
 """
     ),
     md(
@@ -405,7 +405,7 @@ print("   de haber mejorado nada.")
 > |---|---|
 > | Valores por defecto | **0,5104** |
 > | Búsqueda | **0,5893** |
-> | **Ganancia** | **+0,0789** (supera ruido 0,0282) |
+> | **Ganancia** | **+0,0789** (supera ruido 0,0424) |
 >
 > **El ajuste sí ganó, y aun así el modelo se pierde el 94 % de las difíciles.** Deja que
 > celebren el +0,08 y después pregunta por `LEVEL_2`.
@@ -423,8 +423,8 @@ print("   de haber mejorado nada.")
 > > *Ajustar hiperparámetros es lo último que hay que hacer, y lo primero que todos quieren
 > > hacer, porque es lo único que se puede automatizar.*
 >
-> **Criterio de logro:** reconoce que la ganancia no supera el ruido, no concluye que el ajuste
-> "sirvió", y ubica las mejoras de primer orden fuera del ajuste.
+> **Criterio de logro:** reconoce que la ganancia **sí** supera el ruido, no vende eso como
+> "el sensor ya es confiable", y ubica las mejoras de primer orden fuera del ajuste (`LEVEL_2`).
 """
     ),
     md(
@@ -556,13 +556,14 @@ La tabla mide tres cosas que se confunden con facilidad. Explica cada una.
 >
 > | Nivel | Descripción |
 > |---|---|
-> | **Destacado (4)** | Todo lo del 3, y además: **no reporta la ganancia como mejora** al no superar el ruido; explica por qué un optimismo de cero no exonera la trampa; distingue la brecha validación/prueba de una fuga |
+> | **Destacado (4)** | Todo lo del 3, y además: **contrasta la ganancia contra el ruido** y aun así no vende `LEVEL_2` como resuelto; explica por qué un optimismo de cero no exonera la trampa; distingue la brecha validación/prueba de una fuga |
 > | **Logrado (3)** | Valida con `GroupKFold` y 0 segmentos compartidos; justifica la métrica por el desbalance; compara contra los valores por defecto y contra la desviación entre pliegues |
 > | **En desarrollo (2)** | Ejecuta la búsqueda y reporta la mejor configuración, pero presenta la ganancia como mejora sin contrastarla con el ruido |
 > | **Inicial (1)** | Ajusta sobre la prueba, o valida sin agrupar por segmento |
 >
-> **Lo primero que hay que mirar al corregir:** si el informe dice *"el ajuste mejoró el modelo"*.
-> Con estos datos es falso, y es el error central que la sesión previene.
+> **Lo primero que hay que mirar al corregir:** si el informe dice *"el ajuste resolvió el
+> modelo"*. El macro subió y superó el ruido; `LEVEL_2` sigue en 0,0893. Ese es el error que la
+> sesión previene: vender la métrica global.
 """
     ),
 ]

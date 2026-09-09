@@ -2,7 +2,12 @@
 
 from pathlib import Path
 
+import pandas as pd
+import pytest
+
 RAIZ = Path(__file__).resolve().parents[1]
+PARQUET_V2 = RAIZ / "datos" / "waymo_real" / "detecciones_reales.parquet"
+FUENTE_ETICA = RAIZ / "herramientas" / "contenido_actividad14.py"
 
 
 def test_formativas_tienen_al_menos_ocho_items_y_pauta() -> None:
@@ -22,3 +27,73 @@ def test_guiones_de_las_tres_parciales() -> None:
         texto = (RAIZ / "docs" / nombre).read_text(encoding="utf-8")
         assert "defensa individual" in texto.lower() or "Defensa" in texto
         assert "Telco" in texto
+
+
+def test_etica_autochequeo_usa_por_momento() -> None:
+    fuente = FUENTE_ETICA.read_text(encoding="utf-8")
+    assert 'por_momento["pct_nulos"].max()' in fuente
+    assert "nulos_por_momento" not in fuente
+
+
+def test_etica_autochequeo_reidentifica_con_id_interno() -> None:
+    """El lote v2 es denso: tipo no aísla; el tracking id sí."""
+    fuente = FUENTE_ETICA.read_text(encoding="utf-8")
+    assert "(tres == 1).mean() > 0.5" not in fuente
+    assert 'groupby(["segment_id", "timestamp_micros", "id_interno"])' in fuente
+    assert "(con_id == 1).mean() == 1" in fuente
+
+
+def test_etica_y_rubrica_no_citan_el_lote_de_153_segmentos() -> None:
+    etica = FUENTE_ETICA.read_text(encoding="utf-8")
+    rubrica = (RAIZ / "docs" / "rubrica_ra1.md").read_text(encoding="utf-8")
+    for texto in (etica, rubrica):
+        assert "75,5 %" not in texto
+        assert "1,93 %" not in texto
+        assert "| `segment_id` | 153 |" not in texto
+    assert "8,2 %" in etica
+    assert "100,0 %" in etica
+    assert "id_interno" in etica
+    assert "0 nulos" in rubrica or "0 %" in rubrica
+
+
+def test_supervisado_autochequeo_no_exige_ganancia_f1_del_lote_viejo() -> None:
+    """En v2 el bosque pierde en exactitud y el F1-macro apenas se mueve (+0,03)."""
+    fuente = (RAIZ / "herramientas" / "contenido_actividad22.py").read_text(
+        encoding="utf-8"
+    )
+    assert "ganancia_f1 > 0.15" not in fuente
+    assert "ganancia_exactitud < 0" in fuente
+    assert "ganancia_f1 < 0.08" in fuente
+
+
+def test_ajuste_autochequeo_exige_que_la_ganancia_supere_el_ruido() -> None:
+    """Perception v2: +0,0789 supera el 0,0424 de desviación entre pliegues."""
+    fuente = (RAIZ / "herramientas" / "contenido_actividad31.py").read_text(
+        encoding="utf-8"
+    )
+    assert "abs(delta) < ruido" not in fuente
+    assert "delta > ruido" in fuente
+
+
+def test_ensamble_autochequeo_no_exige_perder_contra_el_bosque() -> None:
+    """En v2 el ensamble y el bosque no se distinguen; el signo no está garantizado."""
+    fuente = (RAIZ / "herramientas" / "contenido_actividad32.py").read_text(
+        encoding="utf-8"
+    )
+    assert 'assert diferencia < 0' not in fuente
+    assert "abs(diferencia) < mejor_solo" in fuente
+    assert 'idxmax()' in fuente
+    assert 'isin(["bosque_aleatorio", "ensamble_votacion"])' not in fuente
+
+
+@pytest.mark.skipif(
+    not PARQUET_V2.exists(),
+    reason="requiere Perception v2 en datos/waymo_real/",
+)
+def test_lote_v2_id_interno_es_unico_por_frame() -> None:
+    df = pd.read_parquet(PARQUET_V2)
+    tres = df.groupby(["segment_id", "timestamp_micros", "object_type"]).size()
+    con_id = df.groupby(["segment_id", "timestamp_micros", "id_interno"]).size()
+    assert (tres == 1).mean() < 0.15
+    assert (con_id == 1).mean() == 1.0
+    assert round(100 * (tres == 1).mean(), 1) == 8.2

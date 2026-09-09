@@ -367,8 +367,8 @@ print(f"Filas con speed_mps faltante: {perdidas:,} de {len(df):,} "
     ),
     md(
         """
-Menos del 2 %. En cualquier informe eso se describiría como *"se eliminaron unas pocas filas
-incompletas"* y nadie preguntaría más.
+En este lote el porcentaje sale **cero**. Un informe diría *"el dataset ya viene completo"* y
+pasaría al modelo. El sesgo de procesamiento, aquí, no está en los nulos.
 
 ### ✏️ TODO 6 — La misma cifra, por grupo
 
@@ -433,7 +433,7 @@ efecto
     code(
         """
 # Autochequeo — v2: 0 nulos, dropna no mueve la composición.
-assert nulos_por_momento["pct_nulos"].max() == 0
+assert por_momento["pct_nulos"].max() == 0
 assert (efecto["cambio_pp"] == 0).all()
 print("✅ dropna() no borra nada: 0 nulos. El sesgo de este lote es otro: 100 % sunny y cyclist 0,45 %.")
 """
@@ -484,23 +484,23 @@ Alguien propone: *"entonces imputamos la velocidad con la media y listo"*.
 >
 > **Este es el bloque que convierte la ética en ingeniería. No lo recortes.**
 >
-> **Cifras medidas:**
+> **Cifras medidas (lote v2, 530.396 filas, 40 segmentos):** `speed_mps` llega con **0 nulos**.
+> `dropna()` no mueve la composición. El sesgo de este parquet es otro: **100 % sunny** y
+> `cyclist` **0,45 %**.
 >
-> | | Faltantes | % del grupo perdido | Cambio en su peso |
-> |---|---|---|---|
-> | Noche | 332 | **4,08 %** | −0,44 pp |
-> | Día | 418 | 1,47 % | +0,34 pp |
-> | Amanecer | 37 | 0,91 % | +0,10 pp |
-> | **Total** | **787** | **1,93 % del dataset** | |
+> **El montaje es la secuencia TODO 5 → TODO 6.** Primero sale 0,00 %, y varios van a concluir
+> que "no hay sesgo de procesamiento". Es verdad que no hay nulos que borrar. Lo que hay que
+> mirar es lo que el lote **nunca trajo**: lluvia, y casi ningún ciclista.
 >
-> **El montaje es la secuencia TODO 5 → TODO 6.** Primero sale **1,93 %**, y varios lo van a
-> descartar como irrelevante — con razón, si esa fuera toda la información. Después sale que la
-> noche pierde **4,5 veces más** que el amanecer.
+> La cadena de TODO 8 sigue siendo la que deben saber razonar: *si* el sensor fallara más de
+> noche, un `dropna()` silencioso lo empeoraría y la métrica global no lo mostraría. En el lote
+> de 153 segmentos (40.680 filas) eso se medía: noche 4,08 % de nulos contra 0,91 % al amanecer.
+> Aquí no aplica: no improvises esas cifras sobre este parquet.
 >
 > Merece decirse tal cual:
 >
-> > *La cifra que reportarías —"eliminamos el 2 % de filas incompletas"— es verdadera y es
-> > inútil. Oculta exactamente lo que había que mirar.*
+> > *La cifra que reportarías —"no hay nulos, dataset completo"— es verdadera y es insuficiente.
+> > Oculta el muestreo extremo.*
 >
 > **Respuesta al TODO 8**, los dos eslabones que faltan:
 >
@@ -573,6 +573,7 @@ combinaciones = [
     ["segment_id", "time_of_day"],
     ["segment_id", "timestamp_micros"],
     ["segment_id", "timestamp_micros", "object_type"],
+    ["segment_id", "timestamp_micros", "id_interno"],
 ]
 
 filas = []
@@ -596,6 +597,7 @@ combinaciones = [
     ["segment_id", "time_of_day"],
     ["segment_id", "timestamp_micros"],
     ["segment_id", "timestamp_micros", "object_type"],
+    ["segment_id", "timestamp_micros", "id_interno"],
 ]
 
 filas = []
@@ -615,13 +617,16 @@ pd.DataFrame(filas)
     ),
     code(
         """
-# Autochequeo
+# Autochequeo — lote v2 denso: el tipo no aísla; el tracking id sí.
 tres = df.groupby(["segment_id", "timestamp_micros", "object_type"]).size()
-assert (tres == 1).mean() > 0.5, "revisa la combinación de tres columnas"
-print(f"✅ Con tres columnas, ninguna identificadora por sí sola,")
-print(f"   el {100*(tres==1).mean():.1f} % de las combinaciones señala UNA sola detección.")
+con_id = df.groupby(["segment_id", "timestamp_micros", "id_interno"]).size()
+assert (tres == 1).mean() < 0.15, "en un frame urbano el tipo no aísla una detección"
+assert (con_id == 1).mean() == 1
+print(f"✅ Con segmento + instante + tipo: {100*(tres==1).mean():.1f} % de grupos de una fila.")
+print(f"   Con segmento + instante + id_interno: {100*(con_id==1).mean():.1f} %.")
 print()
-print("   Ninguna de las tres es un dato personal. Las tres juntas son un identificador.")
+print("   id_interno parece un hash técnico, no un dato personal.")
+print("   Junto con el instante señala UNA detección. En muchos frames, es una trayectoria.")
 """
     ),
     md(
@@ -644,17 +649,20 @@ print("   Ninguna de las tres es un dato personal. Las tres juntas son un identi
         """
 > ### 🎓 Pauta docente — Bloque 4 ⭐
 >
-> **Cifras medidas:**
+> **Cifras medidas (lote v2):**
 >
 > | Combinación | Grupos | De una sola fila | % |
 > |---|---|---|---|
-> | `segment_id` | 153 | 0 | 0,0 % |
-> | `segment_id` + `time_of_day` | 459 | 0 | 0,0 % |
-> | `segment_id` + `timestamp_micros` | 22.353 | 10.675 | 47,8 % |
-> | **`segment_id` + `timestamp` + `object_type`** | 30.878 | 23.303 | **75,5 %** |
+> | `segment_id` | 40 | 0 | 0,0 % |
+> | `segment_id` + `time_of_day` | 40 | 0 | 0,0 % |
+> | `segment_id` + `timestamp_micros` | 7.934 | 0 | 0,0 % |
+> | `segment_id` + `timestamp` + `object_type` | 23.378 | 1.916 | **8,2 %** |
+> | **`segment_id` + `timestamp` + `id_interno`** | 530.396 | 530.396 | **100,0 %** |
 >
-> **La demostración es el salto de 0 % a 75,5 %.** Ninguna de las tres columnas es un dato
-> personal. Las tres juntas aíslan tres de cada cuatro detecciones.
+> **La demostración es que el tipo no basta.** Un frame urbano tiene decenas de vehículos: tres
+> columnas "de contexto" dejan el 8,2 % de los grupos con una sola fila. `id_interno` parece un
+> hash técnico, no un nombre, y con el instante aísla **todas** las detecciones. El mismo id
+> reaparece: un peatón de este lote tiene mediana **120,5** frames. Eso es una trayectoria.
 >
 > Vale la pena preguntarlo antes: *"¿cuál de estas columnas les parece un dato personal?"*
 > Ninguna lo es. Y ese es el punto.
@@ -669,10 +677,10 @@ print("   Ninguna de las tres es un dato personal. Las tres juntas son un identi
 > 1. Con la posición y la marca de tiempo se puede reconstruir **la trayectoria** de un peatón.
 >    Cruzada con una dirección o un horario conocido, eso es *dónde estuvo una persona y
 >    cuándo*. Es información de ubicación, de las más sensibles que existen.
-> 2. **`timestamp_micros`** es la respuesta más limpia: para clasificar el tipo de objeto por su
->    geometría, la marca de tiempo no aporta nada, y es la que habilita la trayectoria.
->    `segment_id` también vale como respuesta si se argumenta bien, aunque hace falta para
->    particionar sin fuga (Actividad 2.2) — señalar esa tensión es nivel destacado.
+> 2. **`id_interno`** es la respuesta más limpia de privacidad: para clasificar el tipo por su
+>    geometría no hace falta el tracking id, y es el que habilita la trayectoria.
+>    `timestamp_micros` también vale. `segment_id` vale si se argumenta bien, aunque hace falta
+>    para particionar sin fuga (Actividad 2.2) — señalar esa tensión es nivel destacado.
 > 3. La licencia de Waymo restringe la redistribución en parte por esto: las nubes de puntos y
 >    las imágenes contienen **personas, matrículas y fachadas** de vía pública real. No es
 >    burocracia: es que quien aparece en esos datos no dio su consentimiento.
